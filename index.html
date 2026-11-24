@@ -155,7 +155,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
   <script>/* js/util.js */
 // 공용 유틸리티
 // 화면에 보이는 버전. 업데이트할 때마다 올려서, 서로 같은 버전인지 대기실에서 확인할 수 있게 합니다.
-const APP_VERSION = 'v5';
+const APP_VERSION = 'v6';
 const U = {
   rnd: (n) => Math.floor(Math.random() * n),
   rint: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -468,9 +468,9 @@ const MqttRoom = (() => {
       ...b,
       c: mqtt.connect(b.url, { clientId: 'dg3_' + Math.random().toString(36).slice(2, 12), clean: true, keepalive: 30, connectTimeout: 8000, reconnectPeriod: 3000 }),
     }));
-    const publishAll = (topic, payload) => {
+    const publishAll = (topic, payload, retain = false) => {
       const live = conns.filter((x) => x.c.connected);
-      return Promise.all(live.map((x) => new Promise((res) => x.c.publish(topic, payload, { qos: 0 }, () => res()))));
+      return Promise.all(live.map((x) => new Promise((res) => x.c.publish(topic, payload, { qos: retain ? 1 : 0, retain }, () => res()))));
     };
     const subscribeAll = (filter) => { subs.add(filter); conns.forEach((x) => x.c.connected && x.c.subscribe(filter, { qos: 0 })); };
     const unsubscribeAll = (filter) => { subs.delete(filter); conns.forEach((x) => x.c.connected && x.c.unsubscribe(filter)); };
@@ -483,8 +483,14 @@ const MqttRoom = (() => {
       if (i < 0) return;
       const r = rooms.get(rest.slice(0, i));
       if (!r) return;
+      const sub = rest.slice(i + 1);
+      if (sub.startsWith('keep/')) { // 서버에 남겨 두는 표시 (빈 내용 = 지움)
+        let v = null; if (buf.length) { try { v = JSON.parse(buf.toString()); } catch (e) { return; } }
+        r.kept[sub.slice(5)] = v;
+        return;
+      }
       let msg; try { msg = JSON.parse(buf.toString()); } catch (e) { return; }
-      r.onMessage(rest.slice(i + 1), msg);
+      r.onMessage(sub, msg);
     }
     for (const x of conns) {
       x.c.on('connect', () => { subs.forEach((s) => x.c.subscribe(s, { qos: 0 })); setTimeout(beatAll, 300); });
@@ -502,7 +508,7 @@ const MqttRoom = (() => {
 
     function makeRoom(name) {
       const topic = BASE + name;
-      const r = { name, pres: {}, peers: new Map(), topicLs: {}, peerLs: [], snap: Object.freeze([]), left: false };
+      const r = { name, pres: {}, peers: new Map(), topicLs: {}, peerLs: [], snap: Object.freeze([]), left: false, kept: {} };
       const pub = (sub, obj) => publishAll(`${topic}/${sub}`, JSON.stringify(obj));
       function rebuild(joined = [], left = []) {
         const now = Date.now();
@@ -542,6 +548,9 @@ const MqttRoom = (() => {
           return pub('p', { from: me, pres: r.pres });
         },
         peers: () => r.snap,
+        // keep: 서버에 남겨 두는 표시. 나중에 들어온 사람도, 내 화면이 잠시 멈춰 있어도 바로 보입니다.
+        keep: (key, value) => publishAll(`${topic}/keep/${key}`, value == null ? '' : JSON.stringify(value), true),
+        kept: (key) => r.kept[key] || null,
         onPeers(f) { r.peerLs.push(f); setTimeout(() => rebuild(), 0); return () => { r.peerLs = r.peerLs.filter((x) => x !== f); }; },
         connected: () => conns.some((x) => x.c.connected),
         leave() {
@@ -709,12 +718,23 @@ const Net = (() => {
   }
 
   // 방장: 이름방에 들어가 "방장" 표시를 하고, 인사(hello)를 받으면 링크를 엽니다.
+  const HOST_MARK_TTL = 3 * 3600 * 1000; // 이보다 오래된 방장 표시는 무시
+  const freshMark = (ep) => { const m = ep.r.kept && ep.r.kept('host'); return m && m.peer && Date.now() - m.at < HOST_MARK_TTL ? m : null; };
+
   async function roomListen(name) {
     const ep = await RoomEndpoint.open(name);
     await sleep(1200); // 이미 방장이 있는 이름인지 확인
-    if (ep.peers().some((p) => !p.sameTab && p.presence && p.presence.h)) { ep.destroy(); throw { type: 'unavailable-id' }; }
+    const mark = freshMark(ep);
+    if (ep.peers().some((p) => !p.sameTab && p.presence && p.presence.h) || (mark && mark.peer !== ep.me)) { ep.destroy(); throw { type: 'unavailable-id' }; }
     await ep.r.presence({ h: 1 }).catch(() => {});
-    const server = emitter({ destroy: () => ep.destroy() });
+    // 서버에 "이 방의 방장은 나"라고 남겨 둠: 방장 휴대폰 화면이 잠시 꺼져 있어도 참가자가 방을 찾을 수 있음
+    if (ep.r.keep) await ep.r.keep('host', { peer: ep.me, at: Date.now() }).catch(() => {});
+    const unmark = () => (ep.r.keep ? ep.r.keep('host', null).catch(() => {}) : Promise.resolve());
+    let hidden = false;
+    const server = emitter({
+      hide: () => { if (!hidden) { hidden = true; unmark(); } },
+      destroy: () => { const p = hidden ? Promise.resolve() : unmark(); hidden = true; Promise.race([p, sleep(800)]).then(() => ep.destroy()); },
+    });
     ep.on('hello', (from) => {
       const fresh = !ep.links.has(from);
       const l = ep.link(from);
@@ -724,24 +744,36 @@ const Net = (() => {
     return server;
   }
   // 참가자: 이름방에서 방장을 찾아 인사하고 환영(welcome)을 기다립니다.
-  async function roomConnect(name, timeout = 15000) {
+  // timeout: 방장이 응답할 때까지 기다리는 최대 시간 (방장 화면이 잠시 꺼져 있을 수 있어 넉넉하게)
+  async function roomConnect(name, timeout = 60000) {
     const ep = await RoomEndpoint.open(name);
     status('② 방을 찾는 중...');
     const t0 = Date.now();
     let host = null;
     while (!host && Date.now() - t0 < Math.min(timeout, 10000)) {
       const p = ep.peers().find((x) => !x.sameTab && x.presence && x.presence.h);
-      if (p) host = p.peer; else await sleep(250);
+      const mark = freshMark(ep);
+      if (p) host = p.peer; else if (mark) host = mark.peer; else await sleep(250);
     }
     if (!host) { ep.destroy(); throw { type: 'not-found' }; }
     status('③ 방장과 연결하는 중...');
     const l = ep.link(host);
     const ok = await new Promise((resolve) => {
-      let done = false;
+      let done = false, nudged = false;
       ep.on('welcome', (from) => { if (from === host && !done) { done = true; resolve(true); } });
-      (async () => { while (!done && Date.now() - t0 < timeout) { ep.raw({ to: host, k: 'hello' }); await sleep(900); } if (!done) { done = true; resolve(false); } })();
+      (async () => {
+        while (!done && Date.now() - t0 < timeout) {
+          // 방장이 화면을 다시 켜면 그 사이에 새 주소로 바뀌었을 수 있음
+          const p = ep.peers().find((x) => !x.sameTab && x.presence && x.presence.h);
+          if (p && p.peer !== host) { host = p.peer; }
+          ep.raw({ to: host, k: 'hello' });
+          if (!nudged && Date.now() - t0 > 8000) { nudged = true; status('③ 방장과 연결하는 중... 방장에게 게임 화면을 켜 달라고 하세요'); }
+          await sleep(900);
+        }
+        if (!done) { done = true; resolve(false); }
+      })();
     });
-    if (!ok) { ep.destroy(); throw { type: 'timeout' }; }
+    if (!ok) { ep.destroy(); throw { type: 'host-asleep' }; }
     l.markOpen();
     l.on('close', () => setTimeout(() => ep.destroy(), 100));
     return { conn: l, destroy: () => ep.destroy() };
@@ -802,6 +834,7 @@ const Net = (() => {
       const seats = this.members.map((m) => ({ name: m.name, bot: false, conn: m.conn, local: !m.conn }));
       const total = this.fill ? Math.max(this.cap, minSeats, seats.length) : seats.length;
       for (let i = seats.length, b = 0; i < total; i++, b++) seats.push({ name: botName(b), bot: true, conn: null });
+      if (this.server.hide) this.server.hide(); // 시작했으니 더 이상 방을 찾을 수 없게
       this.game = new GameHost(this.def, seats, { ...this.opts, local: false });
       seats.forEach((s, i) => { if (s.conn && s.conn.open) s.conn.send({ type: 'start', game: this.def.id, seat: i }); });
       this.onStarted();
@@ -822,13 +855,13 @@ const Net = (() => {
 
   class RoomClient {
     constructor() { this.conn = null; this.offset = 0; this.link = null; this.onLobby = () => {}; this.onStart = () => {}; this.onView = () => {}; this.onClose = () => {}; }
-    async join(roomName, name, timeout = 15000) {
-      this.link = await connect(roomName, timeout);
+    async join(roomName, name, connectTimeout = 60000) {
+      this.link = await connect(roomName, connectTimeout);
       const conn = (this.conn = this.link.conn);
       return new Promise((resolve, reject) => {
         let settled = false;
         const done = (fn, v) => { if (!settled) { settled = true; clearTimeout(t); fn(v); } };
-        const t = setTimeout(() => done(reject, { type: 'timeout' }), timeout);
+        const t = setTimeout(() => done(reject, { type: 'timeout' }), 20000);
         conn.on('data', (msg) => {
           if (!msg || typeof msg !== 'object') return;
           if (msg.type === 'reject') { done(reject, { type: 'rejected', reason: msg.reason }); return; }
@@ -903,6 +936,7 @@ const Net = (() => {
       'no-lib': '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하고 페이지를 새로고침하세요.',
       'not-found': '그 코드의 방을 찾을 수 없어요. 코드를 확인하고, 방장이 대기실 화면에 있는지 확인하세요.',
       timeout: '연결 시간이 초과됐어요. 잠시 후 다시 시도하세요.',
+      'host-asleep': '방은 있는데 방장이 응답하지 않아요. 방장이 게임 대기실 화면을 켜 두고 있는지 확인한 뒤 다시 참가하세요.',
       rejected: e.reason || '참가가 거절됐어요.',
       network: '온라인 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요.',
       cancelled: '매칭을 취소했어요.',
