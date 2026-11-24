@@ -4,25 +4,2620 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>데블스 게임룸</title>
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+:root {
+  --bg: #0d0d10;
+  --bg2: #16161b;
+  --bg3: #1f1f26;
+  --line: #2c2c36;
+  --text: #ececf1;
+  --muted: #9a9aa8;
+  --red: #e5383b;
+  --red2: #a4161a;
+  --gold: #f2c14e;
+  --green: #4caf7a;
+  --blue: #4a90e2;
+  --purple: #9b6dff;
+  --radius: 12px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif; }
+body { min-height: 100vh; }
+#app { max-width: 1180px; margin: 0 auto; padding: 16px 16px 60px; }
+button { font: inherit; color: inherit; }
+h2, h3 { margin: 0; }
+
+/* ---------- 허브 ---------- */
+.hub-head { padding: 28px 0 12px; }
+.logo { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+.logo .eye { color: var(--red); text-shadow: 0 0 18px var(--red); }
+.hub-head p { color: var(--muted); max-width: 720px; line-height: 1.6; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 16px; }
+.tab { background: var(--bg2); border: 1px solid var(--line); padding: 7px 14px; border-radius: 999px; cursor: pointer; color: var(--muted); }
+.tab.on { background: var(--red2); border-color: var(--red); color: #fff; }
+.day-title { font-size: 15px; letter-spacing: 3px; color: var(--red); margin: 26px 0 10px; display: flex; gap: 10px; align-items: baseline; }
+.day-title small { color: var(--muted); letter-spacing: 0; font-weight: 400; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.gcard { text-align: left; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: transform .12s, border-color .12s; display: flex; flex-direction: column; gap: 6px; }
+.gcard:hover { transform: translateY(-2px); border-color: var(--red); }
+.gcard.disabled { opacity: .45; }
+.gcard.disabled:hover { transform: none; border-color: var(--line); }
+.gtags { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.slot, .fid { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.slot.main { color: var(--gold); border-color: #6b5520; }
+.slot.prison { color: #ff6b6b; border-color: #6b2020; }
+.slot.exile { color: #8fb6ff; border-color: #24406b; }
+.slot.mini { color: #c6a7ff; border-color: #44306b; }
+.slot.etc { color: var(--muted); }
+.fid.ok { color: var(--green); border-color: #245a3c; }
+.fid.adapt { color: #e0a96d; border-color: #5a4224; }
+.fid.none { color: var(--muted); }
+.gname { font-size: 19px; font-weight: 700; }
+.gen { font-size: 12px; color: var(--muted); }
+.gsum { font-size: 13px; color: #c8c8d2; line-height: 1.5; flex: 1; }
+.gplayers { font-size: 12px; color: var(--muted); }
+
+/* ---------- 게임 공통 ---------- */
+.topbar { display: flex; align-items: center; gap: 10px; padding: 6px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 16px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+.topbar .ttl { flex: 1; font-weight: 700; font-size: 18px; display: flex; flex-direction: column; }
+.topbar .ttl small { font-size: 11px; color: var(--muted); font-weight: 400; }
+.tb-right { display: flex; gap: 6px; }
+.btn { background: var(--bg3); border: 1px solid var(--line); padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: background .1s; }
+.btn:hover:not(:disabled) { background: #2a2a33; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.primary { background: var(--red2); border-color: var(--red); color: #fff; }
+.btn.primary:hover:not(:disabled) { background: var(--red); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 4px 9px; font-size: 13px; }
+.btn.on { border-color: var(--gold); color: var(--gold); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.panel { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.panel h4 { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.split { display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start; }
+@media (max-width: 820px) { .split { grid-template-columns: 1fr; } }
+.big { font-size: 28px; font-weight: 800; }
+.muted { color: var(--muted); }
+.center { text-align: center; }
+.hl { color: var(--gold); font-weight: 700; }
+.bad { color: #ff6b6b; }
+.good { color: var(--green); }
+.log { max-height: 260px; overflow: auto; font-size: 13px; line-height: 1.6; color: #c8c8d2; }
+.log div { border-bottom: 1px dashed #24242c; padding: 2px 0; }
+.stat { display: inline-flex; flex-direction: column; background: var(--bg3); border-radius: 8px; padding: 6px 12px; min-width: 70px; }
+.stat b { font-size: 20px; }
+.stat span { font-size: 11px; color: var(--muted); }
+input[type=number], input[type=text], select { background: var(--bg3); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 8px; font: inherit; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th, .tbl td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.tbl tr.me td { color: var(--gold); }
+.timer { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 22px; }
+.timer.warn { color: var(--red); }
+
+/* 로비 · 대기실 · 가림막 */
+.lobby-wrap { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+.mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.mode-tab { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 8px; cursor: pointer; font-weight: 700; color: var(--muted); }
+.mode-tab.on { background: var(--red2); border-color: var(--red); color: #fff; }
+.fill-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.fill-toggle input { width: 18px; height: 18px; accent-color: var(--red); }
+.lobby { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.chip { background: var(--bg3); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 14px; }
+.chip.empty { color: var(--muted); border-style: dashed; }
+.room-code { font-size: 48px; font-weight: 900; letter-spacing: 10px; color: var(--gold); cursor: pointer; font-variant-numeric: tabular-nums; }
+.turn-banner { background: var(--red2); color: #fff; padding: 8px 14px; border-radius: 8px; margin-bottom: 12px; font-weight: 700; }
+.curtain { position: fixed; inset: 0; background: #0b0b0e; z-index: 40; align-items: center; justify-content: center; }
+.curtain-box { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 20px; }
+.eye-big { font-size: 80px; color: var(--red); text-shadow: 0 0 30px var(--red); line-height: 1; }
+.scores { display: flex; flex-wrap: wrap; gap: 6px; }
+.scores .stat.me b { color: var(--gold); }
+
+/* 모달 & 토스트 */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.modal { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; max-width: 620px; width: 100%; max-height: 86vh; overflow: auto; }
+.modal h3 { margin-bottom: 12px; color: var(--red); }
+.modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.rules { line-height: 1.7; font-size: 14px; color: #d6d6de; }
+.rules ul { padding-left: 20px; margin: 6px 0; }
+.rules .note { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+#toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px); background: #2a2a33; border: 1px solid var(--line); padding: 10px 18px; border-radius: 999px; opacity: 0; transition: .2s; z-index: 60; pointer-events: none; }
+#toast.show { opacity: 1; transform: translateX(-50%); }
+
+/* 트럼프 카드 */
+.pcard { width: 52px; height: 72px; border-radius: 7px; background: #f4f1ea; color: #1a1a1a; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; border: 2px solid transparent; user-select: none; }
+.pcard b { font-size: 20px; line-height: 1; }
+.pcard span { font-size: 18px; }
+.pcard.red { color: #c0262b; }
+.pcard.back { background: repeating-linear-gradient(45deg, var(--red2), var(--red2) 6px, #7a1013 6px, #7a1013 12px); border-color: #3a0a0b; }
+.pcard.sel { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.pcard.dim { opacity: .35; }
+
+/* 격자 공통 */
+.board { display: grid; gap: 2px; user-select: none; touch-action: none; }
+.cell { background: var(--bg3); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.poly-prev { position: relative; }
+.poly-prev div { position: absolute; border-radius: 2px; }
+.tray { display: flex; flex-wrap: wrap; gap: 10px; }
+.tray .piece { padding: 8px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: var(--bg3); }
+.tray .piece.sel { border-color: var(--gold); }
+.tray .piece.used { opacity: .25; }
+
+</style>
 </head>
 <body>
   <div id="app"></div>
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="js/util.js"></script>
-  <script src="js/session.js"></script>
-  <script src="js/net.js"></script>
-  <script src="js/app.js"></script>
+  <script>/* js/util.js */
+// 공용 유틸리티
+const U = {
+  rnd: (n) => Math.floor(Math.random() * n),
+  rint: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
+  pick: (a) => a[Math.floor(Math.random() * a.length)],
+  shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  },
+  range: (n) => Array.from({ length: n }, (_, i) => i),
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  fmt: (n) => n.toLocaleString('ko-KR'),
+  clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+};
+
+// DOM 생성 헬퍼
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'html') e.innerHTML = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat(Infinity)) {
+    if (k == null || k === false) continue;
+    e.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  }
+  return e;
+}
+
+// 사람 입력 대기: 버튼 목록을 표시하고 클릭된 값을 반환
+function choose(container, options) {
+  return new Promise((resolve) => {
+    container.innerHTML = '';
+    for (const o of options) {
+      container.append(
+        h('button', {
+          class: 'btn ' + (o.cls || ''),
+          disabled: o.disabled,
+          onclick: () => { container.innerHTML = ''; resolve(o.value); },
+        }, o.label)
+      );
+    }
+  });
+}
+
+// 폴리오미노 도구
+const Poly = {
+  normalize(cells) {
+    const minR = Math.min(...cells.map((c) => c[0]));
+    const minC = Math.min(...cells.map((c) => c[1]));
+    return cells.map(([r, c]) => [r - minR, c - minC]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  },
+  rotate(cells) { return Poly.normalize(cells.map(([r, c]) => [c, -r])); },
+  flip(cells) { return Poly.normalize(cells.map(([r, c]) => [r, -c])); },
+  key(cells) { return cells.map((c) => c.join(',')).join(';'); },
+  orientations(cells) {
+    const out = [], seen = new Set();
+    let cur = Poly.normalize(cells);
+    for (let f = 0; f < 2; f++) {
+      for (let i = 0; i < 4; i++) {
+        const k = Poly.key(cur);
+        if (!seen.has(k)) { seen.add(k); out.push(cur); }
+        cur = Poly.rotate(cur);
+      }
+      cur = Poly.flip(cur);
+    }
+    return out;
+  },
+  size(cells) {
+    return [Math.max(...cells.map((c) => c[0])) + 1, Math.max(...cells.map((c) => c[1])) + 1];
+  },
+  // 미니 미리보기 요소
+  preview(cells, color, unit = 14) {
+    const [hR, wC] = Poly.size(cells);
+    const box = h('div', { class: 'poly-prev', style: { width: wC * unit + 'px', height: hR * unit + 'px' } });
+    for (const [r, c] of cells) {
+      box.append(h('div', { style: { left: c * unit + 'px', top: r * unit + 'px', width: unit - 2 + 'px', height: unit - 2 + 'px', background: color } }));
+    }
+    return box;
+  },
+};
+
+// 트럼프 카드 & 포커 족보
+const Cards = {
+  suits: ['♠', '♥', '♦', '♣'],
+  rankName: (r) => ({ 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }[r] || String(r)),
+  deck() {
+    const d = [];
+    for (const s of Cards.suits) for (let r = 2; r <= 14; r++) d.push({ r, s });
+    return d;
+  },
+  el(card, faceUp = true, extra = '') {
+    if (!faceUp) return h('div', { class: 'pcard back ' + extra });
+    const red = card.s === '♥' || card.s === '♦';
+    return h('div', { class: 'pcard ' + (red ? 'red ' : '') + extra }, h('b', {}, Cards.rankName(card.r)), h('span', {}, card.s));
+  },
+  // 5장 평가: [카테고리, 타이브레이커...]
+  eval5(cards) {
+    const rs = cards.map((c) => c.r).sort((a, b) => b - a);
+    const flush = cards.every((c) => c.s === cards[0].s);
+    const uniq = [...new Set(rs)];
+    let straightHigh = 0;
+    if (uniq.length === 5) {
+      if (rs[0] - rs[4] === 4) straightHigh = rs[0];
+      else if (rs.join() === '14,5,4,3,2') straightHigh = 5;
+    }
+    const cnt = {};
+    rs.forEach((r) => (cnt[r] = (cnt[r] || 0) + 1));
+    const groups = Object.entries(cnt).map(([r, n]) => [n, +r]).sort((a, b) => b[0] - a[0] || b[1] - a[1]);
+    const byGroup = groups.map((g) => g[1]);
+    if (straightHigh && flush) return [straightHigh === 14 ? 9 : 8, straightHigh];
+    if (groups[0][0] === 4) return [7, ...byGroup];
+    if (groups[0][0] === 3 && groups[1][0] === 2) return [6, ...byGroup];
+    if (flush) return [5, ...rs];
+    if (straightHigh) return [4, straightHigh];
+    if (groups[0][0] === 3) return [3, ...byGroup];
+    if (groups[0][0] === 2 && groups[1][0] === 2) return [2, ...byGroup];
+    if (groups[0][0] === 2) return [1, ...byGroup];
+    return [0, ...rs];
+  },
+  catName: ['하이카드', '원페어', '투페어', '트리플', '스트레이트', '플러시', '풀하우스', '포카드', '스트레이트 플러시', '로열 플러시'],
+  cmp(a, b) {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const d = (a[i] || 0) - (b[i] || 0);
+      if (d) return d;
+    }
+    return 0;
+  },
+};
+
+// 간단한 타이머
+function makeTimer(seconds, onTick, onEnd) {
+  let left = seconds, id = null;
+  const t = {
+    get left() { return left; },
+    start() {
+      onTick(left);
+      id = setInterval(() => {
+        left--;
+        onTick(left);
+        if (left <= 0) { t.stop(); onEnd && onEnd(); }
+      }, 1000);
+      return t;
+    },
+    stop() { if (id) clearInterval(id); id = null; },
+  };
+  return t;
+}
+
+// 게임 UI 공용 조각
+const UIx = {
+  secs: (deadline, now) => Math.max(0, Math.ceil((deadline - now) / 1000)),
+  mmss(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; },
+  // [{name, value, me, sub}]
+  scoreboard(list) {
+    return h('div', { class: 'scores' }, ...list.map((x) => h('div', { class: 'stat' + (x.me ? ' me' : '') }, h('b', {}, x.value), h('span', {}, x.name + (x.sub ? ' ' + x.sub : '')))));
+  },
+  // 메시지 번호가 바뀌면 토스트
+  msgWatcher(ctx) {
+    const last = {}; // 자리별 마지막 메시지 번호
+    return (m, me) => {
+      const n = m ? m.n : 0;
+      if (!(me in last)) { last[me] = n; return; }
+      if (n !== last[me]) { last[me] = n; if (m) ctx.toast(m.text); }
+    };
+  },
+  rankBy(seats, keyFn) {
+    // keyFn이 작은 순 = 높은 순위. 같은 값은 같은 순위
+    const order = seats.slice().sort((a, b) => keyFn(a) - keyFn(b));
+    let rank = 0, prev = null;
+    return order.map((s, i) => { const k = keyFn(s); if (k !== prev) { rank = i + 1; prev = k; } return { seat: s, rank }; });
+  },
+};
+
+const BOT_NAMES =['악마A', '악마B', '악마C', '악마D', '악마E', '악마F', '악마G'];
+
+</script>
+  <script>/* js/session.js */
+// 게임 진행 엔진 실행기 (오프라인 · 온라인 호스트 공용)
+//
+// 각 게임은 engine 객체를 제공합니다.
+//   setup(seats, opts)            → state      seats: [{name, bot}], opts: {...게임옵션, local, now}
+//   action(state, seat, act, now) → false면 무시
+//   active(state)                 → 지금 입력을 기다리는 자리 목록
+//   hidden(state)                 → 지금 단계의 입력이 비밀인지 (같은 화면 플레이 시 가림막)
+//   view(state, seat)             → 그 자리에서 보이는 정보 (seat = -1 은 관전자)
+//   tick(state, now)              → 시간 경과 처리, 바뀌었으면 true
+//   botAct(state, seat)           → 봇의 행동
+//   over(state)                   → null 또는 { ranking: [{seat, rank, score}] }
+class GameHost {
+  constructor(def, seats, opts) {
+    this.def = def;
+    this.E = def.engine;
+    this.seats = seats; // [{name, bot, conn, local}]
+    this.opts = opts;
+    this.botTimers = new Map();
+    this.listeners = [];
+    this.dead = false;
+    this.reset();
+    this.tickId = setInterval(() => this.tick(), 250);
+  }
+  reset() {
+    for (const t of this.botTimers.values()) clearTimeout(t);
+    this.botTimers.clear();
+    this.state = this.E.setup(this.seats.map((s) => ({ name: s.name, bot: s.bot })), { ...this.opts, now: Date.now() });
+    this.changed();
+  }
+  act(seat, a) {
+    if (this.dead || this.E.over(this.state)) return;
+    let r;
+    try { r = this.E.action(this.state, seat, a, Date.now()); } catch (e) { console.error(e); return; }
+    if (r === false) return;
+    this.changed();
+  }
+  tick() {
+    if (this.dead || this.E.over(this.state) || !this.E.tick) return;
+    let r = false;
+    try { r = this.E.tick(this.state, Date.now()); } catch (e) { console.error(e); }
+    if (r) this.changed();
+  }
+  changed() {
+    this.scheduleBots();
+    this.broadcast();
+  }
+  scheduleBots() {
+    if (this.E.over(this.state)) return;
+    for (const s of this.E.active(this.state)) {
+      if (!this.seats[s] || !this.seats[s].bot || this.botTimers.has(s)) continue;
+      const delay = this.E.botDelay ? this.E.botDelay(this.state, s) : 700;
+      this.botTimers.set(s, setTimeout(() => {
+        this.botTimers.delete(s);
+        if (this.dead || this.E.over(this.state) || !this.E.active(this.state).includes(s)) return;
+        let a = null;
+        try { a = this.E.botAct(this.state, s); } catch (e) { console.error(e); }
+        if (a) this.act(s, a);
+      }, delay));
+    }
+  }
+  viewFor(seat) {
+    const v = this.E.view(this.state, seat);
+    v.me = seat;
+    v.names = this.seats.map((s) => s.name);
+    v.bots = this.seats.map((s) => !!s.bot);
+    v.result = this.E.over(this.state) || null;
+    return v;
+  }
+  broadcast() {
+    const now = Date.now();
+    this.seats.forEach((s, i) => {
+      if (s.conn && s.conn.open) {
+        try { s.conn.send({ type: 'view', view: this.viewFor(i), hostNow: now }); } catch (e) { console.error(e); }
+      }
+    });
+    this.listeners.forEach((f) => f());
+  }
+  // 온라인 플레이어가 나가면 봇이 이어받음
+  seatToBot(i) {
+    const s = this.seats[i];
+    s.bot = true; s.conn = null;
+    s.name += ' (봇)';
+    this.changed();
+  }
+  destroy() {
+    this.dead = true;
+    clearInterval(this.tickId);
+    for (const t of this.botTimers.values()) clearTimeout(t);
+  }
+}
+
+// 인원 수 → 실제 자리 수 (봇으로 채움)
+function seatCount(def, humans) {
+  const p = def.players;
+  if (humans <= 1) return p.soloSeats || 1;
+  return Math.max(humans, p.minSeats || 1);
+}
+function botName(i) { return '봇 ' + (i + 1); }
+
+</script>
+  <script>/* js/net.js */
+// 온라인 방 (방장 = 게임 진행 담당, 참가자 = 화면만 받음)
+//
+// 연결 방식 두 가지를 같은 모양으로 감쌉니다.
+//   · claude.ai 아티팩트 안: room 기능 (같은 아티팩트를 연 사람끼리 실시간 메시지)
+//   · 그 밖(로컬·일반 호스팅): PeerJS (브라우저끼리 직접 연결)
+// 연결(conn)은 { open, send(msg), close(), on('open'|'data'|'close', fn) } 모양입니다.
+const Net = (() => {
+  const PREFIX = 'devilsgr3-';
+  const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const randomCode = () => U.range(5).map(() => CODE_CHARS[U.rnd(CODE_CHARS.length)]).join('');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ---------- 연결 방식 고르기 ----------
+  let roomApiP = null;
+  function roomApi() {
+    if (!roomApiP) {
+      roomApiP = (window.claude && typeof window.claude.use === 'function')
+        ? Promise.race([window.claude.use('room').catch(() => null), sleep(10000).then(() => null)])
+        : Promise.resolve(null);
+    }
+    return roomApiP;
+  }
+  roomApi(); // 미리 확인
+
+  // 간단한 이벤트 도우미
+  function emitter(obj) {
+    const ls = {};
+    obj.on = (e, f) => { (ls[e] = ls[e] || []).push(f); return obj; };
+    obj._fire = (e, v) => (ls[e] || []).slice().forEach((f) => { try { f(v); } catch (err) { console.error(err); } });
+    return obj;
+  }
+
+  // ================= room 전송층 =================
+  // 같은 이름방 안에서 1:1 링크를 만들고, 메시지를 잘게 나눠 순서대로·확인 응답과 재전송으로 보냅니다.
+  const CHUNK = 3000, WINDOW = 6, RESEND_MS = 1200;
+  const asciiJson = (v) => JSON.stringify(v).replace(/[\u007f-￿]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+
+  class RoomLink {
+    constructor(ep, remote) {
+      emitter(this);
+      this.ep = ep; this.remote = remote; this.open = false; this.closed = false;
+      this.outSeq = 0; this.unacked = new Map(); this.queue = [];
+      this.inNext = 1; this.inBuf = new Map(); this.parts = [];
+      this.timer = setInterval(() => this.resend(), RESEND_MS / 2);
+    }
+    send(msg) {
+      if (this.closed) return;
+      const s = asciiJson(msg);
+      for (let i = 0; i < s.length || i === 0; i += CHUNK) this.queue.push({ p: s.slice(i, i + CHUNK), e: i + CHUNK >= s.length ? 1 : 0 });
+      this.pump();
+    }
+    pump() {
+      while (this.queue.length && this.unacked.size < WINDOW) {
+        const c = this.queue.shift(); const s = ++this.outSeq;
+        const pkt = { to: this.remote, k: 'd', s, p: c.p, e: c.e };
+        this.unacked.set(s, { pkt, at: Date.now(), tries: 1 });
+        this.ep.raw(pkt);
+      }
+    }
+    resend() {
+      const now = Date.now();
+      for (const u of this.unacked.values()) {
+        if (now - u.at < RESEND_MS) continue;
+        if (u.tries > 25) { this.markClosed(); return; }
+        u.at = now; u.tries++; this.ep.raw(u.pkt);
+      }
+    }
+    onPacket(d) {
+      if (d.k === 'a') { this.unacked.delete(d.s); this.pump(); return; }
+      if (d.k !== 'd') return;
+      this.ep.raw({ to: this.remote, k: 'a', s: d.s });
+      if (d.s < this.inNext || this.inBuf.has(d.s)) return;
+      this.inBuf.set(d.s, d);
+      while (this.inBuf.has(this.inNext)) {
+        const x = this.inBuf.get(this.inNext); this.inBuf.delete(this.inNext); this.inNext++;
+        this.parts.push(x.p);
+        if (x.e) { const txt = this.parts.join(''); this.parts = []; let v; try { v = JSON.parse(txt); } catch (e) { continue; } this._fire('data', v); }
+      }
+    }
+    markOpen() { if (!this.open && !this.closed) { this.open = true; this._fire('open'); } }
+    markClosed() {
+      if (this.closed) return;
+      this.closed = true; this.open = false; clearInterval(this.timer);
+      this.ep.links.delete(this.remote);
+      this._fire('close');
+    }
+    close() { if (!this.closed) { this.ep.raw({ to: this.remote, k: 'bye' }); this.markClosed(); } }
+  }
+
+  class RoomEndpoint {
+    static async open(name) {
+      const room = await roomApi();
+      if (!room) throw { type: 'no-room' };
+      let named;
+      try { named = await room.join(name); } catch (e) { throw { type: e && e.code === 'not_permitted' ? 'not-permitted' : 'network' }; }
+      const ep = new RoomEndpoint(named);
+      for (let i = 0; i < 50 && !ep.me; i++) { ep.findMe(); if (!ep.me) await sleep(100); }
+      if (!ep.me) { ep.destroy(); throw { type: 'network' }; }
+      return ep;
+    }
+    constructor(named) {
+      emitter(this);
+      this.r = named; this.links = new Map(); this.me = null; this.denied = false;
+      this.unsubs = [
+        named.on('m', (msg) => this.onMsg(msg)),
+        named.onPeers((ch) => { this.findMe(); for (const p of ch.left) { const l = this.links.get(p.peer); if (l) l.markClosed(); } this._fire('peers', ch.peers); }),
+      ];
+    }
+    findMe() { const p = this.r.peers().find((x) => x.sameTab); if (p) this.me = p.peer; }
+    raw(pkt) {
+      this.r.emit('m', pkt).catch((e) => { if (e && e.code === 'not_permitted' && !this.denied) { this.denied = true; this._fire('denied'); } });
+    }
+    onMsg(msg) {
+      if (msg.sameTab) return;
+      const d = msg.data;
+      if (!d || typeof d !== 'object' || d.to !== this.me) return;
+      const from = msg.peer;
+      if (d.k === 'hello' || d.k === 'welcome') { this._fire(d.k, from); return; }
+      const l = this.links.get(from);
+      if (!l) return;
+      if (d.k === 'bye') l.markClosed(); else l.onPacket(d);
+    }
+    link(remote) { let l = this.links.get(remote); if (!l) { l = new RoomLink(this, remote); this.links.set(remote, l); } return l; }
+    peers() { return this.r.peers(); }
+    destroy() {
+      for (const l of [...this.links.values()]) l.close();
+      this.unsubs.forEach((u) => { try { u(); } catch (e) {} });
+      this.r.leave().catch(() => {});
+    }
+  }
+
+  // 방장: 이름방에 들어가 "방장" 표시를 하고, 인사(hello)를 받으면 링크를 엽니다.
+  async function roomListen(name) {
+    const ep = await RoomEndpoint.open(name);
+    await sleep(1200); // 이미 방장이 있는 이름인지 확인
+    if (ep.peers().some((p) => !p.sameTab && p.presence && p.presence.h)) { ep.destroy(); throw { type: 'unavailable-id' }; }
+    await ep.r.presence({ h: 1 }).catch(() => {});
+    const server = emitter({ destroy: () => ep.destroy() });
+    ep.on('hello', (from) => {
+      const fresh = !ep.links.has(from);
+      const l = ep.link(from);
+      ep.raw({ to: from, k: 'welcome' });
+      if (fresh) { server._fire('connection', l); setTimeout(() => l.markOpen(), 0); }
+    });
+    ep.on('denied', () => server._fire('denied'));
+    return server;
+  }
+  // 참가자: 이름방에서 방장을 찾아 인사하고 환영(welcome)을 기다립니다.
+  async function roomConnect(name, timeout = 8000) {
+    const ep = await RoomEndpoint.open(name);
+    const t0 = Date.now();
+    let host = null;
+    while (!host && Date.now() - t0 < Math.min(timeout, 6000)) {
+      const p = ep.peers().find((x) => !x.sameTab && x.presence && x.presence.h);
+      if (p) host = p.peer; else await sleep(250);
+    }
+    if (!host) { ep.destroy(); throw { type: 'not-found' }; }
+    const l = ep.link(host);
+    const ok = await new Promise((resolve) => {
+      let done = false;
+      ep.on('welcome', (from) => { if (from === host && !done) { done = true; resolve(true); } });
+      ep.on('denied', () => { if (!done) { done = true; resolve('denied'); } });
+      (async () => { while (!done && Date.now() - t0 < timeout) { ep.raw({ to: host, k: 'hello' }); await sleep(900); } if (!done) { done = true; resolve(false); } })();
+    });
+    if (ok !== true) { ep.destroy(); throw { type: ok === 'denied' ? 'not-permitted' : 'timeout' }; }
+    l.markOpen();
+    l.on('close', () => setTimeout(() => ep.destroy(), 100));
+    return { conn: l, destroy: () => ep.destroy() };
+  }
+
+  // ================= PeerJS 전송층 =================
+  function makePeer(id) {
+    return new Promise((resolve, reject) => {
+      if (typeof Peer === 'undefined') return reject({ type: 'no-lib' });
+      const p = id ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
+      const onErr = (e) => { p.off('open', onOpen); p.destroy(); reject(e); };
+      const onOpen = () => { p.off('error', onErr); resolve(p); };
+      p.once('open', onOpen);
+      p.once('error', onErr);
+    });
+  }
+  async function peerListen(name) {
+    const peer = await makePeer(PREFIX + name);
+    const server = emitter({ destroy: () => { try { peer.destroy(); } catch (e) {} } });
+    peer.on('connection', (conn) => server._fire('connection', conn));
+    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
+    return server;
+  }
+  async function peerConnect(name, timeout = 8000) {
+    const peer = await makePeer(null);
+    try {
+      const conn = await new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject({ type: 'timeout' }), timeout);
+        peer.on('error', (e) => { if (e.type === 'peer-unavailable') { clearTimeout(t); reject({ type: 'not-found' }); } });
+        const c = peer.connect(PREFIX + name, { reliable: true });
+        c.on('open', () => { clearTimeout(t); resolve(c); });
+      });
+      return { conn, destroy: () => { try { conn.close(); } catch (e) {} try { peer.destroy(); } catch (e) {} } };
+    } catch (e) { peer.destroy(); throw e; }
+  }
+
+  async function listen(name) { return (await roomApi()) ? roomListen(name.toLowerCase()) : peerListen(name); }
+  async function connect(name, timeout) { return (await roomApi()) ? roomConnect(name.toLowerCase(), timeout) : peerConnect(name, timeout); }
+
+  // ================= 방 =================
+  class RoomHost {
+    constructor(server, { def, cap, opts, name, code, isPublic, fill = true }) {
+      this.server = server; this.def = def; this.cap = cap; this.opts = opts; this.code = code; this.isPublic = isPublic; this.fill = fill;
+      this.members = [{ name, conn: null }];
+      this.game = null;
+      this.onLobby = () => {}; this.onStart = () => {}; this.onToast = () => {}; this.onStarted = () => {};
+      server.on('connection', (conn) => {
+        conn.on('data', (msg) => this.onMsg(conn, msg));
+        conn.on('close', () => this.onClose(conn));
+        conn.on('error', () => this.onClose(conn));
+      });
+      server.on('denied', () => this.onToast('이 아티팩트에서 "참여자" 이상 권한이 있어야 온라인으로 할 수 있어요.'));
+    }
+    lobbyMsg() { return { type: 'lobby', game: this.def.id, cap: this.cap, opts: this.opts, members: this.members.map((m) => m.name), code: this.code, isPublic: this.isPublic, fill: this.fill }; }
+    broadcastLobby() {
+      const m = this.lobbyMsg();
+      for (const x of this.members) if (x.conn && x.conn.open) x.conn.send(m);
+      this.onLobby(m);
+    }
+    onMsg(conn, msg) {
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'join') {
+        if (this.members.some((m) => m.conn === conn)) return;
+        if (this.game) return this.reject(conn, '이미 게임이 시작된 방이에요.');
+        if (this.members.length >= this.cap) return this.reject(conn, '방이 가득 찼어요.');
+        let name = String(msg.name || '플레이어').slice(0, 12);
+        while (this.members.some((m) => m.name === name)) name += "'";
+        this.members.push({ name, conn });
+        this.broadcastLobby();
+        if (this.isPublic && this.members.length >= this.cap) setTimeout(() => this.start(), 600);
+      } else if (msg.type === 'act' && this.game) {
+        const i = this.game.seats.findIndex((s) => s.conn === conn);
+        if (i >= 0) this.game.act(i, msg.act);
+      }
+    }
+    reject(conn, reason) { conn.send({ type: 'reject', reason }); setTimeout(() => conn.close(), 1500); }
+    onClose(conn) {
+      if (this.game) {
+        const i = this.game.seats.findIndex((s) => s.conn === conn);
+        if (i >= 0 && !this.game.seats[i].bot) { this.onToast(`${this.game.seats[i].name} 님이 나가서 봇이 대신합니다`); this.game.seatToBot(i); }
+        return;
+      }
+      const k = this.members.findIndex((m) => m.conn === conn);
+      if (k > 0) { this.members.splice(k, 1); this.broadcastLobby(); }
+    }
+    start() {
+      if (this.game) return;
+      const minSeats = this.def.players.minSeats || 1;
+      if (!this.fill && this.members.length < Math.max(2, minSeats)) return;
+      const seats = this.members.map((m) => ({ name: m.name, bot: false, conn: m.conn, local: !m.conn }));
+      const total = this.fill ? Math.max(this.cap, minSeats, seats.length) : seats.length;
+      for (let i = seats.length, b = 0; i < total; i++, b++) seats.push({ name: botName(b), bot: true, conn: null });
+      this.game = new GameHost(this.def, seats, { ...this.opts, local: false });
+      seats.forEach((s, i) => { if (s.conn && s.conn.open) s.conn.send({ type: 'start', game: this.def.id, seat: i }); });
+      this.onStarted();
+      this.onStart(this.game);
+      this.game.broadcast();
+    }
+    destroy() { this.dead = true; if (this.game) this.game.destroy(); this.onStarted(); try { this.server.destroy(); } catch (e) {} }
+  }
+
+  async function createRoom(def, cap, opts, name, fill = true) {
+    for (let i = 0; i < 6; i++) {
+      const code = randomCode();
+      try { return new RoomHost(await listen('r-' + code), { def, cap, opts, name, code, isPublic: false, fill }); }
+      catch (e) { if (e.type !== 'unavailable-id') throw e; }
+    }
+    throw { type: 'fail' };
+  }
+
+  class RoomClient {
+    constructor() { this.conn = null; this.offset = 0; this.link = null; this.onLobby = () => {}; this.onStart = () => {}; this.onView = () => {}; this.onClose = () => {}; }
+    async join(roomName, name, timeout = 8000) {
+      this.link = await connect(roomName, timeout);
+      const conn = (this.conn = this.link.conn);
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const done = (fn, v) => { if (!settled) { settled = true; clearTimeout(t); fn(v); } };
+        const t = setTimeout(() => done(reject, { type: 'timeout' }), timeout);
+        conn.on('data', (msg) => {
+          if (!msg || typeof msg !== 'object') return;
+          if (msg.type === 'reject') { done(reject, { type: 'rejected', reason: msg.reason }); return; }
+          if (msg.type === 'lobby') { done(resolve, msg); this.onLobby(msg); }
+          else if (msg.type === 'start') this.onStart(msg);
+          else if (msg.type === 'view') { this.offset = msg.hostNow - Date.now(); this.onView(msg.view); }
+        });
+        conn.on('close', () => { if (settled) this.onClose(); else done(reject, { type: 'closed' }); });
+        conn.send({ type: 'join', name });
+      });
+    }
+    send(act) { if (this.conn && this.conn.open) this.conn.send({ type: 'act', act }); }
+    destroy() { try { this.link && this.link.destroy(); } catch (e) {} }
+  }
+
+  async function joinRoom(code, name) {
+    const c = new RoomClient();
+    try { const lobby = await c.join('r-' + code.trim().toUpperCase(), name); return { client: c, lobby }; }
+    catch (e) { c.destroy(); throw e; }
+  }
+
+  // ---------- 랜덤 매칭 ----------
+  const matchKey = (def, cap, opts) => [def.id, cap, ...Object.keys(opts).sort().map((k) => opts[k])].join('-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase();
+
+  // PeerJS: 정해진 대기방 번호(0~19)를 차례로 시도
+  async function peerQuickMatch(def, cap, opts, name, onStatus, fill) {
+    const key = matchKey(def, cap, opts);
+    for (let k = 0; k < 20; k++) {
+      const id = `q-${key}-${k}`;
+      onStatus && onStatus(`대기방 ${k + 1} 확인 중...`);
+      try { return { host: new RoomHost(await peerListen(id), { def, cap, opts, name, code: null, isPublic: true, fill }) }; }
+      catch (e) { if (e.type !== 'unavailable-id') throw e; }
+      try { const c = new RoomClient(); const lobby = await c.join(id, name, 5000).catch((err) => { c.destroy(); throw err; }); return { client: c, lobby }; }
+      catch (e) { /* 다음 번호 */ }
+    }
+    throw { type: 'fail' };
+  }
+  // room: 대기 중인 사람끼리 presence로 서로를 보고, 가장 먼저 온 사람이 방장이 됨
+  async function roomQuickMatch(def, cap, opts, name, onStatus, isCancelled, fill) {
+    const lobby = await roomApi();
+    const key = matchKey(def, cap, opts);
+    const since = Date.now();
+    await lobby.presence({ q: key, since }).catch(() => {});
+    const clear = () => lobby.presence({ q: null, since: null }).catch(() => {});
+    const searchers = () => lobby.peers().filter((p) => p.presence && p.presence.q === key)
+      .sort((a, b) => (a.presence.since - b.presence.since) || (a.peer < b.peer ? -1 : 1));
+    onStatus && onStatus('같은 게임을 찾는 사람을 확인하는 중...');
+    await sleep(1800); // 다른 사람의 presence가 도착할 시간
+    try {
+      for (let tries = 0; tries < 240; tries++) {
+        if (isCancelled && isCancelled()) throw { type: 'cancelled' };
+        const leader = searchers()[0];
+        if (!leader) { await sleep(500); continue; }
+        const roomName = ('q-' + leader.peer).toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 48);
+        if (leader.sameTab) {
+          onStatus && onStatus('다른 사람을 기다리는 중...');
+          const host = new RoomHost(await roomListen(roomName), { def, cap, opts, name, code: null, isPublic: true, fill });
+          host.onStarted = clear;
+          // 나보다 먼저 찾기 시작한 사람이 보이고 내 방이 비어 있으면, 방을 접고 그쪽으로 다시 매칭
+          const watch = setInterval(() => {
+            if (host.game || host.dead) { clearInterval(watch); return; }
+            const first = searchers()[0];
+            if (first && !first.sameTab && host.members.length === 1) {
+              clearInterval(watch);
+              host.dead = true;
+              try { host.server.destroy(); } catch (e) {}
+              host.onDemote && host.onDemote();
+            }
+          }, 1000);
+          return { host };
+        }
+        onStatus && onStatus('상대 방에 들어가는 중...');
+        const c = new RoomClient();
+        try { const lb = await c.join(roomName, name, 7000); clear(); return { client: c, lobby: lb }; }
+        catch (e) { c.destroy(); if (e.type === 'not-permitted') throw e; await sleep(1500); }
+      }
+      throw { type: 'fail' };
+    } catch (e) { clear(); throw e; }
+  }
+  async function quickMatch(def, cap, opts, name, onStatus, isCancelled, fill = true) {
+    return (await roomApi()) ? roomQuickMatch(def, cap, opts, name, onStatus, isCancelled, fill) : peerQuickMatch(def, cap, opts, name, onStatus, fill);
+  }
+
+  function errText(e) {
+    if (!e) return '알 수 없는 오류';
+    return {
+      'no-lib': window.claude
+        ? '이 화면에서는 온라인에 연결할 수 없어요. claude.ai에 로그인했는지, 이 아티팩트에 초대받았는지 확인하세요.'
+        : '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하세요.',
+      'not-found': '그 코드의 방을 찾을 수 없어요.',
+      'not-permitted': '이 아티팩트에서 "참여자(Contributor)" 이상 권한이 있어야 온라인으로 할 수 있어요. 공유한 사람에게 권한을 요청하세요.',
+      timeout: '연결 시간이 초과됐어요.',
+      rejected: e.reason || '참가가 거절됐어요.',
+      network: '온라인 서버에 연결할 수 없어요.',
+      'server-error': '온라인 서버 오류예요. 잠시 후 다시 시도하세요.',
+      'browser-incompatible': '이 브라우저는 온라인 플레이를 지원하지 않아요.',
+      cancelled: '매칭을 취소했어요.',
+      fail: '방을 만들거나 찾지 못했어요. 잠시 후 다시 시도하세요.',
+    }[e.type] || ('연결 오류: ' + (e.type || e.message || e));
+  }
+
+  return { createRoom, joinRoom, quickMatch, errText, roomApi };
+})();
+
+</script>
+  <script>/* js/app.js */
+// 게임 레지스트리 · 로비 · 플레이 화면
+const GAMES = [];
+function registerGame(def) { GAMES.push(def); }
+
+const App = (() => {
+  let cleanupFns = [];
+  const addCleanup = (f) => cleanupFns.push(f);
+  function unmount() {
+    for (const f of cleanupFns) { try { f(); } catch (e) { console.error(e); } }
+    cleanupFns = [];
+    closeModal();
+  }
+  const root = () => document.getElementById('app');
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('dp3-' + k); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('dp3-' + k, v); } catch (e) {} },
+  };
+
+  // ---------------- 목록 ----------------
+  function hub() {
+    unmount();
+    const r = root(); r.innerHTML = '';
+    const row = h('div', { class: 'cards' });
+    for (const g of GAMES) row.append(h('button', { class: 'gcard', onclick: () => lobby(g.id) },
+      h('div', { class: 'gname' }, g.name),
+      h('div', { class: 'gen' }, g.en || ''),
+      h('div', { class: 'gsum' }, g.summary || ''),
+      h('div', { class: 'gplayers' }, '👤 ' + (g.players.max > 1 ? `1~${g.players.max}명` : '1명'))));
+    r.append(h('header', { class: 'hub-head' }, h('div', { class: 'logo' }, h('span', { class: 'eye' }, '◉'), ' 데블스 게임룸')), row);
+  }
+
+  function topbar(title, onBack, def) {
+    return h('div', { class: 'topbar' },
+      h('button', { class: 'btn ghost', onclick: onBack }, '← ' + (onBack === hub ? '목록' : '나가기')),
+      h('div', { class: 'ttl' }, title),
+      def ? h('div', { class: 'tb-right' }, h('button', { class: 'btn ghost', onclick: () => showRules(def) }, '규칙')) : null);
+  }
+
+  // ---------------- 로비 ----------------
+  function lobby(id) {
+    const def = GAMES.find((g) => g.id === id);
+    if (!def) return hub();
+    unmount();
+    const r = root(); r.innerHTML = '';
+    const P = def.players;
+    const minSeats = P.minSeats || 1;
+    const opts = {};
+    for (const o of def.options || []) opts[o.key] = o.choices.find((c) => String(c[0]) === store.get(`opt-${id}-${o.key}`, ''))?.[0] ?? o.default;
+
+    // 인원 모집 방식: 온라인 / 오프라인 / 봇과 대결 + 부족한 인원 봇으로 채우기
+    let mode = store.get('mode-' + id, 'online');
+    if (!['online', 'offline', 'bots'].includes(mode)) mode = 'online';
+    let fill = store.get('fill', '1') === '1';
+    const minBots = Math.max(1, minSeats - 1), maxBots = P.max - 1;
+    const cnt = {
+      online: U.clamp(+store.get(`n-online-${id}`, Math.max(2, P.default || 2)), 2, P.max),
+      offline: U.clamp(+store.get(`n-offline-${id}`, Math.max(2, P.default || 2)), 2, P.max),
+      bots: U.clamp(+store.get(`n-bots-${id}`, Math.max(minBots, (P.soloSeats || 2) - 1)), minBots, maxBots),
+    };
+    const RANGE = { online: [2, P.max], offline: [2, P.max], bots: [minBots, maxBots] };
+
+    const nick = h('input', { type: 'text', maxlength: 12, value: store.get('nick', ''), placeholder: '닉네임', style: { width: '160px' } });
+    const codeIn = h('input', { type: 'text', maxlength: 5, placeholder: '방 코드', style: { width: '120px', textTransform: 'uppercase', letterSpacing: '3px' } });
+    const optBox = h('div', { class: 'col' });
+    const tabs = h('div', { class: 'mode-tabs' });
+    const body = h('div', { class: 'panel col mode-body' });
+    const localNames = (() => { try { return JSON.parse(store.get('lnames', '[]')) || []; } catch (e) { return []; } })();
+
+    function stepper(key, label) {
+      const [lo, hi] = RANGE[key];
+      const val = h('b', { style: { fontSize: '26px', minWidth: '40px', textAlign: 'center' } }, cnt[key]);
+      const set = (d) => { cnt[key] = U.clamp(cnt[key] + d, lo, hi); store.set(`n-${key}-${id}`, cnt[key]); renderBody(); };
+      return h('div', { class: 'col', style: { gap: '6px' } },
+        h('h4', { style: { margin: 0 } }, label),
+        h('div', { class: 'row' }, h('button', { class: 'btn', disabled: cnt[key] <= lo, onclick: () => set(-1) }, '−'), val,
+          h('button', { class: 'btn', disabled: cnt[key] >= hi, onclick: () => set(1) }, '+'), h('span', { class: 'muted' }, `(${lo}~${hi})`)));
+    }
+    function fillToggle() {
+      const cb = h('input', { type: 'checkbox', id: 'fill-bots' });
+      cb.checked = fill;
+      cb.onchange = () => { fill = cb.checked; store.set('fill', fill ? '1' : '0'); renderBody(); };
+      return h('label', { class: 'fill-toggle', for: 'fill-bots' }, cb, h('span', {}, '부족한 인원은 봇으로 채우기'));
+    }
+    function renderTabs() {
+      tabs.innerHTML = '';
+      for (const [k, label] of [['online', '🌐 온라인'], ['offline', '📺 오프라인'], ['bots', '🤖 봇과 대결']]) {
+        tabs.append(h('button', { class: 'mode-tab' + (mode === k ? ' on' : ''), onclick: () => { mode = k; store.set('mode-' + id, k); renderTabs(); renderBody(); } }, label));
+      }
+    }
+    function renderBody() {
+      body.innerHTML = '';
+      if (mode === 'online') {
+        const n = cnt.online;
+        const note = fill ? `사람이 ${n}명보다 적으면 방장이 시작할 때 빈자리를 봇이 채웁니다.`
+          : `봇 없이 사람끼리만 합니다. 최소 ${Math.max(2, minSeats)}명이 모여야 시작할 수 있어요.`;
+        body.append(stepper('online', '정원'), fillToggle(), h('div', { class: 'muted', style: { fontSize: '13px' } }, note),
+          h('div', { class: 'row' }, h('span', { class: 'muted' }, '닉네임'), nick),
+          h('div', { class: 'row' },
+            h('button', { class: 'btn primary', onclick: () => goOnline('match') }, '🎲 랜덤 매칭'),
+            h('button', { class: 'btn', onclick: () => goOnline('create') }, '🏠 방 만들기')),
+          h('div', { class: 'muted', style: { fontSize: '13px' } }, '랜덤 매칭은 같은 게임·정원·설정을 고른 사람끼리 연결됩니다.'),
+          h('div', { class: 'row', style: { marginTop: '6px' } }, codeIn, h('button', { class: 'btn', onclick: joinByCode }, '코드로 참가')));
+      } else if (mode === 'offline') {
+        const n = cnt.offline;
+        const bots = fill ? Math.max(0, minSeats - n) : 0;
+        const short = !fill && n < minSeats;
+        const names = h('div', { class: 'col' });
+        for (let i = 0; i < n; i++) {
+          const inp = h('input', { type: 'text', maxlength: 12, value: localNames[i] || `플레이어 ${i + 1}`, style: { width: '150px' } });
+          inp.oninput = () => { localNames[i] = inp.value; store.set('lnames', JSON.stringify(localNames)); };
+          names.append(inp);
+        }
+        const note = short ? `이 게임은 최소 ${minSeats}명이 필요해요. 사람을 늘리거나 봇으로 채우기를 켜세요.`
+          : bots ? `빈자리 ${bots}개는 봇이 채웁니다 (총 ${n + bots}명).` : `총 ${n}명이 한 화면에서 같이 합니다.`;
+        body.append(stepper('offline', '사람 수'), fillToggle(),
+          h('div', { class: short ? 'bad' : 'muted', style: { fontSize: '13px' } }, note),
+          h('div', { class: 'muted', style: { fontSize: '13px' } }, '비밀 입력이 필요한 단계에서는 차례마다 화면을 가려 줍니다.'),
+          names,
+          h('div', {}, h('button', { class: 'btn primary', disabled: short, onclick: () => startLocal(def, [...names.querySelectorAll('input')].map((x, i) => x.value.trim() || `플레이어 ${i + 1}`), bots, opts) }, '시작')));
+      } else {
+        const b = cnt.bots;
+        const me = h('input', { type: 'text', maxlength: 12, value: store.get('solo-name', '나'), style: { width: '150px' } });
+        me.oninput = () => store.set('solo-name', me.value);
+        body.append(stepper('bots', '봇 수'),
+          h('div', { class: 'muted', style: { fontSize: '13px' } }, `나 + 봇 ${b}명 (총 ${b + 1}명)`),
+          h('div', { class: 'row' }, h('span', { class: 'muted' }, '이름'), me),
+          h('div', {}, h('button', { class: 'btn primary', onclick: () => startLocal(def, [me.value.trim() || '나'], b, opts) }, '시작')));
+      }
+    }
+
+    for (const o of def.options || []) {
+      const row = h('div', { class: 'row' }, h('span', { class: 'muted', style: { width: '70px' } }, o.label));
+      const draw = () => {
+        row.querySelectorAll('button').forEach((b) => b.remove());
+        for (const [v, label] of o.choices) row.append(h('button', { class: 'btn sm' + (opts[o.key] === v ? ' on' : ''), onclick: () => { opts[o.key] = v; store.set(`opt-${id}-${o.key}`, v); draw(); } }, label));
+      };
+      draw();
+      optBox.append(row);
+    }
+
+    const getNick = () => { const v = nick.value.trim() || '플레이어'; store.set('nick', v); return v; };
+
+    async function goOnline(kind) {
+      const name = getNick();
+      const n = cnt.online;
+      const wait = waitingScreen(def, '연결 중...');
+      let cancelled = false;
+      wait.setLeave(() => (cancelled = true));
+      try {
+        if (kind === 'match') {
+          const res = await Net.quickMatch(def, n, { ...opts }, name, wait.status, () => cancelled, fill);
+          if (cancelled) { if (res.host) res.host.destroy(); else res.client.destroy(); return; }
+          if (res.host) res.host.onDemote = () => { if (!cancelled) goOnline('match'); };
+          if (res.host) hostRoom(def, res.host, wait); else clientRoom(res.client, res.lobby, wait);
+        } else {
+          const host = await Net.createRoom(def, n, { ...opts }, name, fill);
+          hostRoom(def, host, wait);
+        }
+      } catch (e) { console.error(e); if (!cancelled) wait.fail(Net.errText(e)); }
+    }
+    async function joinByCode() {
+      const code = codeIn.value.trim().toUpperCase();
+      if (code.length !== 5) { toast('5자리 방 코드를 입력하세요'); return; }
+      const name = getNick();
+      const wait = waitingScreen(def, `방 ${code}에 참가 중...`);
+      try {
+        const { client, lobby: lb } = await Net.joinRoom(code, name);
+        clientRoom(client, lb, wait);
+      } catch (e) { wait.fail(Net.errText(e)); }
+    }
+    codeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinByCode(); });
+
+    r.append(topbar(def.name, hub, def),
+      h('div', { class: 'lobby-wrap' },
+        tabs, body,
+        (def.options || []).length ? h('div', { class: 'panel col' }, h('h4', {}, '게임 설정'), optBox) : null));
+    renderTabs();
+    renderBody();
+    if (!store.get('rules-' + id, '')) { store.set('rules-' + id, '1'); showRules(def); }
+  }
+
+  // ---------------- 대기실 ----------------
+  function waitingScreen(def, msg) {
+    unmount();
+    const r = root(); r.innerHTML = '';
+    let onLeave = () => {};
+    const statusEl = h('div', { class: 'big' }, msg);
+    const body = h('div', { class: 'col' });
+    r.append(topbar(def.name + ' · 대기실', () => { onLeave(); lobby(def.id); }), h('div', { class: 'panel col', style: { maxWidth: '560px' } }, statusEl, body));
+    return {
+      status: (t) => (statusEl.textContent = t),
+      body, statusEl,
+      setLeave: (f) => (onLeave = f),
+      fail: (t) => { statusEl.innerHTML = `<span class="bad">${t}</span>`; body.innerHTML = ''; body.append(h('button', { class: 'btn', onclick: () => lobby(def.id) }, '돌아가기')); },
+    };
+  }
+  function memberList(m) {
+    return h('div', { class: 'col' },
+      h('div', { class: 'muted' }, `참가자 ${m.members.length} / ${m.cap}`),
+      h('div', { class: 'row' }, ...m.members.map((x, i) => h('span', { class: 'chip' }, (i === 0 ? '👑 ' : '') + x))),
+      h('div', { class: 'row' }, ...U.range(Math.max(0, m.cap - m.members.length)).map(() => h('span', { class: 'chip empty' }, '대기 중'))));
+  }
+
+  function hostRoom(def, host, wait) {
+    wait.setLeave(() => host.destroy());
+    addCleanup(() => { if (!host.game) host.destroy(); });
+    host.onToast = toast;
+    host.onLobby = (m) => {
+      wait.body.innerHTML = '';
+      if (m.code) {
+        wait.status('방을 만들었어요');
+        wait.body.append(h('div', { class: 'muted' }, '친구에게 이 코드를 알려 주세요'),
+          h('div', { class: 'room-code', onclick: () => { try { navigator.clipboard.writeText(m.code).then(() => toast('코드를 복사했어요'), () => {}); } catch (e) {} } }, m.code));
+      } else wait.status('랜덤 매칭 대기 중... 사람이 다 모이면 자동으로 시작해요');
+      const k = m.members.length, need = Math.max(2, def.players.minSeats || 1);
+      let label, ok = true;
+      if (k >= m.cap) label = '시작';
+      else if (m.fill) label = `지금 시작 (빈자리 ${Math.max(m.cap, def.players.minSeats || 1) - k}개는 봇)`;
+      else if (k >= need) label = `지금 ${k}명으로 시작`;
+      else { label = `최소 ${need}명이 모여야 시작할 수 있어요`; ok = false; }
+      wait.body.append(memberList(m),
+        h('div', { class: 'muted', style: { fontSize: '13px' } }, m.fill ? '부족한 인원은 봇으로 채웁니다.' : '봇 없이 사람끼리만 합니다.'),
+        h('button', { class: 'btn primary', disabled: !ok, onclick: () => host.start() }, label));
+    };
+    host.onStart = (game) => {
+      play(def, { mode: 'host', game, localSeats: [0], onLeave: () => host.destroy(),
+        restart: () => game.reset() });
+    };
+    host.broadcastLobby();
+  }
+
+  function clientRoom(client, lb, wait) {
+    let def = GAMES.find((g) => g.id === lb.game);
+    if (!def) { wait.fail('이 앱에 없는 게임의 방이에요.'); client.destroy(); return; }
+    wait.setLeave(() => client.destroy());
+    let started = false;
+    addCleanup(() => { if (!started) client.destroy(); });
+    const showLobby = (m) => {
+      wait.status(m.code ? `방 ${m.code} — 방장이 시작하기를 기다리는 중` : '랜덤 매칭 대기 중... 사람이 다 모이면 시작해요');
+      wait.body.innerHTML = '';
+      wait.body.append(h('div', { class: 'muted' }, `${def.name} · 정원 ${m.cap}명 · ${m.fill ? '부족한 인원은 봇으로 채움' : '사람끼리만'}`), memberList(m));
+    };
+    client.onLobby = showLobby;
+    client.onClose = () => { if (!started) wait.fail('방장이 방을 닫았어요.'); };
+    client.onStart = (msg) => {
+      started = true;
+      def = GAMES.find((g) => g.id === msg.game) || def;
+      play(def, { mode: 'client', client, seat: msg.seat, onLeave: () => client.destroy() });
+    };
+    showLobby(lb);
+  }
+
+  // names: 같은 화면의 사람들, bots: 추가할 봇 수
+  function startLocal(def, names, bots, opts) {
+    const n = names.length;
+    const seats = [...names.map((name) => ({ name, bot: false, local: true })), ...U.range(bots).map((i) => ({ name: botName(i), bot: true }))];
+    const game = new GameHost(def, seats, { ...opts, local: true });
+    play(def, { mode: 'local', game, localSeats: U.range(n), onLeave: () => game.destroy(), restart: () => game.reset() });
+  }
+
+  // ---------------- 플레이 화면 ----------------
+  function play(def, cfg) {
+    unmount();
+    const r = root(); r.innerHTML = '';
+    const banner = h('div', { class: 'turn-banner' });
+    const stage = h('div', { class: 'stage' });
+    const curtain = h('div', { class: 'curtain', style: { display: 'none' } });
+    r.append(topbar(def.name, () => leave(), def), banner, stage, curtain);
+    const leave = () => lobby(def.id); // unmount 시 정리 함수가 연결을 끊음
+    banner.style.display = 'none';
+
+    let displaySeat = null, revealedFor = null, resultShown = false, curView = null;
+    const isClient = cfg.mode === 'client';
+    const now = () => Date.now() + (isClient ? cfg.client.offset : 0);
+    const ctx = {
+      send: (a) => { if (isClient) cfg.client.send(a); else if (displaySeat != null && displaySeat >= 0) cfg.game.act(displaySeat, a); },
+      now, toast,
+      get local() { return cfg.mode === 'local' && cfg.localSeats.length > 1; },
+    };
+    const ui = def.ui(stage, ctx);
+    addCleanup(() => { ui.destroy && ui.destroy(); cfg.onLeave && cfg.onLeave(); });
+
+    function render(view) {
+      curView = view;
+      try { ui.update(view); } catch (e) { console.error(e); }
+      if (view.result && !resultShown) { resultShown = true; setTimeout(() => showResult(view), 700); }
+      if (!view.result && resultShown) { resultShown = false; closeModal(); }
+    }
+    function refresh() {
+      const game = cfg.game, E = def.engine;
+      const locals = cfg.localSeats;
+      let seat;
+      if (locals.length === 1) seat = locals[0];
+      else {
+        const A = E.over(game.state) ? [] : E.active(game.state).filter((s) => locals.includes(s));
+        if (A.length) {
+          seat = A[0];
+          if (E.hidden(game.state) && revealedFor !== seat) {
+            showCurtain(game.seats[seat].name, () => { revealedFor = seat; refresh(); });
+            return;
+          }
+          if (!E.hidden(game.state)) revealedFor = null;
+        } else seat = -1;
+        banner.textContent = seat >= 0 ? `▶ ${game.seats[seat].name} 차례` : '';
+        banner.style.display = seat >= 0 ? '' : 'none';
+      }
+      curtain.style.display = 'none';
+      displaySeat = seat;
+      render(game.viewFor(seat));
+    }
+    function showCurtain(name, onOk) {
+      curtain.innerHTML = '';
+      curtain.style.display = 'flex';
+      curtain.append(h('div', { class: 'curtain-box' },
+        h('div', { class: 'eye-big' }, '◉'),
+        h('div', { class: 'big' }, `${name} 차례`),
+        h('div', { class: 'muted' }, '다른 사람은 화면을 보지 마세요.'),
+        h('button', { class: 'btn primary', onclick: onOk }, '준비됐어요')));
+    }
+    function showResult(view) {
+      const res = view.result;
+      const rows = res.ranking.map((x) => `<tr class="${x.seat === view.me ? 'me' : ''}"><td>${x.rank}위</td><td>${view.names[x.seat]}</td><td>${x.score}</td></tr>`).join('');
+      const mine = res.ranking.find((x) => x.seat === view.me);
+      const title = mine && !ctx.local ? (mine.rank === 1 ? '🏆 1위!' : `${mine.rank}위`) : '게임 종료';
+      const body = `<table class="tbl">${rows}</table>${res.note ? `<p class="muted">${res.note}</p>` : ''}`;
+      const btns = [];
+      if (cfg.restart) btns.push({ label: '다시 하기', fn: () => cfg.restart() });
+      else btns.push({ label: '닫기' });
+      btns.push({ label: '나가기', fn: leave });
+      modal(title, body + (isClient ? '<p class="muted">방장이 다시 시작하면 새 게임이 열립니다.</p>' : ''), btns);
+    }
+
+    if (isClient) {
+      displaySeat = cfg.seat;
+      banner.style.display = 'none';
+      cfg.client.onView = (v) => render(v);
+      cfg.client.onClose = () => { if (!document.getElementById('modal')) modal('연결 끊김', '방장과의 연결이 끊어졌어요.', [{ label: '나가기', fn: leave }]); };
+    } else {
+      cfg.game.listeners.push(refresh);
+      refresh();
+    }
+  }
+
+  // ---------------- 공용 ----------------
+  function showRules(def) {
+    modal(def.name + ' 규칙', h('div', { class: 'rules', html: def.rules || '' }), [{ label: '확인' }]);
+  }
+  function modal(title, body, buttons) {
+    closeModal();
+    const bg = h('div', { class: 'modal-bg', id: 'modal' });
+    const box = h('div', { class: 'modal' },
+      h('h3', {}, title),
+      typeof body === 'string' ? h('div', { html: body }) : body,
+      h('div', { class: 'modal-btns' }, ...(buttons || [{ label: '확인' }]).map((b, i) =>
+        h('button', { class: 'btn' + (i === 0 ? ' primary' : ''), onclick: () => { closeModal(); b.fn && b.fn(); } }, b.label))));
+    bg.append(box);
+    document.body.append(bg);
+  }
+  function closeModal() { const m = document.getElementById('modal'); if (m) m.remove(); }
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('toast');
+    if (!t) { t = h('div', { id: 'toast' }); document.body.append(t); }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+  return { hub, lobby, toast, modal };
+})();
+
+window.addEventListener('DOMContentLoaded', () => App.hub());
+
+</script>
   <!-- 1일차 -->
-  <script src="js/games/rectangles.js"></script>
-  <script src="js/games/memorypoker.js"></script>
-  <script src="js/games/heavy13.js"></script>
+  <script>/* js/games/rectangles.js */
+// 1일차 메인 · 양자택일 미니게임 — 네모 세기
+(() => {
+  const N = 7, TIME = 90000, COUNTDOWN = 3000;
+
+  function makePuzzle() {
+    for (let tries = 0; tries < 300; tries++) {
+      const grid = U.range(N).map(() => U.range(N).map(() => U.rint(1, 9)));
+      const sums = {};
+      for (let r1 = 0; r1 < N; r1++) for (let c1 = 0; c1 < N; c1++)
+        for (let r2 = r1; r2 < N; r2++) for (let c2 = c1; c2 < N; c2++) {
+          let s = 0;
+          for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) s += grid[r][c];
+          (sums[s] = sums[s] || []).push([r1, c1, r2, c2].join(','));
+        }
+      const cands = Object.entries(sums).filter(([s, l]) => l.length >= 10 && l.length <= 16 && +s >= 12);
+      if (cands.length) { const [s, l] = U.pick(cands); return { grid, target: +s, total: l.length }; }
+    }
+  }
+  const rectSum = (g, [r1, c1, r2, c2]) => { let s = 0; for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) s += g[r][c]; return s; };
+
+  const engine = {
+    setup(seats, opts) {
+      const shared = makePuzzle();
+      const st = { local: opts.local, seats, n: seats.length, P: [], found: [], score: [], phase: [], start: [], deadline: [], msg: [], botRate: [] };
+      seats.forEach((s, i) => {
+        st.P[i] = opts.local && !s.bot ? makePuzzle() : shared;
+        st.found[i] = []; st.score[i] = 0; st.msg[i] = null;
+        st.botRate[i] = U.rint(55, 90) / 10;
+        if (opts.local && !s.bot) st.phase[i] = 'ready';
+        else { st.phase[i] = 'play'; st.start[i] = opts.now + COUNTDOWN; st.deadline[i] = st.start[i] + TIME; }
+      });
+      if (opts.local) seats.forEach((s, i) => { if (s.bot) { st.start[i] = opts.now; st.deadline[i] = opts.now + TIME; } });
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (a.t === 'begin') {
+        if (st.phase[seat] !== 'ready') return false;
+        st.phase[seat] = 'play'; st.start[seat] = now + COUNTDOWN; st.deadline[seat] = st.start[seat] + TIME;
+        // 같은 화면 플레이: 봇은 첫 사람과 같이 진행
+        return;
+      }
+      if (a.t === 'rect') {
+        if (st.phase[seat] !== 'play' || now < st.start[seat] || now > st.deadline[seat]) return false;
+        const rc = [a.r1, a.c1, a.r2, a.c2].map((x) => U.clamp(x | 0, 0, N - 1));
+        const key = rc.join(',');
+        const s = rectSum(st.P[seat].grid, rc);
+        const m = st.msg[seat] ? st.msg[seat].n + 1 : 1;
+        if (st.found[seat].includes(key)) st.msg[seat] = { n: m, text: '이미 찾은 네모예요' };
+        else if (s === st.P[seat].target) { st.found[seat].push(key); st.score[seat]++; st.msg[seat] = { n: m, text: '정답! +1' }; }
+        else { st.score[seat]--; st.msg[seat] = { n: m, text: `합 ${s} — 오답 −1` }; }
+      }
+    },
+    tick(st, now) {
+      let ch = false;
+      st.seats.forEach((s, i) => {
+        if (st.phase[i] !== 'play') return;
+        if (now > st.deadline[i]) { st.phase[i] = 'done'; ch = true; return; }
+        if (s.bot && now >= st.start[i] && Math.random() < 0.25 / st.botRate[i]) { st.score[i] += Math.random() < 0.85 ? 1 : -1; ch = true; }
+      });
+      return ch;
+    },
+    active: (st) => U.range(st.n).filter((i) => !st.seats[i].bot && st.phase[i] !== 'done'),
+    hidden: () => true,
+    view(st, me) {
+      const v = { phase: me >= 0 ? st.phase[me] : 'watch', scores: st.score.slice(), done: st.phase.map((p) => p === 'done') };
+      if (me >= 0) Object.assign(v, { grid: st.P[me].grid, target: st.P[me].target, total: st.P[me].total, found: st.found[me], start: st.start[me], deadline: st.deadline[me], msg: st.msg[me] });
+      return v;
+    },
+    over(st) {
+      if (st.phase.some((p) => p !== 'done')) return null;
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: st.score[x.seat] + '점' })) };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, sel = null, dragging = false, cells = [], gridKey = null;
+    const head = h('div', { class: 'big' });
+    const board = h('div', { class: 'board', style: { gridTemplateColumns: `repeat(${N}, 52px)` } });
+    const sumEl = h('div', { class: 'muted' }, ' ');
+    const timerEl = h('span', { class: 'timer' });
+    const foundEl = h('div', { class: 'muted' });
+    const scoreBox = h('div');
+    const readyBox = h('div', { class: 'col', style: { alignItems: 'center', gap: '14px', padding: '40px 0' } });
+    const playBox = h('div', { class: 'col', style: { alignItems: 'center' } }, head, board, sumEl);
+    const msg = UIx.msgWatcher(ctx);
+
+    const rectOf = () => { const [a, b] = sel; return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])]; };
+    function buildGrid() {
+      board.innerHTML = ''; cells = [];
+      view.grid.forEach((row, r) => row.forEach((v, c) => {
+        const el = h('div', { class: 'cell', style: { height: '52px', fontSize: '20px', cursor: 'pointer' }, 'data-r': r, 'data-c': c }, v);
+        cells.push(el); board.append(el);
+      }));
+    }
+    function paint() {
+      if (!view || !view.grid) return;
+      cells.forEach((el) => (el.style.background = ''));
+      for (const k of view.found) { const [r1, c1, r2, c2] = k.split(',').map(Number); for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) cells[r * N + c].style.background = '#22402f'; }
+      if (sel) {
+        const rc = rectOf();
+        for (let r = rc[0]; r <= rc[2]; r++) for (let c = rc[1]; c <= rc[3]; c++) cells[r * N + c].style.background = '#6b2427';
+        sumEl.textContent = `선택 합: ${rectSum(view.grid, rc)}`;
+      } else sumEl.textContent = ' ';
+    }
+    const cellAt = (e) => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.dataset && t.dataset.r != null ? [+t.dataset.r, +t.dataset.c] : null; };
+    board.addEventListener('pointerdown', (e) => {
+      if (!view || view.phase !== 'play' || ctx.now() < view.start) return;
+      const c = cellAt(e); if (!c) return;
+      dragging = true; sel = [c, c]; board.releasePointerCapture?.(e.pointerId); paint();
+    });
+    board.addEventListener('pointermove', (e) => { if (dragging) { const c = cellAt(e); if (c) { sel[1] = c; paint(); } } });
+    const up = () => {
+      if (!dragging) return; dragging = false;
+      const [r1, c1, r2, c2] = rectOf(); sel = null; paint();
+      ctx.send({ t: 'rect', r1, c1, r2, c2 });
+    };
+    document.addEventListener('pointerup', up);
+
+    function tickTimer() {
+      if (!view || view.phase !== 'play') { timerEl.textContent = ''; return; }
+      const now = ctx.now();
+      if (now < view.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(view.start, now)}</span>`; timerEl.textContent = '1:30'; return; }
+      head.innerHTML = `목표 합 <span class="hl">${view.target}</span>`;
+      const s = UIx.secs(view.deadline, now);
+      timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 10);
+    }
+    const iv = setInterval(tickTimer, 200);
+
+    root.append(h('div', { class: 'split' },
+      h('div', {}, readyBox, playBox),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel' }, foundEl),
+        h('div', { class: 'panel col' }, h('h4', {}, '점수'), scoreBox))));
+
+    return {
+      update(v) {
+        view = v;
+        const showPlay = v.phase === 'play' || v.phase === 'done';
+        readyBox.style.display = v.phase === 'ready' ? '' : 'none';
+        playBox.style.display = showPlay ? '' : 'none';
+        if (v.phase === 'ready') {
+          readyBox.innerHTML = '';
+          readyBox.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('div', { class: 'muted' }, '시작을 누르면 3초 뒤 90초가 시작됩니다.'),
+            h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작'));
+        }
+        if (v.phase === 'watch') { readyBox.style.display = ''; readyBox.innerHTML = '<div class="muted">다른 플레이어를 기다리는 중...</div>'; }
+        if (v.grid && v.grid.flat().join() !== gridKey) { gridKey = v.grid.flat().join(); buildGrid(); }
+        if (v.phase === 'done') head.textContent = '종료! 다른 플레이어를 기다리는 중';
+        paint(); tickTimer();
+        msg(v.msg, v.me);
+        foundEl.textContent = v.grid ? `찾은 네모 ${v.found.length}개 (전체 ${v.total}개 숨어 있음)` : '';
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.scores[i], me: i === v.me, sub: v.done[i] ? '✓' : '' }))));
+      },
+      destroy() { clearInterval(iv); document.removeEventListener('pointerup', up); },
+    };
+  }
+
+  registerGame({
+    id: 'rectangles', name: '네모 세기', en: 'Count the Rectangles',
+    summary: '숫자 판에서 합이 목표 숫자가 되는 네모(직사각형)를 최대한 많이 찾으세요.',
+    players: { min: 1, max: 8, default: 1, soloSeats: 4, minSeats: 1 },
+    rules: `
+    <ul>
+      <li>숫자가 적힌 7×7 판과 <b>목표 합</b>이 주어집니다.</li>
+      <li>칸을 드래그해 직사각형(정사각형, 한 줄, 한 칸 포함)을 고르세요. 안의 숫자 합이 목표와 같으면 +1점, 틀리면 −1점. 이미 찾은 네모는 인정되지 않습니다.</li>
+      <li>제한 시간 90초. 점수가 가장 높은 사람이 1위입니다.</li>
+      <li>온라인에서는 모두 같은 판을 동시에 풀고, 한 화면에서는 한 명씩 차례로 (각자 다른 판으로) 풉니다.</li>
+    </ul>`,
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/memorypoker.js */
+// 1일차 메인 · 양자택일 미니게임 — 기억 포커
+(() => {
+  const WIN = 3, PICK_MS = 40000, REVEAL_MS = 6000;
+
+  function newRound(st, now) {
+    const deck = U.shuffle(Cards.deck());
+    st.grid = deck.slice(0, 16); st.community = deck.slice(16, 19);
+    st.phase = 'memo'; st.deadline = now + st.memo * 1000;
+    st.ready = st.seats.map((s) => !!s.bot);
+    st.picks = st.seats.map(() => null);
+    st.reveal = null;
+    st.round++;
+  }
+  function toPick(st, now) { st.phase = 'pick'; st.deadline = now + PICK_MS; }
+  function doReveal(st, now) {
+    st.picks = st.picks.map((p) => p || U.shuffle(U.range(16)).slice(0, 2));
+    const evals = st.picks.map((p) => Cards.eval5([...st.community, st.grid[p[0]], st.grid[p[1]]]));
+    let best = [];
+    evals.forEach((e, i) => {
+      if (!best.length || Cards.cmp(e, evals[best[0]]) > 0) best = [i];
+      else if (Cards.cmp(e, evals[best[0]]) === 0) best.push(i);
+    });
+    const winner = best.length === 1 ? best[0] : -1;
+    if (winner >= 0) st.wins[winner]++;
+    st.reveal = { evals: evals.map((e) => e[0]), winner };
+    st.phase = 'reveal'; st.deadline = now + REVEAL_MS;
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: seats.length, local: opts.local, memo: opts.memo || 20, wins: seats.map(() => 0), round: 0 };
+      newRound(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (a.t === 'ready' && st.phase === 'memo') {
+        st.ready[seat] = true;
+        if (st.local || st.ready.every(Boolean)) toPick(st, now);
+        return;
+      }
+      if (a.t === 'pick' && st.phase === 'pick' && !st.picks[seat]) {
+        const p = [a.a | 0, a.b | 0];
+        if (p[0] === p[1] || p.some((x) => x < 0 || x > 15)) return false;
+        st.picks[seat] = p;
+        if (st.picks.every(Boolean)) doReveal(st, now);
+        return;
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'memo') toPick(st, now);
+      else if (st.phase === 'pick') doReveal(st, now);
+      else if (st.phase === 'reveal') { if (Math.max(...st.wins) >= WIN) st.phase = 'end'; else newRound(st, now); }
+      else return false;
+      return true;
+    },
+    active(st) {
+      if (st.phase === 'memo') return U.range(st.n).filter((i) => !st.ready[i]);
+      if (st.phase === 'pick') return U.range(st.n).filter((i) => !st.picks[i]);
+      return [];
+    },
+    hidden: (st) => st.phase === 'pick',
+    botDelay: () => 1500 + Math.random() * 2500,
+    botAct(st, seat) {
+      if (st.phase !== 'pick') return null;
+      const known = U.range(16).filter(() => Math.random() < 0.65);
+      let best = null;
+      for (let x = 0; x < known.length; x++) for (let y = x + 1; y < known.length; y++) {
+        const v = Cards.eval5([...st.community, st.grid[known[x]], st.grid[known[y]]]);
+        if (!best || Cards.cmp(v, best.v) > 0) best = { v, p: [known[x], known[y]] };
+      }
+      const p = best ? best.p : U.shuffle(U.range(16)).slice(0, 2);
+      return { t: 'pick', a: p[0], b: p[1] };
+    },
+    view(st, me) {
+      const v = { phase: st.phase, round: st.round, wins: st.wins, deadline: st.deadline, ready: st.ready, picked: st.picks.map(Boolean) };
+      v.community = st.phase === 'memo' ? null : st.community;
+      v.grid = st.phase === 'memo' || st.phase === 'reveal' || st.phase === 'end' ? st.grid : null;
+      v.myPick = me >= 0 ? st.picks[me] : null;
+      if (st.reveal) { v.reveal = st.reveal; v.picks = st.picks; }
+      return v;
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.wins[i]).map((x) => ({ ...x, score: st.wins[x.seat] + '승' })) };
+    },
+  };
+
+  const PCOL = ['#f2c14e', '#4a90e2', '#4caf7a', '#ff5d8f'];
+  function ui(root, ctx) {
+    let view = null, sel = [];
+    const status = h('div', { class: 'big' });
+    const sub = h('div', { class: 'muted' });
+    const gridEl = h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 60px)', gap: '8px' } });
+    const commEl = h('div', { class: 'row' });
+    const actions = h('div', { class: 'row' });
+    const result = h('div', { class: 'col' });
+    const scoreBox = h('div');
+
+    function drawGrid() {
+      gridEl.innerHTML = '';
+      for (let i = 0; i < 16; i++) {
+        const face = !!view.grid;
+        const pickers = view.picks ? view.picks.map((p, s) => (p.includes(i) ? s : -1)).filter((s) => s >= 0) : [];
+        const mine = view.phase === 'pick' && (sel.includes(i) || (view.myPick && view.myPick.includes(i)));
+        const el = Cards.el(face ? view.grid[i] : null, face, (mine ? 'sel ' : '') + (view.reveal && !pickers.length ? 'dim' : ''));
+        el.style.width = '60px'; el.style.height = '82px'; el.style.position = 'relative';
+        el.style.cursor = view.phase === 'pick' && !view.myPick ? 'pointer' : 'default';
+        if (pickers.length) {
+          el.style.boxShadow = pickers.map((s, k) => `0 0 0 ${3 + k * 3}px ${PCOL[s % 4]}`).join(',');
+        }
+        el.addEventListener('click', () => {
+          if (view.phase !== 'pick' || view.myPick || view.me < 0) return;
+          if (sel.includes(i)) sel = sel.filter((x) => x !== i); else if (sel.length < 2) sel.push(i);
+          drawGrid(); drawActions();
+        });
+        gridEl.append(el);
+      }
+      commEl.innerHTML = '';
+      if (view.community) view.community.forEach((c) => commEl.append(Cards.el(c)));
+      else for (let k = 0; k < 3; k++) commEl.append(Cards.el(null, false));
+    }
+    function drawActions() {
+      actions.innerHTML = '';
+      if (view.me < 0) return;
+      if (view.phase === 'memo' && !view.ready[view.me]) actions.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, '다 외웠어요'));
+      if (view.phase === 'pick' && !view.myPick) actions.append(h('button', { class: 'btn primary', disabled: sel.length !== 2, onclick: () => { ctx.send({ t: 'pick', a: sel[0], b: sel[1] }); sel = []; } }, '확정'));
+    }
+    function tickTimer() {
+      if (!view) return;
+      const s = UIx.secs(view.deadline, ctx.now());
+      if (view.phase === 'memo') status.textContent = `라운드 ${view.round} — 외우세요 ${s}`;
+      else if (view.phase === 'pick') status.textContent = view.myPick ? `다른 플레이어 기다리는 중... ${s}` : `카드 2장을 고르세요 ${s}`;
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col' }, status, sub,
+        h('div', { class: 'row', style: { alignItems: 'flex-start', gap: '28px' } },
+          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, '보드'), gridEl),
+          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, '공용 카드'), commEl)),
+        actions, result),
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, `스코어 (${WIN}선승)`), scoreBox))));
+
+    return {
+      update(v) {
+        if (!view || v.round !== view.round || v.phase !== view.phase || v.me !== view.me) sel = [];
+        view = v;
+        drawGrid(); drawActions(); tickTimer();
+        sub.textContent = v.phase === 'memo' ? '카드 위치를 기억하세요. 공용 카드는 시간이 끝나면 공개됩니다.'
+          : v.phase === 'pick' ? '공용 카드와 조합해 가장 강한 패가 되도록 고르세요.' : '테두리 색 = 그 카드를 고른 플레이어';
+        result.innerHTML = '';
+        if (v.reveal) {
+          status.innerHTML = v.reveal.winner >= 0 ? `<span class="hl">${v.names[v.reveal.winner]}</span> 라운드 승리!` : '무승부 — 다시 합니다';
+          v.picks.forEach((p, s) => result.append(h('div', { class: 'row' },
+            h('b', { style: { width: '90px', color: PCOL[s % 4] } }, v.names[s]),
+            ...v.community.map((c) => Cards.el(c)), h('span', {}, '+'), ...p.map((i) => Cards.el(v.grid[i])),
+            h('span', { class: s === v.reveal.winner ? 'hl' : '' }, Cards.catName[v.reveal.evals[s]]))));
+        }
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.wins[i], me: i === v.me, sub: v.phase === 'pick' && v.picked[i] ? '✓' : '' }))));
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  registerGame({
+    id: 'memorypoker', name: '기억 포커', en: 'Memory Poker',
+    summary: '16장의 카드 위치를 외운 뒤, 뒤집힌 카드 2장을 골라 공용 카드 3장과 최고의 포커 패를 만드세요.',
+    players: { min: 1, max: 4, default: 2, soloSeats: 2, minSeats: 2 },
+    options: [{ key: 'memo', label: '외우기', default: 20, choices: [[30, '30초'], [20, '20초 (원작)'], [10, '10초']] }],
+    rules: `
+    <ul>
+      <li>52장 중 16장이 4×4로 펼쳐지고, 정해진 시간(기본 20초) 동안 외울 수 있습니다.</li>
+      <li>카드가 뒤집히면 공용 카드 3장이 공개됩니다. 각자 뒤집힌 16장 중 <b>2장</b>을 비밀리에 고릅니다(40초). 같은 카드를 골라도 됩니다.</li>
+      <li>공용 3장 + 내가 고른 2장으로 5장 포커 패를 만들어 가장 높은 사람이 라운드를 가져갑니다. 최고 패가 동점이면 무승부입니다.</li>
+      <li>족보: 로열 플러시 &gt; 스트레이트 플러시 &gt; 포카드 &gt; 풀하우스 &gt; 플러시 &gt; 스트레이트 &gt; 트리플 &gt; 투페어 &gt; 원페어 &gt; 하이카드. A가 가장 높고 A-2-3-4-5는 가장 낮은 스트레이트, 무늬로는 비교하지 않습니다.</li>
+      <li>먼저 <b>3라운드</b>를 이긴 사람이 승리합니다.</li>
+    </ul>`,
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/heavy13.js */
+// 1일차 감옥 매치 — 무거운 13
+(() => {
+  const CNAME = { R: '빨강', G: '초록', B: '파랑', W: '무지개' };
+  const COL = { R: '#e5383b', G: '#4caf7a', B: '#4a90e2', W: 'linear-gradient(135deg,#e5383b,#f2c14e,#4caf7a,#4a90e2,#9b6dff)' };
+  const fresh = (p) => { p.cards = [0, 1, 2, 3, 4, 5, 6]; p.chips = ['R', 'R', 'G', 'G', 'B', 'B', 'W']; };
+  const sum = (st, k) => st.stands[k].reduce((a, b) => a + b, 0);
+  const log = (st, m) => { st.log.unshift(m); if (st.log.length > 40) st.log.pop(); };
+
+  function startRound(st) {
+    st.round++;
+    if (st.round === 8) { st.P.forEach(fresh); log(st, '<b>— 새 카드·칩 세트 지급 —</b>'); }
+    st.phase = 'choose';
+    st.choice = st.P.map(() => null);
+    st.cur = null;
+  }
+  function beginPlacing(st) {
+    st.choice.forEach((c, i) => {
+      const p = st.P[i];
+      p.cards.splice(p.cards.indexOf(c.card), 1);
+      p.chips.splice(p.chips.indexOf(c.chip), 1);
+    });
+    const N = st.n, dist = (i) => (i - st.tiebreak + N) % N;
+    const order = U.range(N).sort((a, b) => {
+      const wa = st.choice[a].chip === 'W' ? 1 : 0, wb = st.choice[b].chip === 'W' ? 1 : 0;
+      return wb - wa || st.choice[b].card - st.choice[a].card || dist(a) - dist(b);
+    });
+    log(st, `<span class="muted">라운드 ${st.round} 순서: ${order.map((i) => st.seats[i].name).join(' → ')}</span>`);
+    st.queue = order; st.passed = []; st.lastPenal = null; st.phase = 'place';
+    nextPlacer(st);
+  }
+  function nextPlacer(st) {
+    if (st.queue.length) { st.cur = st.queue.shift(); st.canPass = (st.queue.length > 0 || st.passed.length > 0) && !st.choice[st.cur].passed; }
+    else if (st.passed.length) { st.cur = st.passed.pop(); st.canPass = false; }
+    else {
+      st.cur = null;
+      if (st.lastPenal !== null) st.tiebreak = st.lastPenal;
+      if (st.round >= st.rounds) st.phase = 'end'; else startRound(st);
+    }
+  }
+  function place(st, i, k) {
+    const card = st.choice[i].card, t = sum(st, k);
+    if (t + card >= 13) {
+      const n = st.stands[k].length;
+      st.P[i].pen += n; st.P[i].lastPen = ++st.clock; st.lastPenal = i;
+      log(st, `<b>${st.seats[i].name}</b>: ${CNAME[k]}에 ${card} → 합 ${t + card}! <span class="bad">돌 ${n}개 떠안음 (+${n})</span>`);
+      st.stands[k] = [card];
+    } else {
+      st.stands[k].push(card);
+      log(st, `${st.seats[i].name}: ${CNAME[k]}에 ${card} (합 ${t + card})`);
+    }
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: seats.length, rounds: opts.rounds || 7, round: 0, tiebreak: 0, clock: 0, stands: { R: [], G: [], B: [] }, log: [], P: seats.map(() => ({ pen: 0, lastPen: 0 })) };
+      st.P.forEach(fresh);
+      startRound(st);
+      return st;
+    },
+    action(st, seat, a) {
+      if (st.phase === 'choose' && a.t === 'choose') {
+        const p = st.P[seat];
+        if (st.choice[seat] || !p.cards.includes(a.card) || !p.chips.includes(a.chip)) return false;
+        st.choice[seat] = { card: a.card, chip: a.chip };
+        if (st.choice.every(Boolean)) beginPlacing(st);
+        return;
+      }
+      if (st.phase === 'place' && st.cur === seat) {
+        const c = st.choice[seat];
+        if (a.t === 'pass') {
+          if (!st.canPass) return false;
+          c.passed = true; st.passed.push(seat); log(st, `${st.seats[seat].name}: 패스`);
+          nextPlacer(st); return;
+        }
+        if (a.t === 'place') {
+          const k = c.chip === 'W' ? a.stand : c.chip;
+          if (!['R', 'G', 'B'].includes(k)) return false;
+          place(st, seat, k); nextPlacer(st); return;
+        }
+      }
+      return false;
+    },
+    active(st) {
+      if (st.phase === 'choose') return U.range(st.n).filter((i) => !st.choice[i]);
+      if (st.phase === 'place') return [st.cur];
+      return [];
+    },
+    hidden: (st) => st.phase === 'choose',
+    botDelay: (st) => (st.phase === 'choose' ? 500 + Math.random() * 900 : 650),
+    botAct(st, i) {
+      const p = st.P[i];
+      if (st.phase === 'choose') {
+        let best = null;
+        for (const card of new Set(p.cards)) for (const chip of new Set(p.chips)) {
+          const ks = chip === 'W' ? ['R', 'G', 'B'] : [chip];
+          let cost = Math.min(...ks.map((k) => {
+            const t = sum(st, k), n = st.stands[k].length, head = 12 - t - card;
+            if (head < 0) return n + 1;
+            return n * Math.max(0, 5 - head) / 6 * (0.4 + (6 - card) / 6) + (t + card) * 0.05;
+          }));
+          if (chip === 'W') cost += 0.8 + (p.chips.length > 3 ? 0.6 : 0);
+          cost += card * 0.04 * (p.cards.length < 4 ? -1 : 1) + Math.random() * 0.6;
+          if (!best || cost < best.cost) best = { cost, card, chip };
+        }
+        return { t: 'choose', card: best.card, chip: best.chip };
+      }
+      const c = st.choice[i];
+      let k = c.chip;
+      if (k === 'W') k = U.shuffle(['R', 'G', 'B']).sort((a, b) => (sum(st, a) + c.card >= 13 ? st.stands[a].length + 1 : 0) - (sum(st, b) + c.card >= 13 ? st.stands[b].length + 1 : 0))[0];
+      if (st.canPass && sum(st, k) + c.card >= 13 && st.stands[k].length >= (c.chip === 'W' ? 1 : 2) && Math.random() < 0.85) return { t: 'pass' };
+      return { t: 'place', stand: k };
+    },
+    view(st, me) {
+      return {
+        phase: st.phase, round: st.round, rounds: st.rounds, tiebreak: st.tiebreak, cur: st.cur, canPass: st.canPass,
+        stands: st.stands, log: st.log.slice(0, 25),
+        players: st.P.map((p, i) => ({ pen: p.pen, cards: p.cards, chosen: !!st.choice[i] })),
+        choices: st.phase === 'place' ? st.choice : null,
+        myChoice: me >= 0 ? st.choice[me] : null,
+        myChips: me >= 0 ? st.P[me].chips : [], myCards: me >= 0 ? st.P[me].cards : [],
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      return {
+        ranking: UIx.rankBy(U.range(st.n), (i) => st.P[i].pen * 1000 + st.P[i].lastPen).map((x) => ({ ...x, score: '벌점 ' + st.P[x.seat].pen })),
+        note: '원작 감옥 매치에서는 하위권이 탈락합니다.',
+      };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, card = null, chip = null;
+    const statusEl = h('div', { class: 'big' });
+    const standEl = h('div', { class: 'row', style: { gap: '14px', alignItems: 'flex-end' } });
+    const ctrl = h('div', { class: 'col' });
+    const playersEl = h('table', { class: 'tbl' });
+    const logEl = h('div', { class: 'log' });
+    const dot = (k, s = 12) => h('span', { style: { display: 'inline-block', width: s + 'px', height: s + 'px', borderRadius: '50%', background: COL[k], verticalAlign: 'middle', marginRight: '5px' } });
+
+    function drawCtrl() {
+      ctrl.innerHTML = '';
+      const v = view;
+      if (v.me < 0) return;
+      if (v.phase === 'choose' && !v.myChoice) {
+        ctrl.append(h('h4', { class: 'muted', style: { margin: 0 } }, '돌 카드'),
+          h('div', { class: 'row' }, ...[0, 1, 2, 3, 4, 5, 6].map((x) => h('button', { class: 'btn' + (card === x ? ' on' : ''), disabled: !v.myCards.includes(x), style: { width: '44px', fontWeight: 800 }, onclick: () => { card = x; drawCtrl(); } }, x))),
+          h('h4', { class: 'muted', style: { margin: 0 } }, '칩'),
+          h('div', { class: 'row' }, ...['R', 'G', 'B', 'W'].map((k) => {
+            const n = v.myChips.filter((c) => c === k).length;
+            return h('button', { class: 'btn' + (chip === k ? ' on' : ''), disabled: !n, onclick: () => { chip = k; drawCtrl(); } }, dot(k, 14), `${CNAME[k]} ×${n}`);
+          })),
+          h('div', {}, h('button', { class: 'btn primary', disabled: card === null || chip === null, onclick: () => { ctx.send({ t: 'choose', card, chip }); card = chip = null; } }, '동시에 내기')));
+      } else if (v.phase === 'choose') ctrl.append(h('div', { class: 'muted' }, `냈습니다: ${v.myChoice.card} / ${CNAME[v.myChoice.chip]} — 다른 플레이어를 기다리는 중`));
+      if (v.phase === 'place' && v.cur === v.me) {
+        const c = v.choices[v.me], t = (k) => v.stands[k].reduce((a, b) => a + b, 0);
+        const row = h('div', { class: 'row' });
+        if (c.chip === 'W') for (const k of ['R', 'G', 'B']) row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place', stand: k }) }, `${CNAME[k]}에 놓기 (→${t(k) + c.card})`));
+        else row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place' }) }, `${CNAME[c.chip]}에 ${c.card} 놓기 (→${t(c.chip) + c.card})`));
+        if (v.canPass) row.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'pass' }) }, '패스 (나중에 놓기)'));
+        ctrl.append(h('div', { class: 'hl' }, '내 차례입니다'), row);
+      }
+    }
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col' }, statusEl, h('div', { class: 'panel' }, standEl), h('div', { class: 'panel col' }, ctrl)),
+      h('div', { class: 'col' }, h('div', { class: 'panel' }, playersEl), h('div', { class: 'panel' }, h('h4', {}, '기록'), logEl))));
+
+    return {
+      update(v) {
+        if (view && (view.me !== v.me || view.round !== v.round)) card = chip = null;
+        view = v;
+        statusEl.textContent = v.phase === 'end' ? '게임 종료' : v.phase === 'choose' ? `라운드 ${v.round}/${v.rounds} — 카드와 칩을 고르세요` : `라운드 ${v.round}/${v.rounds} — ${v.names[v.cur]} 차례`;
+        standEl.innerHTML = '';
+        for (const k of ['R', 'G', 'B']) {
+          const t = v.stands[k].reduce((a, b) => a + b, 0);
+          standEl.append(h('div', { class: 'col', style: { alignItems: 'center', gap: '4px', width: '110px' } },
+            h('div', { style: { display: 'flex', flexDirection: 'column-reverse', gap: '3px', minHeight: '170px' } },
+              ...v.stands[k].map((x) => h('div', { style: { width: '70px', height: '22px', borderRadius: '10px', background: '#8d8d99', color: '#111', textAlign: 'center', fontWeight: 800, fontSize: '14px' } }, x))),
+            h('div', { style: { width: '100px', height: '12px', borderRadius: '4px', background: COL[k] } }),
+            h('div', { class: t >= 9 ? 'bad' : '' }, h('b', { style: { fontSize: '22px' } }, t), h('span', { class: 'muted' }, ` /13 · ${v.stands[k].length}개`))));
+        }
+        playersEl.innerHTML = '';
+        playersEl.append(h('tr', {}, h('th', {}, '플레이어'), h('th', {}, '이번 라운드'), h('th', {}, '남은 카드'), h('th', {}, '벌점')));
+        v.players.forEach((p, i) => playersEl.append(h('tr', { class: i === v.me ? 'me' : '' },
+          h('td', {}, (v.cur === i ? '▶ ' : '') + (v.tiebreak === i ? '⚑ ' : '') + v.names[i]),
+          h('td', {}, v.choices ? h('span', {}, dot(v.choices[i].chip), v.choices[i].card) : p.chosen ? '✓' : '…'),
+          h('td', { style: { fontSize: '12px' } }, p.cards.join(' ')),
+          h('td', {}, h('b', {}, p.pen)))));
+        logEl.innerHTML = v.log.map((m) => `<div>${m}</div>`).join('');
+        drawCtrl();
+      },
+    };
+  }
+
+  registerGame({
+    id: 'heavy13', name: '무거운 13', en: 'Heavy 13',
+    summary: '돌 카드와 색 칩을 동시에 내서 받침대에 돌을 쌓습니다. 13을 넘기면 위에 있던 돌을 전부 떠안습니다.',
+    players: { min: 1, max: 8, default: 3, soloSeats: 5, minSeats: 3 },
+    options: [{ key: 'rounds', label: '라운드', default: 7, choices: [[7, '빠른 7'], [14, '원작 14']] }],
+    rules: `
+    <ul>
+      <li>각자 <b>돌 카드 0~6</b> 7장과 <b>칩 7개</b>(빨강 2, 초록 2, 파랑 2, 무지개 1)를 가집니다. 받침대는 빨강·초록·파랑 3개입니다.</li>
+      <li>매 라운드 모두 카드 1장과 칩 1개를 <b>동시에</b> 냅니다. 칩 색이 받침대를, 카드 숫자가 돌의 무게를 정합니다. 무지개 칩은 자기 차례에 받침대를 고릅니다.</li>
+      <li>놓는 순서: <b>무지개 칩</b> 먼저, 그다음 <b>큰 숫자부터</b>. 같으면 타이브레이크(⚑) 보유자부터 시계 방향.</li>
+      <li>자기 차례에 <b>패스</b>하면 모두가 놓은 뒤에 놓습니다(먼저 패스한 사람이 가장 마지막). 줄의 마지막 사람은 패스할 수 없습니다.</li>
+      <li>받침대 합이 <b>13 이상</b>이 되면 그 받침대에 있던 돌을 모두 가져갑니다. 돌 1개당 벌점 1점(0도 1점)이며, 방금 놓은 돌은 남습니다.</li>
+      <li>그 라운드 마지막으로 벌점을 받은 사람이 다음 타이브레이크를 가집니다.</li>
+      <li>7라운드(빠른) 또는 14라운드(원작, 7라운드 뒤 새 세트). <b>벌점이 가장 적은 사람</b>이 이기고, 동점이면 나중에 벌점을 받은 사람이 아래입니다.</li>
+    </ul>
+    <div class="note">3명 미만이면 봇이 채웁니다.</div>`,
+    engine, ui,
+  });
+})();
+
+</script>
   <!-- 2일차 -->
-  <script src="js/games/spotdiff.js"></script>
+  <script>/* js/games/spotdiff.js */
+// 2일차 유배지 매치 — 달라진 그림 찾기
+(() => {
+  const N = 6, CH = 5, ROUNDS = 3, MEMO = [20, 15, 12], FIND_MS = 45000, RESULT_MS = 6000;
+  const SHAPES = ['circle', 'square', 'triangle', 'star', 'diamond', 'cross'];
+  const COLORS = ['#e5383b', '#f2c14e', '#4caf7a', '#4a90e2', '#9b6dff', '#eeeeee'];
+
+  function gen() {
+    const orig = U.range(N * N).map(() => (Math.random() < 0.25 ? null : { s: U.pick(SHAPES), c: U.pick(COLORS) }));
+    const mod = orig.map((x) => (x ? { ...x } : null));
+    const changed = U.shuffle(U.range(N * N)).slice(0, CH);
+    for (const i of changed) {
+      const x = mod[i];
+      if (!x) mod[i] = { s: U.pick(SHAPES), c: U.pick(COLORS) };
+      else {
+        const r = U.rnd(3);
+        if (r === 0) { let s; do s = U.pick(SHAPES); while (s === x.s); x.s = s; }
+        else if (r === 1) { let c; do c = U.pick(COLORS); while (c === x.c); x.c = c; }
+        else mod[i] = null;
+      }
+    }
+    return { orig, mod, changed };
+  }
+  function newRound(st, now) {
+    st.round++;
+    Object.assign(st, gen());
+    st.phase = 'memo'; st.deadline = now + MEMO[Math.min(st.round - 1, 2)] * 1000;
+    st.ready = st.seats.map((s) => s.bot);
+    st.marks = st.seats.map(() => null);
+    st.hits = null;
+  }
+  function toFind(st, now) { st.phase = 'find'; st.deadline = now + FIND_MS; }
+  function toResult(st, now) {
+    st.hits = st.seats.map((s, i) => {
+      if (s.bot) { let n = 0; for (let k = 0; k < CH; k++) if (Math.random() < 0.62) n++; return n; }
+      return (st.marks[i] || []).filter((x) => st.changed.includes(x)).length;
+    });
+    st.hits.forEach((x, i) => (st.score[i] += x));
+    st.phase = 'result'; st.deadline = now + RESULT_MS;
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: seats.length, local: opts.local, round: 0, score: seats.map(() => 0) };
+      newRound(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (a.t === 'ready' && st.phase === 'memo') {
+        st.ready[seat] = true;
+        if (st.local || st.ready.every(Boolean)) toFind(st, now);
+        return;
+      }
+      if (a.t === 'submit' && st.phase === 'find' && !st.marks[seat]) {
+        const m = [...new Set((a.marks || []).map((x) => x | 0))].filter((x) => x >= 0 && x < N * N);
+        if (m.length !== CH) return false;
+        st.marks[seat] = m;
+        if (st.seats.every((s, i) => s.bot || st.marks[i])) toResult(st, now);
+        return;
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'memo') toFind(st, now);
+      else if (st.phase === 'find') toResult(st, now);
+      else if (st.phase === 'result') { if (st.round >= ROUNDS) st.phase = 'end'; else newRound(st, now); }
+      else return false;
+      return true;
+    },
+    active(st) {
+      if (st.phase === 'memo') return U.range(st.n).filter((i) => !st.ready[i]);
+      if (st.phase === 'find') return U.range(st.n).filter((i) => !st.seats[i].bot && !st.marks[i]);
+      return [];
+    },
+    hidden: (st) => st.phase === 'find',
+    view(st, me) {
+      const v = { phase: st.phase, round: st.round, deadline: st.deadline, score: st.score, submitted: st.marks.map(Boolean) };
+      if (st.phase === 'memo') v.pic = st.orig;
+      if (st.phase === 'find') { v.pic = st.mod; v.myMarks = me >= 0 ? st.marks[me] : null; }
+      if (st.phase === 'result' || st.phase === 'end') { v.pic = st.mod; v.changed = st.changed; v.myMarks = me >= 0 ? st.marks[me] : null; v.hits = st.hits; }
+      return v;
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: st.score[x.seat] + '점' })), note: '원작에서는 최하위가 탈락합니다.' };
+    },
+  };
+
+  function shapeSvg(s, c) {
+    const P = { circle: `<circle cx="20" cy="20" r="13" fill="${c}"/>`, square: `<rect x="8" y="8" width="24" height="24" rx="3" fill="${c}"/>`,
+      triangle: `<polygon points="20,6 34,32 6,32" fill="${c}"/>`, diamond: `<polygon points="20,5 35,20 20,35 5,20" fill="${c}"/>`,
+      star: `<polygon points="20,4 24,15 36,15 26,22 30,34 20,27 10,34 14,22 4,15 16,15" fill="${c}"/>`,
+      cross: `<polygon points="15,6 25,6 25,15 34,15 34,25 25,25 25,34 15,34 15,25 6,25 6,15 15,15" fill="${c}"/>` };
+    return `<svg viewBox="0 0 40 40" width="100%" height="100%">${P[s] || ''}</svg>`;
+  }
+
+  function ui(root, ctx) {
+    let view = null, marks = new Set(), key = null;
+    const status = h('div', { class: 'big' });
+    const area = h('div');
+    const ctrl = h('div', { class: 'row' });
+    const scoreBox = h('div');
+
+    function drawGrid() {
+      const v = view;
+      area.innerHTML = '';
+      if (!v.pic) return;
+      const canMark = v.phase === 'find' && !v.myMarks && v.me >= 0;
+      const g = h('div', { class: 'board', style: { gridTemplateColumns: `repeat(${N}, 58px)` } });
+      const shown = v.myMarks ? new Set(v.myMarks) : marks;
+      v.pic.forEach((x, i) => {
+        const el = h('div', { class: 'cell', style: { height: '58px', position: 'relative', cursor: canMark ? 'pointer' : 'default' }, html: x ? shapeSvg(x.s, x.c) : '' });
+        if (v.phase !== 'memo' && shown.has(i)) el.append(h('div', { style: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b3b', fontSize: '44px', fontWeight: 900, textShadow: '0 0 4px #000' } }, '✕'));
+        if (v.changed && v.changed.includes(i)) el.style.outline = '3px solid #4caf7a';
+        else if (v.changed && shown.has(i)) el.style.outline = '3px solid #e5383b';
+        if (canMark) el.addEventListener('click', () => { if (marks.has(i)) marks.delete(i); else if (marks.size < CH) marks.add(i); drawGrid(); drawCtrl(); });
+        g.append(el);
+      });
+      area.append(g);
+    }
+    function drawCtrl() {
+      ctrl.innerHTML = '';
+      const v = view;
+      if (v.me < 0) return;
+      if (v.phase === 'memo') ctrl.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, '다 외웠어요'));
+      if (v.phase === 'find' && !v.myMarks) ctrl.append(h('button', { class: 'btn primary', disabled: marks.size !== CH, onclick: () => ctx.send({ t: 'submit', marks: [...marks] }) }, `제출 (${marks.size}/5)`));
+    }
+    function tickTimer() {
+      if (!view) return;
+      const s = UIx.secs(view.deadline, ctx.now()), v = view;
+      if (v.phase === 'memo') status.textContent = `라운드 ${v.round}/${ROUNDS} — 외우세요 ${s}`;
+      else if (v.phase === 'find') status.textContent = v.myMarks ? `제출 완료 — 다른 사람을 기다리는 중 ${s}` : `달라진 곳 5개를 고르세요 ${s}`;
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, status, area, ctrl),
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, '점수'), scoreBox))));
+    return {
+      update(v) {
+        const k = `${v.round}-${v.phase}-${v.me}`;
+        if (k !== key) { marks = new Set(); key = k; }
+        view = v;
+        drawGrid(); drawCtrl(); tickTimer();
+        if (v.phase === 'result' || v.phase === 'end') {
+          const mine = v.me >= 0 ? `내 정답 ${v.hits[v.me]}/5 · ` : '';
+          status.innerHTML = `${mine}<span class="muted" style="font-size:14px">초록 테두리 = 정답 칸</span>`;
+        }
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.score[i], me: i === v.me, sub: v.hits ? `(+${v.hits[i]})` : v.phase === 'find' && v.submitted[i] ? '✓' : '' }))));
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  registerGame({
+    id: 'spotdiff', name: '달라진 그림 찾기', en: 'Spot the Difference',
+    summary: '그림을 외운 뒤, 바뀐 그림에서 달라진 곳 5군데를 X로 표시하세요.',
+    players: { min: 1, max: 8, default: 1, soloSeats: 3, minSeats: 1 },
+    rules: `
+    <ul>
+      <li>그림이 정해진 시간 동안 공개됩니다(20초 → 15초 → 12초). 잘 외워 두세요.</li>
+      <li>그림이 사라지고 <b>5군데가 바뀐</b> 그림이 나옵니다(모양·색 변경, 사라짐, 새로 생김).</li>
+      <li>달라졌다고 생각하는 칸을 정확히 <b>5개</b> 골라 제출하세요(45초). 맞힌 개수가 점수입니다.</li>
+      <li>3라운드 합산 점수로 순위를 정합니다.</li>
+      <li>한 화면에서 할 때는 외우기는 다 같이, 고르기는 한 명씩 화면을 가리고 합니다.</li>
+    </ul>`,
+    engine, ui,
+  });
+})();
+
+</script>
   <!-- 3일차 -->
-  <script src="js/games/loopfence.js"></script>
+  <script>/* js/games/loopfence.js */
+// 3일차 유배지 매치 — 울타리 치기
+(() => {
+  const SIZES = { 5: [0.75, 300], 7: [0.65, 600], 10: [0.6, 900] };
+  const COUNTDOWN = 3000;
+
+  function makePuzzle(N) {
+    const region = U.range(N).map(() => Array(N).fill(false));
+    const inR = (r, c) => r >= 0 && c >= 0 && r < N && c < N && region[r][c];
+    const noHoles = () => {
+      const P = N + 2, seen = new Set([0]), st = [0];
+      let cnt = 0;
+      while (st.length) {
+        const x = st.pop(); const r = Math.floor(x / P) - 1, c = (x % P) - 1;
+        if (r >= 0 && c >= 0 && r < N && c < N) cnt++;
+        for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const rr = r + a, cc = c + b;
+          if (rr < -1 || cc < -1 || rr > N || cc > N || inR(rr, cc)) continue;
+          const k = (rr + 1) * P + cc + 1;
+          if (!seen.has(k)) { seen.add(k); st.push(k); }
+        }
+      }
+      return cnt === N * N - region.flat().filter(Boolean).length;
+    };
+    const checker = (r, c) => {
+      for (const [dr, dc] of [[-1, -1], [-1, 0], [0, -1], [0, 0]]) {
+        const a = inR(r + dr, c + dc), b = inR(r + dr, c + dc + 1), d = inR(r + dr + 1, c + dc), e = inR(r + dr + 1, c + dc + 1);
+        if ((a && e && !b && !d) || (b && d && !a && !e)) return true;
+      }
+      return false;
+    };
+    region[U.rnd(N)][U.rnd(N)] = true;
+    let size = 1, fails = 0;
+    while (size < Math.floor(N * N * 0.5) && fails < 4000) {
+      const cand = [];
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!region[r][c] && (inR(r - 1, c) || inR(r + 1, c) || inR(r, c - 1) || inR(r, c + 1))) cand.push([r, c]);
+      const [r, c] = U.pick(cand);
+      region[r][c] = true;
+      if (checker(r, c) || !noHoles()) { region[r][c] = false; fails++; continue; }
+      size++;
+    }
+    const ratio = SIZES[N][0];
+    const clue = U.range(N).map((r) => U.range(N).map((c) => {
+      const n4 = [[-1, 0], [1, 0], [0, -1], [0, 1]].filter(([a, b]) => inR(r + a, c + b) !== region[r][c]).length;
+      return Math.random() < ratio ? n4 : null;
+    }));
+    const solution = [];
+    for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) if (inR(r - 1, c) !== inR(r, c)) solution.push(`h${r},${c}`);
+    for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) if (inR(r, c - 1) !== inR(r, c)) solution.push(`v${r},${c}`);
+    return { N, clue, solution };
+  }
+  function check(P, lines) {
+    const L = new Set(lines), N = P.N;
+    const E = (t, r, c) => L.has(`${t}${r},${c}`);
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (P.clue[r][c] !== null) {
+      if (E('h', r, c) + E('h', r + 1, c) + E('v', r, c) + E('v', r, c + 1) !== P.clue[r][c]) return false;
+    }
+    const adj = {};
+    const add = (a, b) => { (adj[a] = adj[a] || []).push(b); (adj[b] = adj[b] || []).push(a); };
+    for (const k of L) {
+      const m = /^([hv])(\d+),(\d+)$/.exec(k); if (!m) return false;
+      const r = +m[2], c = +m[3];
+      if (m[1] === 'h') add(`${r},${c}`, `${r},${c + 1}`); else add(`${r},${c}`, `${r + 1},${c}`);
+    }
+    const vs = Object.keys(adj);
+    if (!vs.length || vs.some((v) => adj[v].length !== 2)) return false;
+    const seen = new Set([vs[0]]), st = [vs[0]];
+    while (st.length) for (const w of adj[st.pop()]) if (!seen.has(w)) { seen.add(w); st.push(w); }
+    return seen.size === vs.length;
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const N = opts.size || 7, limit = SIZES[N][1] * 1000;
+      const shared = makePuzzle(N);
+      const st = { seats, n: seats.length, N, limit, P: [], phase: [], start: [], deadline: [], time: [], botAt: [] };
+      seats.forEach((s, i) => {
+        st.P[i] = opts.local && !s.bot ? makePuzzle(N) : shared;
+        st.time[i] = null;
+        if (opts.local && !s.bot) st.phase[i] = 'ready';
+        else { st.phase[i] = 'play'; st.start[i] = opts.now + COUNTDOWN; st.deadline[i] = st.start[i] + limit; }
+        if (s.bot) st.botAt[i] = Math.random() < 0.8 ? limit * (0.25 + Math.random() * 0.7) : Infinity;
+      });
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (a.t === 'begin' && st.phase[seat] === 'ready') { st.phase[seat] = 'play'; st.start[seat] = now + COUNTDOWN; st.deadline[seat] = st.start[seat] + st.limit; return; }
+      if (a.t === 'lines' && st.phase[seat] === 'play' && now >= st.start[seat] && Array.isArray(a.lines)) {
+        if (check(st.P[seat], a.lines.slice(0, 1000).map(String))) { st.phase[seat] = 'done'; st.time[seat] = now - st.start[seat]; return; }
+        return false;
+      }
+      return false;
+    },
+    tick(st, now) {
+      let ch = false;
+      st.seats.forEach((s, i) => {
+        if (st.phase[i] !== 'play') return;
+        if (s.bot && now - st.start[i] >= st.botAt[i]) { st.phase[i] = 'done'; st.time[i] = st.botAt[i]; ch = true; }
+        else if (now > st.deadline[i]) { st.phase[i] = 'out'; ch = true; }
+      });
+      return ch;
+    },
+    active: (st) => U.range(st.n).filter((i) => !st.seats[i].bot && (st.phase[i] === 'ready' || st.phase[i] === 'play')),
+    hidden: () => true,
+    view(st, me) {
+      const v = { phase: me >= 0 ? st.phase[me] : 'watch', status: st.phase.slice(), times: st.time.slice() };
+      if (me >= 0) {
+        const P = st.P[me];
+        Object.assign(v, { N: P.N, clue: P.clue, pid: st.P.indexOf(P) + '-' + P.clue.flat().join(''), start: st.start[me], deadline: st.deadline[me] });
+        if (st.phase[me] === 'done' || st.phase[me] === 'out') v.solution = P.solution;
+      }
+      return v;
+    },
+    over(st) {
+      if (st.phase.some((p) => p === 'ready' || p === 'play')) return null;
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? '실패' : (st.time[x.seat] / 1000).toFixed(1) + '초' })) };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, edges = {}, pid = null;
+    const svgWrap = h('div');
+    const head = h('div', { class: 'big' });
+    const timerEl = h('span', { class: 'timer' });
+    const box = h('div', { class: 'col', style: { alignItems: 'center' } });
+    const scoreBox = h('div');
+    const ek = (t, r, c) => `${t}${r},${c}`;
+    const E = (t, r, c) => edges[ek(t, r, c)] || 0;
+
+    function draw() {
+      const v = view;
+      if (!v.clue) { svgWrap.innerHTML = ''; return; }
+      const N = v.N, S = Math.min(48, Math.floor(460 / N)), M = 16, W = N * S + M * 2;
+      const fin = v.solution;
+      const lineSet = fin ? Object.fromEntries(v.solution.map((k) => [k, 1])) : null;
+      const val = (t, r, c) => (fin ? lineSet[ek(t, r, c)] || 0 : E(t, r, c));
+      let s = `<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:${W + 40}px;touch-action:manipulation">`;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (v.clue[r][c] !== null) {
+        const cnt = (val('h', r, c) === 1) + (val('h', r + 1, c) === 1) + (val('v', r, c) === 1) + (val('v', r, c + 1) === 1);
+        const col = cnt === v.clue[r][c] ? '#4caf7a' : cnt > v.clue[r][c] ? '#e5383b' : '#ececf1';
+        s += `<text x="${M + c * S + S / 2}" y="${M + r * S + S / 2 + S * 0.17}" text-anchor="middle" font-size="${S * 0.5}" font-weight="700" fill="${col}">${v.clue[r][c]}</text>`;
+      }
+      const edge = (t, r, c, x1, y1, x2, y2) => {
+        const e = val(t, r, c);
+        if (e === 1) s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${fin ? '#4caf7a' : '#f2c14e'}" stroke-width="${S * 0.12}" stroke-linecap="round"/>`;
+        if (e === 2) { const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, d = S * 0.1; s += `<path d="M${mx - d} ${my - d}L${mx + d} ${my + d}M${mx + d} ${my - d}L${mx - d} ${my + d}" stroke="#e5383b" stroke-width="2"/>`; }
+        if (!fin) s += `<line data-e="${ek(t, r, c)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="${S * 0.45}" style="cursor:pointer"/>`;
+      };
+      for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) edge('h', r, c, M + c * S, M + r * S, M + (c + 1) * S, M + r * S);
+      for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) edge('v', r, c, M + c * S, M + r * S, M + c * S, M + (r + 1) * S);
+      for (let r = 0; r <= N; r++) for (let c = 0; c <= N; c++) s += `<circle cx="${M + c * S}" cy="${M + r * S}" r="${Math.max(2.5, S * 0.07)}" fill="#9a9aa8" pointer-events="none"/>`;
+      svgWrap.innerHTML = s + '</svg>';
+    }
+    function clickEdge(k, right) {
+      const v = view;
+      if (!v || v.phase !== 'play' || ctx.now() < v.start) return;
+      const x = edges[k] || 0;
+      edges[k] = right ? (x === 2 ? 0 : 2) : (x + 1) % 3;
+      draw();
+      ctx.send({ t: 'lines', lines: Object.keys(edges).filter((q) => edges[q] === 1) });
+    }
+    svgWrap.addEventListener('click', (e) => { const k = e.target.dataset && e.target.dataset.e; if (k) clickEdge(k, false); });
+    svgWrap.addEventListener('contextmenu', (e) => { e.preventDefault(); const k = e.target.dataset && e.target.dataset.e; if (k) clickEdge(k, true); });
+
+    function tickTimer() {
+      const v = view; if (!v || v.phase !== 'play') { timerEl.textContent = ''; return; }
+      const now = ctx.now();
+      if (now < v.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(v.start, now)}</span>`; return; }
+      head.textContent = '닫힌 고리 하나를 만드세요';
+      const s = UIx.secs(v.deadline, now);
+      timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 30);
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, head, box, svgWrap),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, h('h4', {}, '진행 상황'), scoreBox),
+        h('div', { class: 'panel col' }, h('div', { class: 'muted', style: { fontSize: '13px' } }, '변 클릭: 선 → ✕ → 빈칸 / 우클릭: ✕'),
+          h('div', {}, h('button', { class: 'btn', onclick: () => { edges = {}; draw(); ctx.send({ t: 'lines', lines: [] }); } }, '전부 지우기'))))));
+
+    return {
+      update(v) {
+        if (v.pid !== pid) { pid = v.pid; edges = {}; }
+        view = v;
+        box.innerHTML = '';
+        if (v.phase === 'ready') box.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작'));
+        if (v.phase === 'watch') box.append(h('div', { class: 'muted' }, '다른 플레이어를 기다리는 중...'));
+        if (v.phase === 'done') head.innerHTML = '<span class="good">완성!</span> 다른 플레이어를 기다리는 중';
+        if (v.phase === 'out') head.innerHTML = '<span class="bad">시간 초과</span> — 정답 고리를 보여 드려요';
+        if (v.phase === 'ready' || v.phase === 'watch') { svgWrap.innerHTML = ''; head.textContent = ''; } else draw();
+        tickTimer();
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, me: i === v.me, value: v.status[i] === 'done' ? (v.times[i] / 1000).toFixed(0) + 's' : v.status[i] === 'out' ? '✕' : '…' }))));
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  registerGame({
+    id: 'loopfence', name: '울타리 치기', en: 'Loop Fence Puzzle',
+    summary: '숫자를 만족하도록 점과 점을 이어 하나의 닫힌 울타리를 만드세요. 여럿이면 누가 먼저 푸나 대결!',
+    players: { min: 1, max: 8, default: 1, soloSeats: 1, minSeats: 1 },
+    options: [{ key: 'size', label: '크기', default: 7, choices: [[5, '5×5'], [7, '7×7'], [10, '10×10 (원작)']] }],
+    rules: `
+    <ul>
+      <li>점 사이의 선을 이어 <b>하나의 닫힌 고리</b>를 만듭니다. 고리는 갈라지거나 교차할 수 없습니다.</li>
+      <li>칸 안의 숫자는 그 칸의 네 변 중 <b>울타리가 지나가는 변의 개수</b>입니다.</li>
+      <li>변을 클릭하면 <b>선 → ✕ → 빈칸</b> 순으로 바뀝니다. 우클릭은 바로 ✕.</li>
+      <li>숫자를 모두 만족하는 고리가 완성되면 자동으로 완료됩니다. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li>
+      <li>제한 시간: 5×5 5분, 7×7 10분, 10×10 15분.</li>
+    </ul>`,
+    engine, ui,
+  });
+})();
+
+</script>
   <!-- 4일차 -->
-  <script src="js/games/wallgo.js"></script>
-  <script src="js/games/symmetry.js"></script>
+  <script>/* js/games/wallgo.js */
+// 4일차 감옥 매치 — 벽바둑 2
+(() => {
+  const N = 7;
+  const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const COL = ['#f2c14e', '#4a90e2', '#4caf7a', '#ff5d8f'];
+  const PIECES = { 2: 4, 3: 3, 4: 2 };
+
+  // ---- 판 계산 (state: {wh, wv, pieces}) ----
+  const pieceAt = (st, r, c) => st.pieces.find((p) => p.r === r && p.c === c);
+  function blocked(st, r, c, dr, dc) {
+    const rr = r + dr, cc = c + dc;
+    if (rr < 0 || cc < 0 || rr >= N || cc >= N) return true;
+    if (dr === 1) return st.wh[r][c];
+    if (dr === -1) return st.wh[rr][c];
+    if (dc === 1) return st.wv[r][c];
+    return st.wv[r][cc];
+  }
+  function reachable(st, p) {
+    const out = new Map([[`${p.r},${p.c}`, [p.r, p.c]]]);
+    let fr = [[p.r, p.c]];
+    for (let step = 0; step < 2; step++) {
+      const nf = [];
+      for (const [r, c] of fr) for (const [dr, dc] of DIRS) {
+        if (blocked(st, r, c, dr, dc)) continue;
+        const rr = r + dr, cc = c + dc, k = `${rr},${cc}`;
+        if (out.has(k) || pieceAt(st, rr, cc)) continue;
+        out.set(k, [rr, cc]); nf.push([rr, cc]);
+      }
+      fr = nf;
+    }
+    return [...out.values()];
+  }
+  function wallOptions(st, r, c) {
+    const o = [];
+    if (r < N - 1 && !st.wh[r][c]) o.push(['h', r, c]);
+    if (r > 0 && !st.wh[r - 1][c]) o.push(['h', r - 1, c]);
+    if (c < N - 1 && !st.wv[r][c]) o.push(['v', r, c]);
+    if (c > 0 && !st.wv[r][c - 1]) o.push(['v', r, c - 1]);
+    return o;
+  }
+  const setWall = (st, [t, r, c], v) => { (t === 'h' ? st.wh : st.wv)[r][c] = v; };
+  function regions(st) {
+    const id = U.range(N).map(() => Array(N).fill(-1)), regs = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (id[r][c] < 0) {
+      const reg = { cells: [], owners: new Set() }, stack = [[r, c]];
+      id[r][c] = regs.length;
+      while (stack.length) {
+        const [a, b] = stack.pop(); reg.cells.push([a, b]);
+        const p = pieceAt(st, a, b); if (p) reg.owners.add(p.o);
+        for (const [dr, dc] of DIRS) if (!blocked(st, a, b, dr, dc) && id[a + dr][b + dc] < 0) { id[a + dr][b + dc] = regs.length; stack.push([a + dr, b + dc]); }
+      }
+      regs.push(reg);
+    }
+    return regs;
+  }
+  function scores(st) {
+    const sc = U.range(st.n).map(() => 0);
+    for (const g of regions(st)) if (g.owners.size === 1) sc[[...g.owners][0]] += g.cells.length;
+    return sc;
+  }
+  const canMove = (st, o) => st.pieces.some((p) => p.o === o && (reachable(st, p).length > 1 || wallOptions(st, p.r, p.c).length));
+  // 봇 평가: 벽을 고려한 가장 가까운 말 기준 영역
+  function evalFor(st, me) {
+    const d = U.range(st.n).map(() => U.range(N).map(() => Array(N).fill(99)));
+    for (let o = 0; o < st.n; o++) {
+      const q = st.pieces.filter((p) => p.o === o).map((p) => [p.r, p.c]);
+      q.forEach(([r, c]) => (d[o][r][c] = 0));
+      for (let i = 0; i < q.length; i++) {
+        const [r, c] = q[i];
+        for (const [dr, dc] of DIRS) if (!blocked(st, r, c, dr, dc) && d[o][r + dr][c + dc] > d[o][r][c] + 1) { d[o][r + dr][c + dc] = d[o][r][c] + 1; q.push([r + dr, c + dc]); }
+      }
+    }
+    const cnt = U.range(st.n).map(() => 0);
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      let best = 99, who = -1;
+      for (let o = 0; o < st.n; o++) { if (d[o][r][c] < best) { best = d[o][r][c]; who = o; } else if (d[o][r][c] === best) who = -1; }
+      if (who >= 0) cnt[who]++;
+    }
+    const sc = scores(st);
+    const mine = cnt[me] + sc[me] * 0.6;
+    const others = Math.max(...U.range(st.n).filter((o) => o !== me).map((o) => cnt[o] + sc[o] * 0.6));
+    return mine - others;
+  }
+  function isOver(st) { return regions(st).every((g) => g.owners.size <= 1) || U.range(st.n).every((o) => !canMove(st, o)); }
+  function advanceTurn(st) {
+    if (isOver(st)) { st.phase = 'end'; return; }
+    for (let k = 1; k <= st.n; k++) {
+      const o = (st.turn + k) % st.n;
+      if (canMove(st, o)) { st.turn = o; return; }
+    }
+    st.phase = 'end';
+  }
+
+  const engine = {
+    setup(seats) {
+      const n = seats.length, per = PIECES[n] || 2;
+      const st = { seats, n, wh: U.range(N - 1).map(() => Array(N).fill(false)), wv: U.range(N).map(() => Array(N - 1).fill(false)), pieces: [], phase: 'place', turn: 0, last: null };
+      st.order = [];
+      for (let k = 0; k < per; k++) for (let i = 0; i < n; i++) st.order.push(k % 2 ? n - 1 - i : i); // 뱀 순서
+      return st;
+    },
+    action(st, seat, a) {
+      if (st.phase === 'place' && a.t === 'place' && st.order[0] === seat) {
+        if (a.r < 0 || a.c < 0 || a.r >= N || a.c >= N || pieceAt(st, a.r, a.c)) return false;
+        st.pieces.push({ o: seat, r: a.r, c: a.c }); st.order.shift();
+        if (!st.order.length) { st.phase = 'move'; st.turn = st.n - 1; advanceTurn(st); }
+        return;
+      }
+      if (st.phase === 'move' && a.t === 'move' && st.turn === seat) {
+        const p = pieceAt(st, a.from[0], a.from[1]);
+        if (!p || p.o !== seat) return false;
+        if (!reachable(st, p).some(([r, c]) => r === a.to[0] && c === a.to[1])) return false;
+        p.r = a.to[0]; p.c = a.to[1];
+        const opts = wallOptions(st, p.r, p.c);
+        if (opts.length) {
+          const w = opts.find((o) => a.wall && o[0] === a.wall[0] && o[1] === a.wall[1] && o[2] === a.wall[2]);
+          if (!w) { p.r = a.from[0]; p.c = a.from[1]; return false; }
+          setWall(st, w, true);
+        }
+        st.last = { from: a.from, to: a.to, wall: a.wall };
+        advanceTurn(st);
+        return;
+      }
+      return false;
+    },
+    active: (st) => (st.phase === 'place' ? [st.order[0]] : st.phase === 'move' ? [st.turn] : []),
+    hidden: () => false,
+    botDelay: () => 550,
+    botAct(st, me) {
+      if (st.phase === 'place') {
+        let best = null;
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!pieceAt(st, r, c)) {
+          st.pieces.push({ o: me, r, c });
+          const v = evalFor(st, me) + Math.random() * 0.5;
+          st.pieces.pop();
+          if (!best || v > best.v) best = { v, r, c };
+        }
+        return { t: 'place', r: best.r, c: best.c };
+      }
+      let best = null;
+      for (const p of st.pieces.filter((q) => q.o === me)) {
+        const or = p.r, oc = p.c;
+        for (const [r, c] of reachable(st, p)) {
+          p.r = r; p.c = c;
+          const opts = wallOptions(st, r, c);
+          if (!opts.length) { const v = evalFor(st, me); if (!best || v > best.v) best = { v, from: [or, oc], to: [r, c], wall: null }; }
+          for (const w of opts) {
+            setWall(st, w, true);
+            const v = evalFor(st, me) + Math.random() * 0.3;
+            setWall(st, w, false);
+            if (!best || v > best.v) best = { v, from: [or, oc], to: [r, c], wall: w };
+          }
+        }
+        p.r = or; p.c = oc;
+      }
+      return best ? { t: 'move', from: best.from, to: best.to, wall: best.wall } : null;
+    },
+    view(st) {
+      return { phase: st.phase, turn: st.turn, placer: st.order[0], wh: st.wh, wv: st.wv, pieces: st.pieces, last: st.last, scores: scores(st), regions: st.phase === 'end' ? regions(st).map((g) => ({ cells: g.cells, owner: g.owners.size === 1 ? [...g.owners][0] : -1 })) : null };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      const sc = scores(st);
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -sc[i]).map((x) => ({ ...x, score: sc[x.seat] + '칸' })) };
+    },
+  };
+
+  function ui(root, ctx) {
+    const S = 58, M = 12;
+    let view = null, selPiece = null, reach = null, dest = null;
+    const status = h('div', { class: 'big' });
+    const svgWrap = h('div');
+    const scoreBox = h('div');
+    const info = h('div', { class: 'muted', style: { fontSize: '13px' } });
+    // view 데이터를 엔진 계산 함수에 그대로 넘길 수 있게 맞춤
+    const board = () => ({ wh: view.wh, wv: view.wv, pieces: view.pieces });
+
+    function myTurn() { return view.me >= 0 && ((view.phase === 'place' && view.placer === view.me) || (view.phase === 'move' && view.turn === view.me)); }
+    function draw() {
+      const v = view, W = N * S + M * 2;
+      let s = `<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:${W}px">`;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        let fill = '#1f1f26';
+        if (v.regions) { const g = v.regions.find((g) => g.cells.some(([a, b]) => a === r && b === c)); if (g && g.owner >= 0) fill = COL[g.owner] + '33'; }
+        if (reach && reach.some(([a, b]) => a === r && b === c)) fill = '#3a3320';
+        if (dest && dest[0] === r && dest[1] === c) fill = '#5a4a20';
+        s += `<rect data-cell="${r},${c}" x="${M + c * S + 2}" y="${M + r * S + 2}" width="${S - 4}" height="${S - 4}" rx="6" fill="${fill}" style="cursor:pointer"/>`;
+      }
+      const wl = (x1, y1, x2, y2, col, w, extra = '') => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
+      const hw = (r, c, col, w, extra) => wl(M + c * S + 4, M + (r + 1) * S, M + (c + 1) * S - 4, M + (r + 1) * S, col, w, extra);
+      const vw = (r, c, col, w, extra) => wl(M + (c + 1) * S, M + r * S + 4, M + (c + 1) * S, M + (r + 1) * S - 4, col, w, extra);
+      const L = v.last && v.last.wall;
+      for (let r = 0; r < N - 1; r++) for (let c = 0; c < N; c++) if (v.wh[r][c]) s += hw(r, c, L && L[0] === 'h' && L[1] === r && L[2] === c ? '#ff8a8a' : '#e5383b', 6);
+      for (let r = 0; r < N; r++) for (let c = 0; c < N - 1; c++) if (v.wv[r][c]) s += vw(r, c, L && L[0] === 'v' && L[1] === r && L[2] === c ? '#ff8a8a' : '#e5383b', 6);
+      for (const p of v.pieces) {
+        const sel = selPiece && selPiece.r === p.r && selPiece.c === p.c;
+        s += `<circle data-cell="${p.r},${p.c}" cx="${M + p.c * S + S / 2}" cy="${M + p.r * S + S / 2}" r="${S * 0.3}" fill="${COL[p.o]}" stroke="${sel ? '#fff' : '#0d0d10'}" stroke-width="${sel ? 4 : 2}" style="cursor:pointer"/>`;
+      }
+      if (dest) for (const [t, r, c] of wallOptions(board(), dest[0], dest[1])) {
+        const data = `data-wall="${t},${r},${c}" style="cursor:pointer"`;
+        s += t === 'h' ? hw(r, c, '#f2c14e', 7, 'stroke-dasharray="6 5"') + hw(r, c, 'transparent', 18, data) : vw(r, c, '#f2c14e', 7, 'stroke-dasharray="6 5"') + vw(r, c, 'transparent', 18, data);
+      }
+      svgWrap.innerHTML = s + '</svg>';
+    }
+    svgWrap.addEventListener('click', (e) => {
+      if (!view || !myTurn()) return;
+      const t = e.target;
+      if (t.dataset.wall && dest) {
+        const [k, r, c] = t.dataset.wall.split(',');
+        ctx.send({ t: 'move', from: [selPiece.r, selPiece.c], to: dest, wall: [k, +r, +c] });
+        selPiece = reach = dest = null; return;
+      }
+      if (!t.dataset.cell) return;
+      const [r, c] = t.dataset.cell.split(',').map(Number);
+      if (view.phase === 'place') { if (!view.pieces.some((p) => p.r === r && p.c === c)) ctx.send({ t: 'place', r, c }); return; }
+      if (dest) { dest = null; reach = reachable(board(), selPiece); draw(); }
+      const p = view.pieces.find((q) => q.r === r && q.c === c);
+      if (p && p.o === view.me && !(selPiece && selPiece.r === r && selPiece.c === c)) { selPiece = { r, c }; reach = reachable(board(), selPiece); dest = null; draw(); return; }
+      if (selPiece && reach && reach.some(([a, b]) => a === r && b === c)) {
+        const opts = wallOptions(board(), r, c);
+        if (!opts.length) { ctx.send({ t: 'move', from: [selPiece.r, selPiece.c], to: [r, c], wall: null }); selPiece = reach = dest = null; return; }
+        dest = [r, c]; reach = null; draw();
+      }
+    });
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, status, svgWrap),
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, '확정 영역'), scoreBox, info))));
+
+    return {
+      update(v) {
+        const turnChanged = !view || view.turn !== v.turn || view.phase !== v.phase || view.me !== v.me || view.pieces.length !== v.pieces.length;
+        view = v;
+        if (turnChanged || !myTurn()) selPiece = reach = dest = null;
+        const who = v.phase === 'place' ? v.placer : v.turn;
+        if (v.phase === 'end') status.textContent = '게임 종료';
+        else if (myTurn()) status.innerHTML = v.phase === 'place' ? '<span class="hl">말을 놓을 빈칸을 고르세요</span>' : '<span class="hl">내 차례</span> — 말 → 이동할 칸 → 벽 순서로 고르세요';
+        else status.innerHTML = `<span style="color:${COL[who]}">●</span> ${v.names[who]} 차례`;
+        draw();
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.scores[i], me: i === v.me }))));
+        info.innerHTML = v.names.map((n, i) => `<span style="color:${COL[i]}">●</span> ${n}`).join(' &nbsp; ') + '<br>확정 영역 = 한 사람의 말만 있는 닫힌 구역의 칸 수';
+      },
+    };
+  }
+
+  registerGame({
+    id: 'wallgo', name: '벽바둑 2', en: 'Wall Go II',
+    summary: '말을 옮기고 벽을 세워 내 말만 있는 구역을 최대한 넓게 만드세요.',
+    players: { min: 1, max: 4, default: 2, soloSeats: 2, minSeats: 2 },
+    rules: `
+    <ul>
+      <li>7×7 판. 말 개수는 2명이면 4개씩, 3명이면 3개씩, 4명이면 2개씩입니다. 먼저 번갈아(뱀 순서) 원하는 빈칸에 모두 놓습니다.</li>
+      <li>자기 차례에 말 하나를 <b>0~2칸</b> 상하좌우로 옮깁니다(꺾어도 되지만 벽과 말은 통과 불가).</li>
+      <li>옮긴 뒤에는 반드시 그 말이 있는 칸의 한 변에 <b>벽</b>을 세웁니다.</li>
+      <li>모든 구역에 <b>한 사람의 말만</b> 남으면 끝. 내 말만 있는 구역의 칸 수 합이 점수입니다.</li>
+    </ul>
+    <div class="note">「벽바둑 2」의 세부 규칙은 공개되지 않아 시즌 2 「벽바둑」 기본 규칙을 따랐습니다.</div>`,
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/symmetry.js */
+// 4일차 유배지 매치 — 대칭 퍼즐
+(() => {
+  const MODES = { V: { syms: ['V'], n: 8 }, VH: { syms: ['V', 'H'], n: 8 }, DR: { syms: ['D', 'R'], n: 8 }, ALL: { syms: ['V', 'H', 'D'], n: 10 } };
+  const SYM_NAME = { V: '좌우 대칭(세로축)', H: '상하 대칭(가로축)', D: '대각선 대칭(↘)', R: '90° 회전 대칭' };
+  const COLORS = ['#e5383b', '#f2c14e', '#4a90e2'];
+  const TIME = 180000, COUNTDOWN = 3000;
+
+  function makePuzzle(modeKey) {
+    const { syms, n: N } = MODES[modeKey];
+    const tf = { V: (r, c) => [r, N - 1 - c], H: (r, c) => [N - 1 - r, c], D: (r, c) => [c, r], R: (r, c) => [c, N - 1 - r] };
+    const target = U.range(N).map(() => Array(N).fill(-1));
+    const given = U.range(N).map(() => Array(N).fill(false));
+    const seen = new Set();
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!seen.has(`${r},${c}`)) {
+      const orbit = [[r, c]], st = [[r, c]]; seen.add(`${r},${c}`);
+      while (st.length) { const [a, b] = st.pop(); for (const s of syms) { const [x, y] = tf[s](a, b); if (!seen.has(`${x},${y}`)) { seen.add(`${x},${y}`); st.push([x, y]); orbit.push([x, y]); } } }
+      if (Math.random() < 0.4) {
+        const col = U.rnd(COLORS.length);
+        orbit.forEach(([a, b]) => (target[a][b] = col));
+        const [gr, gc] = U.pick(orbit); given[gr][gc] = true;
+      }
+    }
+    return { N, syms, target, given };
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const mode = opts.mode || 'VH';
+      const shared = makePuzzle(mode);
+      const st = { seats, n: seats.length, P: [], phase: [], start: [], deadline: [], time: [], botAt: [] };
+      seats.forEach((s, i) => {
+        st.P[i] = opts.local && !s.bot ? makePuzzle(mode) : shared;
+        st.time[i] = null;
+        if (opts.local && !s.bot) st.phase[i] = 'ready';
+        else { st.phase[i] = 'play'; st.start[i] = opts.now + COUNTDOWN; st.deadline[i] = st.start[i] + TIME; }
+        if (s.bot) st.botAt[i] = Math.random() < 0.8 ? TIME * (0.3 + Math.random() * 0.65) : Infinity;
+      });
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (a.t === 'begin' && st.phase[seat] === 'ready') { st.phase[seat] = 'play'; st.start[seat] = now + COUNTDOWN; st.deadline[seat] = st.start[seat] + TIME; return; }
+      if (a.t === 'paint' && st.phase[seat] === 'play' && now >= st.start[seat] && Array.isArray(a.paint)) {
+        const T = st.P[seat].target;
+        const ok = T.every((row, r) => row.every((v, c) => (a.paint[r] || [])[c] === v));
+        if (ok) { st.phase[seat] = 'done'; st.time[seat] = now - st.start[seat]; return; }
+        return false;
+      }
+      return false;
+    },
+    tick(st, now) {
+      let ch = false;
+      st.seats.forEach((s, i) => {
+        if (st.phase[i] !== 'play') return;
+        if (s.bot && now - st.start[i] >= st.botAt[i]) { st.phase[i] = 'done'; st.time[i] = st.botAt[i]; ch = true; }
+        else if (now > st.deadline[i]) { st.phase[i] = 'out'; ch = true; }
+      });
+      return ch;
+    },
+    active: (st) => U.range(st.n).filter((i) => !st.seats[i].bot && (st.phase[i] === 'ready' || st.phase[i] === 'play')),
+    hidden: () => true,
+    view(st, me) {
+      const v = { phase: me >= 0 ? st.phase[me] : 'watch', status: st.phase.slice(), times: st.time.slice() };
+      if (me >= 0) {
+        const P = st.P[me];
+        Object.assign(v, { N: P.N, syms: P.syms, start: st.start[me], deadline: st.deadline[me], pid: st.P.indexOf(P) + '-' + P.target.flat().join(''),
+          given: P.given.map((row, r) => row.map((g, c) => (g ? P.target[r][c] : -1))) });
+        if (st.phase[me] === 'done' || st.phase[me] === 'out') v.answer = P.target;
+      }
+      return v;
+    },
+    over(st) {
+      if (st.phase.some((p) => p === 'ready' || p === 'play')) return null;
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? '실패' : (st.time[x.seat] / 1000).toFixed(1) + '초' })) };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, paint = null, pid = null, color = 0, dragging = false, cells = [];
+    const head = h('div', { class: 'big' });
+    const boardEl = h('div', { class: 'board' });
+    const box = h('div', { class: 'col', style: { alignItems: 'center' } });
+    const timerEl = h('span', { class: 'timer' });
+    const symEl = h('div', { class: 'hl' });
+    const palette = h('div', { class: 'row' });
+    const scoreBox = h('div');
+
+    function build() {
+      const N = view.N, sz = N > 8 ? 38 : 46;
+      boardEl.innerHTML = ''; cells = [];
+      boardEl.style.gridTemplateColumns = `repeat(${N}, ${sz}px)`;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        const el = h('div', { class: 'cell', style: { height: sz + 'px', cursor: 'pointer', color: '#0d0d10' }, 'data-r': r, 'data-c': c });
+        cells.push(el); boardEl.append(el);
+      }
+    }
+    function draw() {
+      if (!view.N) return;
+      const N = view.N, src = view.answer || paint;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        const el = cells[r * N + c], v = src[r][c];
+        el.style.background = v >= 0 ? COLORS[v] : '';
+        el.textContent = view.given[r][c] >= 0 ? '◆' : '';
+      }
+    }
+    function setCell(r, c) {
+      if (!view || view.phase !== 'play' || ctx.now() < view.start || view.given[r][c] >= 0) return;
+      if (paint[r][c] === color) return;
+      paint[r][c] = color; draw();
+      ctx.send({ t: 'paint', paint });
+    }
+    const at = (e) => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.dataset && t.dataset.r != null ? [+t.dataset.r, +t.dataset.c] : null; };
+    boardEl.addEventListener('pointerdown', (e) => { const p = at(e); if (p) { dragging = true; boardEl.releasePointerCapture?.(e.pointerId); setCell(...p); } });
+    boardEl.addEventListener('pointermove', (e) => { if (dragging) { const p = at(e); if (p) setCell(...p); } });
+    const up = () => (dragging = false);
+    document.addEventListener('pointerup', up);
+
+    function renderPalette() {
+      palette.innerHTML = '';
+      [...COLORS, null].forEach((col, i) => palette.append(h('button', {
+        class: 'btn' + ((col ? i : -1) === color ? ' on' : ''), style: { width: '52px', height: '40px', background: col || 'transparent' },
+        onclick: () => { color = col ? i : -1; renderPalette(); } }, col ? '' : '지우개')));
+    }
+    function tickTimer() {
+      const v = view; if (!v || v.phase !== 'play') { timerEl.textContent = ''; return; }
+      const now = ctx.now();
+      if (now < v.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(v.start, now)}</span>`; return; }
+      head.textContent = '대칭이 되도록 칠하세요';
+      const s = UIx.secs(v.deadline, now);
+      timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 20);
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, head, box, boardEl, h('div', { class: 'muted', style: { fontSize: '13px' } }, '◆ = 단서 칸 (바꿀 수 없음)')),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, h('h4', {}, '만족해야 할 대칭'), symEl),
+        h('div', { class: 'panel col' }, h('h4', {}, '색'), palette),
+        h('div', { class: 'panel col' }, h('h4', {}, '진행 상황'), scoreBox))));
+    renderPalette();
+
+    return {
+      update(v) {
+        view = v;
+        if (v.N && v.pid !== pid) { pid = v.pid; paint = v.given.map((row) => row.slice()); build(); }
+        const playing = v.phase !== 'ready' && v.phase !== 'watch';
+        boardEl.style.display = playing ? '' : 'none';
+        box.innerHTML = '';
+        if (v.phase === 'ready') { head.textContent = ''; box.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작')); }
+        if (v.phase === 'watch') { head.textContent = ''; box.append(h('div', { class: 'muted' }, '다른 플레이어를 기다리는 중...')); }
+        if (v.phase === 'done') head.innerHTML = '<span class="good">완성!</span> 다른 플레이어를 기다리는 중';
+        if (v.phase === 'out') head.innerHTML = '<span class="bad">시간 초과</span> — 정답을 보여 드려요';
+        symEl.innerHTML = v.syms ? v.syms.map((s) => SYM_NAME[s]).join('<br>') : '';
+        if (playing) draw();
+        tickTimer();
+        scoreBox.innerHTML = '';
+        scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, me: i === v.me, value: v.status[i] === 'done' ? (v.times[i] / 1000).toFixed(0) + 's' : v.status[i] === 'out' ? '✕' : '…' }))));
+      },
+      destroy() { clearInterval(iv); document.removeEventListener('pointerup', up); },
+    };
+  }
+
+  registerGame({
+    id: 'symmetry', name: '대칭 퍼즐', en: 'Symmetrical Puzzle',
+    summary: '흩어진 단서 칸을 보고, 주어진 대칭축에 맞게 그림 전체를 완성하세요. 여럿이면 누가 먼저 푸나 대결!',
+    players: { min: 1, max: 8, default: 1, soloSeats: 1, minSeats: 1 },
+    options: [{ key: 'mode', label: '대칭', default: 'VH', choices: [['V', '좌우'], ['VH', '좌우+상하'], ['DR', '대각선+회전'], ['ALL', '8방향']] }],
+    rules: `
+    <ul>
+      <li>격자 위에 색칠된 <b>단서 칸(◆)</b> 몇 개와 <b>대칭 조건</b>이 주어집니다.</li>
+      <li>완성된 그림은 주어진 대칭을 <b>모두</b> 만족해야 합니다. 단서를 대칭으로 옮겨 나머지 칸을 칠하세요.</li>
+      <li>색을 고르고 칸을 클릭(또는 드래그)해 칠합니다. 필요한 칸만 정확히 칠해지면 자동 완료.</li>
+      <li>제한 시간 3분. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li>
+    </ul>`,
+    engine, ui,
+  });
+})();
+
+</script>
 </body>
 </html>
