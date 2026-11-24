@@ -445,7 +445,7 @@ function botName(i) { return '봇 ' + (i + 1); }
 // 연결(conn)은 { open, send(msg), close(), on('open'|'data'|'close', fn) } 모양입니다.
 const Net = (() => {
   const PREFIX = 'devilsgr3-';
-  const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const CODE_CHARS = '0123456789';
   const randomCode = () => U.range(5).map(() => CODE_CHARS[U.rnd(CODE_CHARS.length)]).join('');
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -738,7 +738,7 @@ const Net = (() => {
 
   async function joinRoom(code, name) {
     const c = new RoomClient();
-    try { const lobby = await c.join('r-' + code.trim().toUpperCase(), name); return { client: c, lobby }; }
+    try { const lobby = await c.join('r-' + code.replace(/\D/g, ''), name); return { client: c, lobby }; }
     catch (e) { c.destroy(); throw e; }
   }
 
@@ -889,7 +889,8 @@ const App = (() => {
     const RANGE = { online: [2, P.max], offline: [2, P.max], bots: [minBots, maxBots] };
 
     const nick = h('input', { type: 'text', maxlength: 12, value: store.get('nick', ''), placeholder: '닉네임', style: { width: '160px' } });
-    const codeIn = h('input', { type: 'text', maxlength: 5, placeholder: '방 코드', style: { width: '120px', textTransform: 'uppercase', letterSpacing: '3px' } });
+    const codeIn = h('input', { type: 'text', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: 5, placeholder: '방 코드 (숫자 5자리)', style: { width: '170px', letterSpacing: '3px' } });
+    codeIn.addEventListener('input', () => { const v = codeIn.value.replace(/\D/g, '').slice(0, 5); if (v !== codeIn.value) codeIn.value = v; });
     const optBox = h('div', { class: 'col' });
     const tabs = h('div', { class: 'mode-tabs' });
     const body = h('div', { class: 'panel col mode-body' });
@@ -988,8 +989,8 @@ const App = (() => {
       } catch (e) { console.error(e); if (!cancelled) wait.fail(Net.errText(e)); }
     }
     async function joinByCode() {
-      const code = codeIn.value.trim().toUpperCase();
-      if (code.length !== 5) { toast('5자리 방 코드를 입력하세요'); return; }
+      const code = codeIn.value.replace(/\D/g, '');
+      if (code.length !== 5) { toast('숫자 5자리 방 코드를 입력하세요'); return; }
       const name = getNick();
       const wait = waitingScreen(def, `방 ${code}에 참가 중...`);
       try {
