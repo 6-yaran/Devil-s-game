@@ -149,7 +149,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 </head>
 <body>
   <div id="app"></div>
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
   <script>/* js/util.js */
 // 공용 유틸리티
 const U = {
@@ -436,30 +436,150 @@ function seatCount(def, humans) {
 function botName(i) { return '봇 ' + (i + 1); }
 
 </script>
+  <script>/* js/mqttroom.js */
+// 공개 MQTT 중계 서버(WebSocket)를 "방(room)" 모양의 API로 감쌉니다.
+// 기기끼리 직접 연결(WebRTC)하지 않고 서버를 거쳐 주고받으므로,
+// 기기 간 통신을 막는 와이파이나 휴대폰 데이터에서도 웹페이지만 열리면 연결됩니다.
+// 반환: { presence, peers, onPeers, emit, on, join, connected }
+const MqttRoom = (() => {
+  const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt'];
+  const BASE = 'devilsgr3v1/';
+  // 휴대폰에서 잠깐 다른 앱을 보거나 백그라운드 탭이 느려져도 끊기지 않도록 넉넉하게
+  const BEAT_MS = 2000, EXPIRE_MS = 45000;
+  let apiP = null;
+
+  function connectBroker(url) {
+    return new Promise((resolve, reject) => {
+      const client = mqtt.connect(url, {
+        clientId: 'dg3_' + Math.random().toString(36).slice(2, 12),
+        clean: true, keepalive: 30, connectTimeout: 7000, reconnectPeriod: 2000,
+      });
+      const t = setTimeout(() => { client.end(true); reject(new Error('timeout')); }, 8000);
+      client.once('connect', () => { clearTimeout(t); resolve(client); });
+      client.once('error', (e) => { clearTimeout(t); client.end(true); reject(e); });
+    });
+  }
+
+  async function create() {
+    let client = null;
+    for (const url of BROKERS) {
+      try { client = await connectBroker(url); break; } catch (e) { console.warn('MQTT 연결 실패', url, e && e.message); }
+    }
+    if (!client) throw { type: 'network' };
+    const me = Math.random().toString(36).slice(2, 14).replace(/[^a-z0-9]/g, 'x');
+    const rooms = new Map();
+
+    function makeRoom(name) {
+      const topic = BASE + name;
+      const r = { name, pres: {}, peers: new Map(), topicLs: {}, peerLs: [], snap: Object.freeze([]), left: false };
+      const pub = (sub, obj) => new Promise((res) => client.publish(`${topic}/${sub}`, JSON.stringify(obj), { qos: 0 }, () => res()));
+      function rebuild(joined = [], left = []) {
+        const now = Date.now();
+        for (const [p, v] of r.peers) if (now - v.seen > EXPIRE_MS) { r.peers.delete(p); left.push({ peer: p }); }
+        const list = [{ peer: me, sameTab: true, isMe: true, by: null, kind: 'viewer', guest: false, presence: r.pres, updatedAt: now },
+          ...[...r.peers].map(([p, v]) => ({ peer: p, sameTab: false, isMe: false, by: null, kind: 'viewer', guest: false, presence: v.pres, updatedAt: v.seen }))];
+        r.snap = Object.freeze(list);
+        const ch = { peers: r.snap, joined, left, updated: [] };
+        r.peerLs.forEach((f) => { try { f(ch); } catch (e) { console.error(e); } });
+      }
+      r.onMessage = (sub, msg) => {
+        if (!msg || msg.from === me) return;
+        if (sub === 'p') {
+          const isNew = !r.peers.has(msg.from);
+          r.peers.set(msg.from, { pres: msg.pres || {}, seen: Date.now() });
+          if (isNew) rebuild([{ peer: msg.from }], []);
+          else rebuild();
+        } else if (sub === 'l') {
+          if (r.peers.delete(msg.from)) rebuild([], [{ peer: msg.from }]);
+        } else if (sub.startsWith('m/')) {
+          const t = sub.slice(2);
+          (r.topicLs[t] || []).forEach((f) => { try { f({ topic: t, data: msg.data, peer: msg.from, sameTab: false, isMe: false, by: null, kind: 'viewer', guest: false }); } catch (e) { console.error(e); } });
+        }
+      };
+      r.beat = setInterval(() => { pub('p', { from: me, pres: r.pres }); rebuild(); }, BEAT_MS);
+      client.subscribe(topic + '/#', { qos: 0 });
+      pub('p', { from: me, pres: r.pres });
+      setTimeout(() => rebuild(), 0);
+      r.api = {
+        name,
+        emit: (t, data) => pub('m/' + t, { from: me, data }),
+        on(t, f) { (r.topicLs[t] = r.topicLs[t] || []).push(f); return () => { r.topicLs[t] = (r.topicLs[t] || []).filter((x) => x !== f); }; },
+        presence(patch) {
+          const next = { ...r.pres };
+          for (const k in patch) { if (patch[k] === null) delete next[k]; else next[k] = patch[k]; }
+          r.pres = next;
+          rebuild();
+          return pub('p', { from: me, pres: r.pres });
+        },
+        peers: () => r.snap,
+        onPeers(f) { r.peerLs.push(f); setTimeout(() => rebuild(), 0); return () => { r.peerLs = r.peerLs.filter((x) => x !== f); }; },
+        connected: () => client.connected,
+        leave() {
+          if (r.left) return Promise.resolve();
+          r.left = true; clearInterval(r.beat);
+          const p = pub('l', { from: me });
+          client.unsubscribe(topic + '/#');
+          rooms.delete(name);
+          return p;
+        },
+      };
+      return r;
+    }
+
+    client.on('message', (t, buf) => {
+      if (!t.startsWith(BASE)) return;
+      const rest = t.slice(BASE.length);
+      const i = rest.indexOf('/');
+      if (i < 0) return;
+      const r = rooms.get(rest.slice(0, i));
+      if (!r) return;
+      let msg; try { msg = JSON.parse(buf.toString()); } catch (e) { return; }
+      r.onMessage(rest.slice(i + 1), msg);
+    });
+
+    const lobbyRoom = makeRoom('lobby');
+    rooms.set('lobby', lobbyRoom);
+    const lobby = Object.assign({}, lobbyRoom.api, {
+      async join(name) {
+        if (rooms.has(name)) return rooms.get(name).api;
+        const r = makeRoom(name); rooms.set(name, r);
+        return r.api;
+      },
+    });
+    window.addEventListener('pagehide', () => { for (const r of rooms.values()) r.api.leave(); });
+    // 화면으로 돌아오면 바로 "나 여기 있어요"를 다시 알림
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') for (const r of rooms.values()) client.publish(`${BASE}${r.name}/p`, JSON.stringify({ from: me, pres: r.pres }), { qos: 0 });
+    });
+    return lobby;
+  }
+
+  return {
+    available: () => typeof mqtt !== 'undefined',
+    // 처음 부를 때만 서버에 연결 (오프라인으로만 노는 사람은 연결하지 않음)
+    get() { if (!apiP) apiP = create().catch((e) => { apiP = null; throw e; }); return apiP; },
+  };
+})();
+
+</script>
   <script>/* js/net.js */
 // 온라인 방 (방장 = 게임 진행 담당, 참가자 = 화면만 받음)
 //
-// 연결 방식 두 가지를 같은 모양으로 감쌉니다.
-//   · claude.ai 아티팩트 안: room 기능 (같은 아티팩트를 연 사람끼리 실시간 메시지)
-//   · 그 밖(로컬·일반 호스팅): PeerJS (브라우저끼리 직접 연결)
+// 모든 메시지는 공개 MQTT 중계 서버(js/mqttroom.js)를 거칩니다. 기기끼리 직접 연결하지 않으므로
+// 와이파이 종류와 상관없이 웹페이지만 열리면 연결됩니다.
 // 연결(conn)은 { open, send(msg), close(), on('open'|'data'|'close', fn) } 모양입니다.
 const Net = (() => {
-  const PREFIX = 'devilsgr3-';
   const CODE_CHARS = '0123456789';
   const randomCode = () => U.range(5).map(() => CODE_CHARS[U.rnd(CODE_CHARS.length)]).join('');
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // ---------- 연결 방식 고르기 ----------
-  let roomApiP = null;
+  // 중계 서버 연결 (처음 온라인을 고를 때 한 번 연결)
   function roomApi() {
-    if (!roomApiP) {
-      roomApiP = (window.claude && typeof window.claude.use === 'function')
-        ? Promise.race([window.claude.use('room').catch(() => null), sleep(10000).then(() => null)])
-        : Promise.resolve(null);
-    }
-    return roomApiP;
+    if (typeof MqttRoom === 'undefined' || !MqttRoom.available()) return Promise.reject({ type: 'no-lib' });
+    return MqttRoom.get(); // 실패하면 { type: 'network' }
   }
-  roomApi(); // 미리 확인
+  let status = () => {};   // 대기 화면에 연결 단계를 보여 주는 함수
+  const setStatus = (f) => { status = f || (() => {}); };
 
   // 간단한 이벤트 도우미
   function emitter(obj) {
@@ -469,9 +589,9 @@ const Net = (() => {
     return obj;
   }
 
-  // ================= room 전송층 =================
+  // ================= 전송층 =================
   // 같은 이름방 안에서 1:1 링크를 만들고, 메시지를 잘게 나눠 순서대로·확인 응답과 재전송으로 보냅니다.
-  const CHUNK = 3000, WINDOW = 6, RESEND_MS = 1200;
+  const CHUNK = 3000, WINDOW = 6, RESEND_MS = 1200, GIVE_UP_MS = 60000;
   const asciiJson = (v) => JSON.stringify(v).replace(/[\u007f-￿]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 
   class RoomLink {
@@ -492,7 +612,7 @@ const Net = (() => {
       while (this.queue.length && this.unacked.size < WINDOW) {
         const c = this.queue.shift(); const s = ++this.outSeq;
         const pkt = { to: this.remote, k: 'd', s, p: c.p, e: c.e };
-        this.unacked.set(s, { pkt, at: Date.now(), tries: 1 });
+        this.unacked.set(s, { pkt, at: Date.now(), first: Date.now() });
         this.ep.raw(pkt);
       }
     }
@@ -500,8 +620,9 @@ const Net = (() => {
       const now = Date.now();
       for (const u of this.unacked.values()) {
         if (now - u.at < RESEND_MS) continue;
-        if (u.tries > 25) { this.markClosed(); return; }
-        u.at = now; u.tries++; this.ep.raw(u.pkt);
+        // 1분 동안 한 번도 확인 응답이 없을 때만 끊긴 것으로 봄
+        if (now - u.first > GIVE_UP_MS) { this.markClosed(); return; }
+        u.at = now; this.ep.raw(u.pkt);
       }
     }
     onPacket(d) {
@@ -528,10 +649,10 @@ const Net = (() => {
 
   class RoomEndpoint {
     static async open(name) {
+      status('① 온라인 서버에 연결 중...');
       const room = await roomApi();
-      if (!room) throw { type: 'no-room' };
       let named;
-      try { named = await room.join(name); } catch (e) { throw { type: e && e.code === 'not_permitted' ? 'not-permitted' : 'network' }; }
+      try { named = await room.join(name); } catch (e) { throw { type: 'network' }; }
       const ep = new RoomEndpoint(named);
       for (let i = 0; i < 50 && !ep.me; i++) { ep.findMe(); if (!ep.me) await sleep(100); }
       if (!ep.me) { ep.destroy(); throw { type: 'network' }; }
@@ -539,7 +660,7 @@ const Net = (() => {
     }
     constructor(named) {
       emitter(this);
-      this.r = named; this.links = new Map(); this.me = null; this.denied = false;
+      this.r = named; this.links = new Map(); this.me = null;
       this.unsubs = [
         named.on('m', (msg) => this.onMsg(msg)),
         named.onPeers((ch) => { this.findMe(); for (const p of ch.left) { const l = this.links.get(p.peer); if (l) l.markClosed(); } this._fire('peers', ch.peers); }),
@@ -547,7 +668,7 @@ const Net = (() => {
     }
     findMe() { const p = this.r.peers().find((x) => x.sameTab); if (p) this.me = p.peer; }
     raw(pkt) {
-      this.r.emit('m', pkt).catch((e) => { if (e && e.code === 'not_permitted' && !this.denied) { this.denied = true; this._fire('denied'); } });
+      this.r.emit('m', pkt).catch(() => {});
     }
     onMsg(msg) {
       if (msg.sameTab) return;
@@ -581,12 +702,12 @@ const Net = (() => {
       ep.raw({ to: from, k: 'welcome' });
       if (fresh) { server._fire('connection', l); setTimeout(() => l.markOpen(), 0); }
     });
-    ep.on('denied', () => server._fire('denied'));
     return server;
   }
   // 참가자: 이름방에서 방장을 찾아 인사하고 환영(welcome)을 기다립니다.
   async function roomConnect(name, timeout = 8000) {
     const ep = await RoomEndpoint.open(name);
+    status('② 방을 찾는 중...');
     const t0 = Date.now();
     let host = null;
     while (!host && Date.now() - t0 < Math.min(timeout, 6000)) {
@@ -594,52 +715,21 @@ const Net = (() => {
       if (p) host = p.peer; else await sleep(250);
     }
     if (!host) { ep.destroy(); throw { type: 'not-found' }; }
+    status('③ 방장과 연결하는 중...');
     const l = ep.link(host);
     const ok = await new Promise((resolve) => {
       let done = false;
       ep.on('welcome', (from) => { if (from === host && !done) { done = true; resolve(true); } });
-      ep.on('denied', () => { if (!done) { done = true; resolve('denied'); } });
       (async () => { while (!done && Date.now() - t0 < timeout) { ep.raw({ to: host, k: 'hello' }); await sleep(900); } if (!done) { done = true; resolve(false); } })();
     });
-    if (ok !== true) { ep.destroy(); throw { type: ok === 'denied' ? 'not-permitted' : 'timeout' }; }
+    if (!ok) { ep.destroy(); throw { type: 'timeout' }; }
     l.markOpen();
     l.on('close', () => setTimeout(() => ep.destroy(), 100));
     return { conn: l, destroy: () => ep.destroy() };
   }
 
-  // ================= PeerJS 전송층 =================
-  function makePeer(id) {
-    return new Promise((resolve, reject) => {
-      if (typeof Peer === 'undefined') return reject({ type: 'no-lib' });
-      const p = id ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
-      const onErr = (e) => { p.off('open', onOpen); p.destroy(); reject(e); };
-      const onOpen = () => { p.off('error', onErr); resolve(p); };
-      p.once('open', onOpen);
-      p.once('error', onErr);
-    });
-  }
-  async function peerListen(name) {
-    const peer = await makePeer(PREFIX + name);
-    const server = emitter({ destroy: () => { try { peer.destroy(); } catch (e) {} } });
-    peer.on('connection', (conn) => server._fire('connection', conn));
-    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
-    return server;
-  }
-  async function peerConnect(name, timeout = 8000) {
-    const peer = await makePeer(null);
-    try {
-      const conn = await new Promise((resolve, reject) => {
-        const t = setTimeout(() => reject({ type: 'timeout' }), timeout);
-        peer.on('error', (e) => { if (e.type === 'peer-unavailable') { clearTimeout(t); reject({ type: 'not-found' }); } });
-        const c = peer.connect(PREFIX + name, { reliable: true });
-        c.on('open', () => { clearTimeout(t); resolve(c); });
-      });
-      return { conn, destroy: () => { try { conn.close(); } catch (e) {} try { peer.destroy(); } catch (e) {} } };
-    } catch (e) { peer.destroy(); throw e; }
-  }
-
-  async function listen(name) { return (await roomApi()) ? roomListen(name.toLowerCase()) : peerListen(name); }
-  async function connect(name, timeout) { return (await roomApi()) ? roomConnect(name.toLowerCase(), timeout) : peerConnect(name, timeout); }
+  const listen = (name) => roomListen(name.toLowerCase());
+  const connect = (name, timeout) => roomConnect(name.toLowerCase(), timeout);
 
   // ================= 방 =================
   class RoomHost {
@@ -653,7 +743,6 @@ const Net = (() => {
         conn.on('close', () => this.onClose(conn));
         conn.on('error', () => this.onClose(conn));
       });
-      server.on('denied', () => this.onToast('이 아티팩트에서 "참여자" 이상 권한이 있어야 온라인으로 할 수 있어요.'));
     }
     lobbyMsg() { return { type: 'lobby', game: this.def.id, cap: this.cap, opts: this.opts, members: this.members.map((m) => m.name), code: this.code, isPublic: this.isPublic, fill: this.fill }; }
     broadcastLobby() {
@@ -745,21 +834,9 @@ const Net = (() => {
   // ---------- 랜덤 매칭 ----------
   const matchKey = (def, cap, opts) => [def.id, cap, ...Object.keys(opts).sort().map((k) => opts[k])].join('-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase();
 
-  // PeerJS: 정해진 대기방 번호(0~19)를 차례로 시도
-  async function peerQuickMatch(def, cap, opts, name, onStatus, fill) {
-    const key = matchKey(def, cap, opts);
-    for (let k = 0; k < 20; k++) {
-      const id = `q-${key}-${k}`;
-      onStatus && onStatus(`대기방 ${k + 1} 확인 중...`);
-      try { return { host: new RoomHost(await peerListen(id), { def, cap, opts, name, code: null, isPublic: true, fill }) }; }
-      catch (e) { if (e.type !== 'unavailable-id') throw e; }
-      try { const c = new RoomClient(); const lobby = await c.join(id, name, 5000).catch((err) => { c.destroy(); throw err; }); return { client: c, lobby }; }
-      catch (e) { /* 다음 번호 */ }
-    }
-    throw { type: 'fail' };
-  }
-  // room: 대기 중인 사람끼리 presence로 서로를 보고, 가장 먼저 온 사람이 방장이 됨
-  async function roomQuickMatch(def, cap, opts, name, onStatus, isCancelled, fill) {
+  // 대기 중인 사람끼리 presence로 서로를 보고, 가장 먼저 찾기 시작한 사람이 방장이 됨
+  async function quickMatch(def, cap, opts, name, onStatus, isCancelled, fill = true) {
+    onStatus && onStatus('① 온라인 서버에 연결 중...');
     const lobby = await roomApi();
     const key = matchKey(def, cap, opts);
     const since = Date.now();
@@ -795,34 +872,26 @@ const Net = (() => {
         onStatus && onStatus('상대 방에 들어가는 중...');
         const c = new RoomClient();
         try { const lb = await c.join(roomName, name, 7000); clear(); return { client: c, lobby: lb }; }
-        catch (e) { c.destroy(); if (e.type === 'not-permitted') throw e; await sleep(1500); }
+        catch (e) { c.destroy(); await sleep(1500); }
       }
       throw { type: 'fail' };
     } catch (e) { clear(); throw e; }
-  }
-  async function quickMatch(def, cap, opts, name, onStatus, isCancelled, fill = true) {
-    return (await roomApi()) ? roomQuickMatch(def, cap, opts, name, onStatus, isCancelled, fill) : peerQuickMatch(def, cap, opts, name, onStatus, fill);
   }
 
   function errText(e) {
     if (!e) return '알 수 없는 오류';
     return {
-      'no-lib': window.claude
-        ? '이 화면에서는 온라인에 연결할 수 없어요. claude.ai에 로그인했는지, 이 아티팩트에 초대받았는지 확인하세요.'
-        : '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하세요.',
-      'not-found': '그 코드의 방을 찾을 수 없어요.',
-      'not-permitted': '이 아티팩트에서 "참여자(Contributor)" 이상 권한이 있어야 온라인으로 할 수 있어요. 공유한 사람에게 권한을 요청하세요.',
-      timeout: '연결 시간이 초과됐어요.',
+      'no-lib': '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하고 페이지를 새로고침하세요.',
+      'not-found': '그 코드의 방을 찾을 수 없어요. 코드를 확인하고, 방장이 대기실 화면에 있는지 확인하세요.',
+      timeout: '연결 시간이 초과됐어요. 잠시 후 다시 시도하세요.',
       rejected: e.reason || '참가가 거절됐어요.',
-      network: '온라인 서버에 연결할 수 없어요.',
-      'server-error': '온라인 서버 오류예요. 잠시 후 다시 시도하세요.',
-      'browser-incompatible': '이 브라우저는 온라인 플레이를 지원하지 않아요.',
+      network: '온라인 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요.',
       cancelled: '매칭을 취소했어요.',
       fail: '방을 만들거나 찾지 못했어요. 잠시 후 다시 시도하세요.',
     }[e.type] || ('연결 오류: ' + (e.type || e.message || e));
   }
 
-  return { createRoom, joinRoom, quickMatch, errText, roomApi };
+  return { createRoom, joinRoom, quickMatch, errText, roomApi, setStatus };
 })();
 
 </script>
@@ -1017,6 +1086,8 @@ const App = (() => {
     const statusEl = h('div', { class: 'big' }, msg);
     const body = h('div', { class: 'col' });
     r.append(topbar(def.name + ' · 대기실', () => { onLeave(); lobby(def.id); }), h('div', { class: 'panel col', style: { maxWidth: '560px' } }, statusEl, body));
+    Net.setStatus((t) => { if (statusEl.isConnected) statusEl.textContent = t; });
+    addCleanup(() => Net.setStatus(null));
     return {
       status: (t) => (statusEl.textContent = t),
       body, statusEl,
