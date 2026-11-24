@@ -31,6 +31,9 @@ h2, h3 { margin: 0; }
 /* ---------- 허브 ---------- */
 .hub-head { padding: 28px 0 12px; }
 .logo { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+.hub-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.lang-pick { display: inline-flex; align-items: center; gap: 6px; }
+.lang-select { padding: 6px 8px; font-size: 14px; }
 .logo .ver { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 8px; }
 .logo .eye { color: var(--red); text-shadow: 0 0 18px var(--red); }
 .hub-head p { color: var(--muted); max-width: 720px; line-height: 1.6; }
@@ -152,10 +155,199 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 <body>
   <div id="app"></div>
   <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script>/* js/i18n.js */
+// 다국어 (한국어 / English / 中文)
+// t('키', {값}) 으로 현재 언어의 문장을 가져옵니다. 없는 키는 한국어 → 키 이름 순으로 대신 씁니다.
+// 게임 파일은 I18N.add({ ko: {...}, en: {...}, zh: {...} }) 로 자기 문장을 추가합니다.
+// 온라인에서 방장이 보내는 정보에는 문장을 넣지 않고(키·숫자만), 각자 화면에서 자기 언어로 바꿉니다.
+const I18N = (() => {
+  const LANGS = [['ko', '한국어'], ['en', 'English'], ['zh', '中文']];
+  const STR = { ko: {}, en: {}, zh: {} };
+  let lang = (() => {
+    try { const s = localStorage.getItem('dp3-lang'); if (s && STR[s]) return s; } catch (e) {}
+    const n = (navigator.language || '').toLowerCase();
+    return n.startsWith('ko') ? 'ko' : n.startsWith('zh') ? 'zh' : 'en';
+  })();
+  document.documentElement.lang = lang;
+  const listeners = [];
+  return {
+    LANGS,
+    get lang() { return lang; },
+    set(l) {
+      if (!STR[l] || l === lang) return;
+      lang = l; document.documentElement.lang = l;
+      try { localStorage.setItem('dp3-lang', l); } catch (e) {}
+      listeners.forEach((f) => f(l));
+    },
+    onChange(f) { listeners.push(f); },
+    add(dict) { for (const l in dict) Object.assign(STR[l] = STR[l] || {}, dict[l]); },
+    t(key, p) {
+      let s = STR[lang][key];
+      if (s == null) s = STR.ko[key];
+      if (s == null) return key;
+      if (p) s = s.replace(/\{(\w+)\}/g, (m, k) => (p[k] != null ? p[k] : m));
+      return s;
+    },
+    // {ko, en, zh} 객체 또는 문자열에서 현재 언어 값 고르기
+    pick(x) { return x == null ? '' : typeof x === 'string' ? x : (x[lang] != null ? x[lang] : x.ko); },
+  };
+})();
+// 전역 이름 T / L (지역 변수 t 와 겹치지 않도록 대문자)
+const T = (k, p) => I18N.t(k, p);
+const L = (x) => I18N.pick(x);
+
+I18N.add({
+  ko: {
+    'app.title': '데블스 게임룸', 'hub.players': '1~{n}명', 'hub.player1': '1명',
+    'top.back': '← 목록', 'top.leave': '← 나가기', 'top.rules': '규칙', 'lang': '언어',
+    'lobby.online': '🌐 온라인', 'lobby.offline': '📺 오프라인', 'lobby.bots': '🤖 봇과 대결',
+    'lobby.capacity': '정원', 'lobby.fill': '부족한 인원은 봇으로 채우기',
+    'lobby.noteFill': '사람이 {n}명보다 적으면 방장이 시작할 때 빈자리를 봇이 채웁니다.',
+    'lobby.noteNoFill': '봇 없이 사람끼리만 합니다. 최소 {n}명이 모여야 시작할 수 있어요.',
+    'lobby.nickname': '닉네임', 'lobby.match': '🎲 랜덤 매칭', 'lobby.create': '🏠 방 만들기',
+    'lobby.matchNote': '랜덤 매칭은 같은 게임·정원·설정을 고른 사람끼리 연결됩니다.',
+    'lobby.codePh': '방 코드 (숫자 5자리)', 'lobby.join': '코드로 참가', 'lobby.people': '사람 수', 'lobby.playerN': '플레이어 {n}',
+    'lobby.minNeeded': '이 게임은 최소 {n}명이 필요해요. 사람을 늘리거나 봇으로 채우기를 켜세요.',
+    'lobby.botsFill': '빈자리 {b}개는 봇이 채웁니다 (총 {t}명).', 'lobby.total': '총 {n}명이 한 화면에서 같이 합니다.',
+    'lobby.curtainNote': '비밀 입력이 필요한 단계에서는 차례마다 화면을 가려 줍니다.',
+    'lobby.start': '시작', 'lobby.botCount': '봇 수', 'lobby.meBots': '나 + 봇 {b}명 (총 {t}명)', 'lobby.name': '이름', 'lobby.me': '나',
+    'lobby.settings': '게임 설정', 'lobby.enterCode': '숫자 5자리 방 코드를 입력하세요', 'lobby.defaultNick': '플레이어',
+    'wait.title': '{game} · 대기실', 'wait.connecting': '연결 중...', 'wait.joining': '방 {code}에 참가 중...', 'wait.back': '돌아가기',
+    'wait.members': '참가자 {n} / {cap}', 'wait.waiting': '대기 중', 'wait.created': '방을 만들었어요', 'wait.tellCode': '친구에게 이 코드를 알려 주세요',
+    'wait.matchWaiting': '랜덤 매칭 대기 중... 사람이 다 모이면 자동으로 시작해요', 'wait.start': '시작',
+    'wait.startBots': '지금 시작 (빈자리 {n}개는 봇)', 'wait.startN': '지금 {n}명으로 시작', 'wait.needMin': '최소 {n}명이 모여야 시작할 수 있어요',
+    'wait.fillOn': '부족한 인원은 봇으로 채웁니다.', 'wait.fillOff': '봇 없이 사람끼리만 합니다.',
+    'wait.clientRoom': '방 {code} — 방장이 시작하기를 기다리는 중', 'wait.clientMatch': '랜덤 매칭 대기 중... 사람이 다 모이면 시작해요',
+    'wait.info': '{game} · 정원 {cap}명 · {fill}', 'wait.infoFill': '부족한 인원은 봇으로 채움', 'wait.infoNoFill': '사람끼리만',
+    'wait.copied': '코드를 복사했어요', 'wait.unknownGame': '이 앱에 없는 게임의 방이에요.', 'wait.hostClosed': '방장이 방을 닫았어요.',
+    'wait.diag': '{v} · 서버 {s}', 'wait.diagNone': '연결 전',
+    'play.turn': '▶ {name} 차례', 'play.curtainTurn': '{name} 차례', 'play.curtainNote': '다른 사람은 화면을 보지 마세요.', 'play.ready': '준비됐어요',
+    'play.readyTitle': '{name} 님 준비', 'play.waitOthers': '다른 플레이어를 기다리는 중...', 'play.startIn': '시작까지 {s}', 'play.timeLeft': '남은 시간',
+    'play.progress': '진행 상황', 'play.scores': '점수', 'play.log': '기록', 'play.doneWait': '완성! 다른 플레이어를 기다리는 중', 'play.timeout': '시간 초과',
+    'res.first': '🏆 1위!', 'res.rank': '{n}위', 'res.rankCol': '{n}위', 'res.over': '게임 종료', 'res.again': '다시 하기', 'res.close': '닫기', 'res.leave': '나가기',
+    'res.waitHost': '방장이 다시 시작하면 새 게임이 열립니다.', 'res.disconnected': '연결 끊김', 'res.disconnectedBody': '방장과의 연결이 끊어졌어요.',
+    'rules.title': '{game} 규칙', 'ok': '확인', 'err.generic': '오류가 발생했어요: {m}',
+    'score.pts': '{v}점', 'score.wins': '{v}승', 'score.pen': '벌점 {v}', 'score.cells': '{v}칸', 'score.sec': '{v}초', 'score.fail': '실패',
+    'note.prison': '원작 감옥 매치에서는 하위권이 탈락합니다.', 'note.lastOut': '원작에서는 최하위가 탈락합니다.',
+    'net.s1': '① 온라인 서버에 연결 중...', 'net.s2': '② 방을 찾는 중...', 'net.s3': '③ 방장과 연결하는 중...',
+    'net.s3nudge': '③ 방장과 연결하는 중... 방장에게 게임 화면을 켜 달라고 하세요',
+    'net.matchCheck': '같은 게임을 찾는 사람을 확인하는 중...', 'net.matchWaitOthers': '다른 사람을 기다리는 중...', 'net.matchEnter': '상대 방에 들어가는 중...',
+    'net.leftBot': '{name} 님이 나가서 봇이 대신합니다',
+    'reject.started': '이미 게임이 시작된 방이에요.', 'reject.full': '방이 가득 찼어요.',
+    'err.no-lib': '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하고 페이지를 새로고침하세요.',
+    'err.not-found': '그 코드의 방을 찾을 수 없어요. 코드를 확인하고, 방장이 대기실 화면에 있는지 확인하세요.',
+    'err.timeout': '연결 시간이 초과됐어요. 잠시 후 다시 시도하세요.',
+    'err.host-asleep': '방은 있는데 방장이 응답하지 않아요. 방장이 게임 대기실 화면을 켜 두고 있는지 확인한 뒤 다시 참가하세요.',
+    'err.rejected': '참가가 거절됐어요.', 'err.network': '온라인 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요.',
+    'err.cancelled': '매칭을 취소했어요.', 'err.fail': '방을 만들거나 찾지 못했어요. 잠시 후 다시 시도하세요.',
+    'err.unknown': '알 수 없는 오류', 'err.other': '연결 오류: {m}',
+    'poker.cat0': '하이카드', 'poker.cat1': '원페어', 'poker.cat2': '투페어', 'poker.cat3': '트리플', 'poker.cat4': '스트레이트',
+    'poker.cat5': '플러시', 'poker.cat6': '풀하우스', 'poker.cat7': '포카드', 'poker.cat8': '스트레이트 플러시', 'poker.cat9': '로열 플러시',
+  },
+  en: {
+    'app.title': "Devil's Game Room", 'hub.players': '1–{n} players', 'hub.player1': '1 player',
+    'top.back': '← Games', 'top.leave': '← Leave', 'top.rules': 'Rules', 'lang': 'Language',
+    'lobby.online': '🌐 Online', 'lobby.offline': '📺 Offline', 'lobby.bots': '🤖 vs Bots',
+    'lobby.capacity': 'Room size', 'lobby.fill': 'Fill empty seats with bots',
+    'lobby.noteFill': 'If fewer than {n} people join, bots take the empty seats when the host starts.',
+    'lobby.noteNoFill': 'People only, no bots. At least {n} players are needed to start.',
+    'lobby.nickname': 'Nickname', 'lobby.match': '🎲 Random match', 'lobby.create': '🏠 Create room',
+    'lobby.matchNote': 'Random match pairs you with people who picked the same game, room size and settings.',
+    'lobby.codePh': 'Room code (5 digits)', 'lobby.join': 'Join with code', 'lobby.people': 'Players', 'lobby.playerN': 'Player {n}',
+    'lobby.minNeeded': 'This game needs at least {n} players. Add players or turn on bot fill.',
+    'lobby.botsFill': 'Bots fill {b} empty seat(s) ({t} players total).', 'lobby.total': '{n} players share one screen.',
+    'lobby.curtainNote': 'When a step needs secret input, the screen is covered between turns.',
+    'lobby.start': 'Start', 'lobby.botCount': 'Bots', 'lobby.meBots': 'You + {b} bot(s) ({t} players)', 'lobby.name': 'Name', 'lobby.me': 'Me',
+    'lobby.settings': 'Game settings', 'lobby.enterCode': 'Enter the 5-digit room code', 'lobby.defaultNick': 'Player',
+    'wait.title': '{game} · Waiting room', 'wait.connecting': 'Connecting...', 'wait.joining': 'Joining room {code}...', 'wait.back': 'Back',
+    'wait.members': 'Players {n} / {cap}', 'wait.waiting': 'Waiting', 'wait.created': 'Room created', 'wait.tellCode': 'Share this code with your friends',
+    'wait.matchWaiting': 'Waiting for a random match... starts automatically when the room is full', 'wait.start': 'Start',
+    'wait.startBots': 'Start now ({n} bot seat(s))', 'wait.startN': 'Start now with {n}', 'wait.needMin': 'Need at least {n} players to start',
+    'wait.fillOn': 'Empty seats will be filled with bots.', 'wait.fillOff': 'People only, no bots.',
+    'wait.clientRoom': 'Room {code} — waiting for the host to start', 'wait.clientMatch': 'Waiting for a random match... starts when the room is full',
+    'wait.info': '{game} · {cap} seats · {fill}', 'wait.infoFill': 'bots fill empty seats', 'wait.infoNoFill': 'people only',
+    'wait.copied': 'Code copied', 'wait.unknownGame': "This room is for a game this app doesn't have.", 'wait.hostClosed': 'The host closed the room.',
+    'wait.diag': '{v} · servers {s}', 'wait.diagNone': 'not connected',
+    'play.turn': "▶ {name}'s turn", 'play.curtainTurn': "{name}'s turn", 'play.curtainNote': "Everyone else, don't look at the screen.", 'play.ready': "I'm ready",
+    'play.readyTitle': '{name}, get ready', 'play.waitOthers': 'Waiting for other players...', 'play.startIn': 'Starting in {s}', 'play.timeLeft': 'Time left',
+    'play.progress': 'Progress', 'play.scores': 'Scores', 'play.log': 'Log', 'play.doneWait': 'Solved! Waiting for other players', 'play.timeout': 'Time up',
+    'res.first': '🏆 1st place!', 'res.rank': 'Place #{n}', 'res.rankCol': '#{n}', 'res.over': 'Game over', 'res.again': 'Play again', 'res.close': 'Close', 'res.leave': 'Leave',
+    'res.waitHost': 'A new game opens when the host restarts.', 'res.disconnected': 'Disconnected', 'res.disconnectedBody': 'Lost the connection to the host.',
+    'rules.title': '{game} rules', 'ok': 'OK', 'err.generic': 'Something went wrong: {m}',
+    'score.pts': '{v} pts', 'score.wins': '{v} wins', 'score.pen': '{v} penalty', 'score.cells': '{v} cells', 'score.sec': '{v}s', 'score.fail': 'Failed',
+    'note.prison': 'In the show, the lowest players are eliminated in prison matches.', 'note.lastOut': 'In the show, last place is eliminated.',
+    'net.s1': '① Connecting to the online server...', 'net.s2': '② Looking for the room...', 'net.s3': '③ Connecting to the host...',
+    'net.s3nudge': '③ Connecting to the host... ask the host to keep the game screen open',
+    'net.matchCheck': 'Looking for players who chose the same game...', 'net.matchWaitOthers': 'Waiting for others...', 'net.matchEnter': "Entering the other player's room...",
+    'net.leftBot': '{name} left — a bot takes over',
+    'reject.started': 'This game has already started.', 'reject.full': 'The room is full.',
+    'err.no-lib': "Couldn't load the online module. Check your internet connection and reload the page.",
+    'err.not-found': "Couldn't find a room with that code. Check the code and make sure the host is on the waiting room screen.",
+    'err.timeout': 'The connection timed out. Try again in a moment.',
+    'err.host-asleep': "The room exists but the host isn't responding. Make sure the host keeps the waiting room screen open, then join again.",
+    'err.rejected': 'Your request to join was declined.', 'err.network': "Can't reach the online server. Check your internet connection.",
+    'err.cancelled': 'Matching cancelled.', 'err.fail': "Couldn't create or find a room. Try again in a moment.",
+    'err.unknown': 'Unknown error', 'err.other': 'Connection error: {m}',
+    'poker.cat0': 'High card', 'poker.cat1': 'One pair', 'poker.cat2': 'Two pair', 'poker.cat3': 'Three of a kind', 'poker.cat4': 'Straight',
+    'poker.cat5': 'Flush', 'poker.cat6': 'Full house', 'poker.cat7': 'Four of a kind', 'poker.cat8': 'Straight flush', 'poker.cat9': 'Royal flush',
+  },
+  zh: {
+    'app.title': '恶魔游戏室', 'hub.players': '1~{n}人', 'hub.player1': '1人',
+    'top.back': '← 列表', 'top.leave': '← 离开', 'top.rules': '规则', 'lang': '语言',
+    'lobby.online': '🌐 线上', 'lobby.offline': '📺 线下', 'lobby.bots': '🤖 人机对战',
+    'lobby.capacity': '人数上限', 'lobby.fill': '人数不足时用机器人补位',
+    'lobby.noteFill': '人数少于 {n} 人时，房主开始游戏后空位由机器人补上。',
+    'lobby.noteNoFill': '只有真人玩家，不加机器人。至少 {n} 人才能开始。',
+    'lobby.nickname': '昵称', 'lobby.match': '🎲 随机匹配', 'lobby.create': '🏠 创建房间',
+    'lobby.matchNote': '随机匹配会把选择相同游戏、人数和设置的玩家配在一起。',
+    'lobby.codePh': '房间码（5位数字）', 'lobby.join': '用房间码加入', 'lobby.people': '人数', 'lobby.playerN': '玩家 {n}',
+    'lobby.minNeeded': '这个游戏至少需要 {n} 人。请增加人数或开启机器人补位。',
+    'lobby.botsFill': '{b} 个空位由机器人补上（共 {t} 人）。', 'lobby.total': '共 {n} 人在同一个画面上玩。',
+    'lobby.curtainNote': '需要秘密操作的步骤，每轮都会遮住画面。',
+    'lobby.start': '开始', 'lobby.botCount': '机器人数量', 'lobby.meBots': '你 + {b} 个机器人（共 {t} 人）', 'lobby.name': '名字', 'lobby.me': '我',
+    'lobby.settings': '游戏设置', 'lobby.enterCode': '请输入5位数字房间码', 'lobby.defaultNick': '玩家',
+    'wait.title': '{game} · 等待室', 'wait.connecting': '连接中...', 'wait.joining': '正在加入房间 {code}...', 'wait.back': '返回',
+    'wait.members': '参与者 {n} / {cap}', 'wait.waiting': '等待中', 'wait.created': '房间已创建', 'wait.tellCode': '把这个房间码告诉朋友',
+    'wait.matchWaiting': '随机匹配中……人齐后自动开始', 'wait.start': '开始',
+    'wait.startBots': '现在开始（{n} 个空位用机器人）', 'wait.startN': '现在以 {n} 人开始', 'wait.needMin': '至少 {n} 人才能开始',
+    'wait.fillOn': '空位由机器人补上。', 'wait.fillOff': '只有真人，不加机器人。',
+    'wait.clientRoom': '房间 {code} — 等待房主开始', 'wait.clientMatch': '随机匹配中……人齐后开始',
+    'wait.info': '{game} · 上限 {cap} 人 · {fill}', 'wait.infoFill': '机器人补位', 'wait.infoNoFill': '仅真人',
+    'wait.copied': '已复制房间码', 'wait.unknownGame': '这个房间的游戏本应用里没有。', 'wait.hostClosed': '房主关闭了房间。',
+    'wait.diag': '{v} · 服务器 {s}', 'wait.diagNone': '未连接',
+    'play.turn': '▶ 轮到 {name}', 'play.curtainTurn': '轮到 {name}', 'play.curtainNote': '其他人请不要看屏幕。', 'play.ready': '准备好了',
+    'play.readyTitle': '{name}，请准备', 'play.waitOthers': '等待其他玩家...', 'play.startIn': '{s} 秒后开始', 'play.timeLeft': '剩余时间',
+    'play.progress': '进度', 'play.scores': '分数', 'play.log': '记录', 'play.doneWait': '完成！等待其他玩家', 'play.timeout': '时间到',
+    'res.first': '🏆 第1名！', 'res.rank': '第{n}名', 'res.rankCol': '第{n}名', 'res.over': '游戏结束', 'res.again': '再来一局', 'res.close': '关闭', 'res.leave': '离开',
+    'res.waitHost': '房主重新开始后会开启新的一局。', 'res.disconnected': '连接断开', 'res.disconnectedBody': '与房主的连接已断开。',
+    'rules.title': '{game} 规则', 'ok': '确定', 'err.generic': '出错了：{m}',
+    'score.pts': '{v}分', 'score.wins': '{v}胜', 'score.pen': '罚分 {v}', 'score.cells': '{v}格', 'score.sec': '{v}秒', 'score.fail': '失败',
+    'note.prison': '原作的监狱赛中，排名靠后的玩家会被淘汰。', 'note.lastOut': '原作中最后一名会被淘汰。',
+    'net.s1': '① 正在连接线上服务器...', 'net.s2': '② 正在寻找房间...', 'net.s3': '③ 正在连接房主...',
+    'net.s3nudge': '③ 正在连接房主……请让房主打开游戏画面',
+    'net.matchCheck': '正在寻找选择同一游戏的玩家...', 'net.matchWaitOthers': '等待其他人...', 'net.matchEnter': '正在进入对方的房间...',
+    'net.leftBot': '{name} 已离开，由机器人接替',
+    'reject.started': '这个房间的游戏已经开始了。', 'reject.full': '房间已满。',
+    'err.no-lib': '无法加载联机模块。请检查网络连接后刷新页面。',
+    'err.not-found': '找不到这个房间码的房间。请检查房间码，并确认房主停留在等待室画面。',
+    'err.timeout': '连接超时，请稍后再试。',
+    'err.host-asleep': '房间存在，但房主没有回应。请确认房主一直开着等待室画面，然后重新加入。',
+    'err.rejected': '加入请求被拒绝。', 'err.network': '无法连接线上服务器。请检查网络连接。',
+    'err.cancelled': '已取消匹配。', 'err.fail': '无法创建或找到房间，请稍后再试。',
+    'err.unknown': '未知错误', 'err.other': '连接错误：{m}',
+    'poker.cat0': '高牌', 'poker.cat1': '一对', 'poker.cat2': '两对', 'poker.cat3': '三条', 'poker.cat4': '顺子',
+    'poker.cat5': '同花', 'poker.cat6': '葫芦', 'poker.cat7': '四条', 'poker.cat8': '同花顺', 'poker.cat9': '皇家同花顺',
+  },
+});
+
+// 결과 점수 {k, v} → 문장
+const scoreText = (s) => (s && typeof s === 'object' ? T('score.' + s.k, { v: s.v }) : String(s ?? ''));
+
+</script>
   <script>/* js/util.js */
 // 공용 유틸리티
 // 화면에 보이는 버전. 업데이트할 때마다 올려서, 서로 같은 버전인지 대기실에서 확인할 수 있게 합니다.
-const APP_VERSION = 'v6';
+const APP_VERSION = 'v7';
 const U = {
   rnd: (n) => Math.floor(Math.random() * n),
   rint: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -325,7 +517,7 @@ const UIx = {
     return (m, me) => {
       const n = m ? m.n : 0;
       if (!(me in last)) { last[me] = n; return; }
-      if (n !== last[me]) { last[me] = n; if (m) ctx.toast(m.text); }
+      if (n !== last[me]) { last[me] = n; if (m) ctx.toast(m.key ? T(m.key, m.p) : m.text); }
     };
   },
   rankBy(seats, keyFn) {
@@ -421,7 +613,7 @@ class GameHost {
   seatToBot(i) {
     const s = this.seats[i];
     s.bot = true; s.conn = null;
-    s.name += ' (봇)';
+    s.name += ' 🤖';
     this.changed();
   }
   destroy() {
@@ -437,7 +629,8 @@ function seatCount(def, humans) {
   if (humans <= 1) return p.soloSeats || 1;
   return Math.max(humans, p.minSeats || 1);
 }
-function botName(i) { return '봇 ' + (i + 1); }
+// 봇 이름은 온라인에서 모두에게 똑같이 보이므로 언어와 상관없는 모양으로
+function botName(i) { return '🤖 ' + (i + 1); }
 
 </script>
   <script>/* js/mqttroom.js */
@@ -677,7 +870,7 @@ const Net = (() => {
 
   class RoomEndpoint {
     static async open(name) {
-      status('① 온라인 서버에 연결 중...');
+      status(T('net.s1'));
       const room = await roomApi();
       let named;
       try { named = await room.join(name); } catch (e) { throw { type: 'network' }; }
@@ -747,7 +940,7 @@ const Net = (() => {
   // timeout: 방장이 응답할 때까지 기다리는 최대 시간 (방장 화면이 잠시 꺼져 있을 수 있어 넉넉하게)
   async function roomConnect(name, timeout = 60000) {
     const ep = await RoomEndpoint.open(name);
-    status('② 방을 찾는 중...');
+    status(T('net.s2'));
     const t0 = Date.now();
     let host = null;
     while (!host && Date.now() - t0 < Math.min(timeout, 10000)) {
@@ -756,7 +949,7 @@ const Net = (() => {
       if (p) host = p.peer; else if (mark) host = mark.peer; else await sleep(250);
     }
     if (!host) { ep.destroy(); throw { type: 'not-found' }; }
-    status('③ 방장과 연결하는 중...');
+    status(T('net.s3'));
     const l = ep.link(host);
     const ok = await new Promise((resolve) => {
       let done = false, nudged = false;
@@ -767,7 +960,7 @@ const Net = (() => {
           const p = ep.peers().find((x) => !x.sameTab && x.presence && x.presence.h);
           if (p && p.peer !== host) { host = p.peer; }
           ep.raw({ to: host, k: 'hello' });
-          if (!nudged && Date.now() - t0 > 8000) { nudged = true; status('③ 방장과 연결하는 중... 방장에게 게임 화면을 켜 달라고 하세요'); }
+          if (!nudged && Date.now() - t0 > 8000) { nudged = true; status(T('net.s3nudge')); }
           await sleep(900);
         }
         if (!done) { done = true; resolve(false); }
@@ -805,9 +998,9 @@ const Net = (() => {
       if (!msg || typeof msg !== 'object') return;
       if (msg.type === 'join') {
         if (this.members.some((m) => m.conn === conn)) return;
-        if (this.game) return this.reject(conn, '이미 게임이 시작된 방이에요.');
-        if (this.members.length >= this.cap) return this.reject(conn, '방이 가득 찼어요.');
-        let name = String(msg.name || '플레이어').slice(0, 12);
+        if (this.game) return this.reject(conn, 'started');
+        if (this.members.length >= this.cap) return this.reject(conn, 'full');
+        let name = String(msg.name || 'Player').slice(0, 12);
         while (this.members.some((m) => m.name === name)) name += "'";
         this.members.push({ name, conn });
         this.broadcastLobby();
@@ -821,7 +1014,7 @@ const Net = (() => {
     onClose(conn) {
       if (this.game) {
         const i = this.game.seats.findIndex((s) => s.conn === conn);
-        if (i >= 0 && !this.game.seats[i].bot) { this.onToast(`${this.game.seats[i].name} 님이 나가서 봇이 대신합니다`); this.game.seatToBot(i); }
+        if (i >= 0 && !this.game.seats[i].bot) { this.onToast(T('net.leftBot', { name: this.game.seats[i].name })); this.game.seatToBot(i); }
         return;
       }
       const k = this.members.findIndex((m) => m.conn === conn);
@@ -888,7 +1081,7 @@ const Net = (() => {
 
   // 대기 중인 사람끼리 presence로 서로를 보고, 가장 먼저 찾기 시작한 사람이 방장이 됨
   async function quickMatch(def, cap, opts, name, onStatus, isCancelled, fill = true) {
-    onStatus && onStatus('① 온라인 서버에 연결 중...');
+    onStatus && onStatus(T('net.s1'));
     const lobby = await roomApi();
     const key = matchKey(def, cap, opts);
     const since = Date.now();
@@ -896,7 +1089,7 @@ const Net = (() => {
     const clear = () => lobby.presence({ q: null, since: null }).catch(() => {});
     const searchers = () => lobby.peers().filter((p) => p.presence && p.presence.q === key)
       .sort((a, b) => (a.presence.since - b.presence.since) || (a.peer < b.peer ? -1 : 1));
-    onStatus && onStatus('같은 게임을 찾는 사람을 확인하는 중...');
+    onStatus && onStatus(T('net.matchCheck'));
     await sleep(1800); // 다른 사람의 presence가 도착할 시간
     try {
       for (let tries = 0; tries < 240; tries++) {
@@ -905,7 +1098,7 @@ const Net = (() => {
         if (!leader) { await sleep(500); continue; }
         const roomName = ('q-' + leader.peer).toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 48);
         if (leader.sameTab) {
-          onStatus && onStatus('다른 사람을 기다리는 중...');
+          onStatus && onStatus(T('net.matchWaitOthers'));
           const host = new RoomHost(await roomListen(roomName), { def, cap, opts, name, code: null, isPublic: true, fill });
           host.onStarted = clear;
           // 나보다 먼저 찾기 시작한 사람이 보이고 내 방이 비어 있으면, 방을 접고 그쪽으로 다시 매칭
@@ -921,7 +1114,7 @@ const Net = (() => {
           }, 1000);
           return { host };
         }
-        onStatus && onStatus('상대 방에 들어가는 중...');
+        onStatus && onStatus(T('net.matchEnter'));
         const c = new RoomClient();
         try { const lb = await c.join(roomName, name, 7000); clear(); return { client: c, lobby: lb }; }
         catch (e) { c.destroy(); await sleep(1500); }
@@ -931,17 +1124,10 @@ const Net = (() => {
   }
 
   function errText(e) {
-    if (!e) return '알 수 없는 오류';
-    return {
-      'no-lib': '온라인 모듈을 불러오지 못했어요. 인터넷 연결을 확인하고 페이지를 새로고침하세요.',
-      'not-found': '그 코드의 방을 찾을 수 없어요. 코드를 확인하고, 방장이 대기실 화면에 있는지 확인하세요.',
-      timeout: '연결 시간이 초과됐어요. 잠시 후 다시 시도하세요.',
-      'host-asleep': '방은 있는데 방장이 응답하지 않아요. 방장이 게임 대기실 화면을 켜 두고 있는지 확인한 뒤 다시 참가하세요.',
-      rejected: e.reason || '참가가 거절됐어요.',
-      network: '온라인 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요.',
-      cancelled: '매칭을 취소했어요.',
-      fail: '방을 만들거나 찾지 못했어요. 잠시 후 다시 시도하세요.',
-    }[e.type] || ('연결 오류: ' + (e.type || e.message || e));
+    if (!e) return T('err.unknown');
+    if (e.type === 'rejected') return e.reason ? T('reject.' + e.reason) : T('err.rejected');
+    if (['no-lib', 'not-found', 'timeout', 'host-asleep', 'network', 'cancelled', 'fail'].includes(e.type)) return T('err.' + e.type);
+    return T('err.other', { m: e.type || e.message || e });
   }
 
   return { createRoom, joinRoom, quickMatch, errText, roomApi, setStatus };
@@ -955,11 +1141,13 @@ function registerGame(def) { GAMES.push(def); }
 
 const App = (() => {
   let cleanupFns = [];
+  let screen = null; // 언어를 바꿀 때 다시 그릴 화면 { fn, arg }
   const addCleanup = (f) => cleanupFns.push(f);
   function unmount() {
     for (const f of cleanupFns) { try { f(); } catch (e) { console.error(e); } }
     cleanupFns = [];
     closeModal();
+    screen = null;
   }
   const root = () => document.getElementById('app');
   const store = {
@@ -967,24 +1155,37 @@ const App = (() => {
     set(k, v) { try { localStorage.setItem('dp3-' + k, v); } catch (e) {} },
   };
 
+  function langPicker() {
+    const sel = h('select', { class: 'lang-select', 'aria-label': T('lang'), onchange: (e) => I18N.set(e.target.value) },
+      ...I18N.LANGS.map(([k, label]) => h('option', { value: k, selected: k === I18N.lang }, label)));
+    return h('label', { class: 'lang-pick' }, h('span', {}, '🌐'), sel);
+  }
+  I18N.onChange(() => { document.title = T('app.title'); if (screen) screen.fn(screen.arg); });
+
   // ---------------- 목록 ----------------
   function hub() {
     unmount();
     const r = root(); r.innerHTML = '';
+    document.title = T('app.title');
     const row = h('div', { class: 'cards' });
     for (const g of GAMES) row.append(h('button', { class: 'gcard', onclick: () => lobby(g.id) },
-      h('div', { class: 'gname' }, g.name),
-      h('div', { class: 'gen' }, g.en || ''),
-      h('div', { class: 'gsum' }, g.summary || ''),
-      h('div', { class: 'gplayers' }, '👤 ' + (g.players.max > 1 ? `1~${g.players.max}명` : '1명'))));
-    r.append(h('header', { class: 'hub-head' }, h('div', { class: 'logo' }, h('span', { class: 'eye' }, '◉'), ' 데블스 게임룸', h('small', { class: 'ver' }, APP_VERSION))), row);
+      h('div', { class: 'gname' }, L(g.name)),
+      h('div', { class: 'gen' }, I18N.lang === 'en' ? '' : g.en || ''),
+      h('div', { class: 'gsum' }, L(g.summary)),
+      h('div', { class: 'gplayers' }, '👤 ' + (g.players.max > 1 ? T('hub.players', { n: g.players.max }) : T('hub.player1')))));
+    r.append(h('header', { class: 'hub-head' },
+      h('div', { class: 'logo' }, h('span', { class: 'eye' }, '◉'), ' ' + T('app.title'), h('small', { class: 'ver' }, APP_VERSION)),
+      langPicker()), row);
+    screen = { fn: hub };
   }
 
-  function topbar(title, onBack, def) {
+  function topbar(title, onBack, def, withLang) {
     return h('div', { class: 'topbar' },
-      h('button', { class: 'btn ghost', onclick: onBack }, '← ' + (onBack === hub ? '목록' : '나가기')),
+      h('button', { class: 'btn ghost', onclick: onBack }, onBack === hub ? T('top.back') : T('top.leave')),
       h('div', { class: 'ttl' }, title),
-      def ? h('div', { class: 'tb-right' }, h('button', { class: 'btn ghost', onclick: () => showRules(def) }, '규칙')) : null);
+      h('div', { class: 'tb-right' },
+        withLang ? langPicker() : null,
+        def ? h('button', { class: 'btn ghost', onclick: () => showRules(def) }, T('top.rules')) : null));
   }
 
   // ---------------- 로비 ----------------
@@ -1010,13 +1211,14 @@ const App = (() => {
     };
     const RANGE = { online: [2, P.max], offline: [2, P.max], bots: [minBots, maxBots] };
 
-    const nick = h('input', { type: 'text', maxlength: 12, value: store.get('nick', ''), placeholder: '닉네임', style: { width: '160px' } });
-    const codeIn = h('input', { type: 'text', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: 5, placeholder: '방 코드 (숫자 5자리)', style: { width: '170px', letterSpacing: '3px' } });
+    const nick = h('input', { type: 'text', maxlength: 12, value: store.get('nick', ''), placeholder: T('lobby.nickname'), style: { width: '160px' } });
+    const codeIn = h('input', { type: 'text', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: 5, placeholder: T('lobby.codePh'), style: { width: '190px', letterSpacing: '3px' } });
     codeIn.addEventListener('input', () => { const v = codeIn.value.replace(/\D/g, '').slice(0, 5); if (v !== codeIn.value) codeIn.value = v; });
     const optBox = h('div', { class: 'col' });
     const tabs = h('div', { class: 'mode-tabs' });
     const body = h('div', { class: 'panel col mode-body' });
     const localNames = (() => { try { return JSON.parse(store.get('lnames', '[]')) || []; } catch (e) { return []; } })();
+    const small = (txt, cls = 'muted') => h('div', { class: cls, style: { fontSize: '13px' } }, txt);
 
     function stepper(key, label) {
       const [lo, hi] = RANGE[key];
@@ -1031,71 +1233,70 @@ const App = (() => {
       const cb = h('input', { type: 'checkbox', id: 'fill-bots' });
       cb.checked = fill;
       cb.onchange = () => { fill = cb.checked; store.set('fill', fill ? '1' : '0'); renderBody(); };
-      return h('label', { class: 'fill-toggle', for: 'fill-bots' }, cb, h('span', {}, '부족한 인원은 봇으로 채우기'));
+      return h('label', { class: 'fill-toggle', for: 'fill-bots' }, cb, h('span', {}, T('lobby.fill')));
     }
     function renderTabs() {
       tabs.innerHTML = '';
-      for (const [k, label] of [['online', '🌐 온라인'], ['offline', '📺 오프라인'], ['bots', '🤖 봇과 대결']]) {
-        tabs.append(h('button', { class: 'mode-tab' + (mode === k ? ' on' : ''), onclick: () => { mode = k; store.set('mode-' + id, k); renderTabs(); renderBody(); } }, label));
+      for (const k of ['online', 'offline', 'bots']) {
+        tabs.append(h('button', { class: 'mode-tab' + (mode === k ? ' on' : ''), onclick: () => { mode = k; store.set('mode-' + id, k); renderTabs(); renderBody(); } }, T('lobby.' + k)));
       }
     }
+    const defaultName = (i) => T('lobby.playerN', { n: i + 1 });
     function renderBody() {
       body.innerHTML = '';
       if (mode === 'online') {
         const n = cnt.online;
-        const note = fill ? `사람이 ${n}명보다 적으면 방장이 시작할 때 빈자리를 봇이 채웁니다.`
-          : `봇 없이 사람끼리만 합니다. 최소 ${Math.max(2, minSeats)}명이 모여야 시작할 수 있어요.`;
-        body.append(stepper('online', '정원'), fillToggle(), h('div', { class: 'muted', style: { fontSize: '13px' } }, note),
-          h('div', { class: 'row' }, h('span', { class: 'muted' }, '닉네임'), nick),
+        const note = fill ? T('lobby.noteFill', { n }) : T('lobby.noteNoFill', { n: Math.max(2, minSeats) });
+        body.append(stepper('online', T('lobby.capacity')), fillToggle(), small(note),
+          h('div', { class: 'row' }, h('span', { class: 'muted' }, T('lobby.nickname')), nick),
           h('div', { class: 'row' },
-            h('button', { class: 'btn primary', onclick: () => goOnline('match') }, '🎲 랜덤 매칭'),
-            h('button', { class: 'btn', onclick: () => goOnline('create') }, '🏠 방 만들기')),
-          h('div', { class: 'muted', style: { fontSize: '13px' } }, '랜덤 매칭은 같은 게임·정원·설정을 고른 사람끼리 연결됩니다.'),
-          h('div', { class: 'row', style: { marginTop: '6px' } }, codeIn, h('button', { class: 'btn', onclick: joinByCode }, '코드로 참가')));
+            h('button', { class: 'btn primary', onclick: () => goOnline('match') }, T('lobby.match')),
+            h('button', { class: 'btn', onclick: () => goOnline('create') }, T('lobby.create'))),
+          small(T('lobby.matchNote')),
+          h('div', { class: 'row', style: { marginTop: '6px' } }, codeIn, h('button', { class: 'btn', onclick: joinByCode }, T('lobby.join'))));
       } else if (mode === 'offline') {
         const n = cnt.offline;
         const bots = fill ? Math.max(0, minSeats - n) : 0;
         const short = !fill && n < minSeats;
         const names = h('div', { class: 'col' });
         for (let i = 0; i < n; i++) {
-          const inp = h('input', { type: 'text', maxlength: 12, value: localNames[i] || `플레이어 ${i + 1}`, style: { width: '150px' } });
+          const inp = h('input', { type: 'text', maxlength: 12, value: localNames[i] || defaultName(i), style: { width: '150px' } });
           inp.oninput = () => { localNames[i] = inp.value; store.set('lnames', JSON.stringify(localNames)); };
           names.append(inp);
         }
-        const note = short ? `이 게임은 최소 ${minSeats}명이 필요해요. 사람을 늘리거나 봇으로 채우기를 켜세요.`
-          : bots ? `빈자리 ${bots}개는 봇이 채웁니다 (총 ${n + bots}명).` : `총 ${n}명이 한 화면에서 같이 합니다.`;
-        body.append(stepper('offline', '사람 수'), fillToggle(),
-          h('div', { class: short ? 'bad' : 'muted', style: { fontSize: '13px' } }, note),
-          h('div', { class: 'muted', style: { fontSize: '13px' } }, '비밀 입력이 필요한 단계에서는 차례마다 화면을 가려 줍니다.'),
+        const note = short ? T('lobby.minNeeded', { n: minSeats })
+          : bots ? T('lobby.botsFill', { b: bots, t: n + bots }) : T('lobby.total', { n });
+        body.append(stepper('offline', T('lobby.people')), fillToggle(),
+          small(note, short ? 'bad' : 'muted'), small(T('lobby.curtainNote')),
           names,
-          h('div', {}, h('button', { class: 'btn primary', disabled: short, onclick: () => startLocal(def, [...names.querySelectorAll('input')].map((x, i) => x.value.trim() || `플레이어 ${i + 1}`), bots, opts) }, '시작')));
+          h('div', {}, h('button', { class: 'btn primary', disabled: short, onclick: () => startLocal(def, [...names.querySelectorAll('input')].map((x, i) => x.value.trim() || defaultName(i)), bots, opts) }, T('lobby.start'))));
       } else {
         const b = cnt.bots;
-        const me = h('input', { type: 'text', maxlength: 12, value: store.get('solo-name', '나'), style: { width: '150px' } });
+        const me = h('input', { type: 'text', maxlength: 12, value: store.get('solo-name', '') || T('lobby.me'), style: { width: '150px' } });
         me.oninput = () => store.set('solo-name', me.value);
-        body.append(stepper('bots', '봇 수'),
-          h('div', { class: 'muted', style: { fontSize: '13px' } }, `나 + 봇 ${b}명 (총 ${b + 1}명)`),
-          h('div', { class: 'row' }, h('span', { class: 'muted' }, '이름'), me),
-          h('div', {}, h('button', { class: 'btn primary', onclick: () => startLocal(def, [me.value.trim() || '나'], b, opts) }, '시작')));
+        body.append(stepper('bots', T('lobby.botCount')),
+          small(T('lobby.meBots', { b, t: b + 1 })),
+          h('div', { class: 'row' }, h('span', { class: 'muted' }, T('lobby.name')), me),
+          h('div', {}, h('button', { class: 'btn primary', onclick: () => startLocal(def, [me.value.trim() || T('lobby.me')], b, opts) }, T('lobby.start'))));
       }
     }
 
     for (const o of def.options || []) {
-      const row = h('div', { class: 'row' }, h('span', { class: 'muted', style: { width: '70px' } }, o.label));
+      const row = h('div', { class: 'row' }, h('span', { class: 'muted', style: { minWidth: '70px' } }, L(o.label)));
       const draw = () => {
         row.querySelectorAll('button').forEach((b) => b.remove());
-        for (const [v, label] of o.choices) row.append(h('button', { class: 'btn sm' + (opts[o.key] === v ? ' on' : ''), onclick: () => { opts[o.key] = v; store.set(`opt-${id}-${o.key}`, v); draw(); } }, label));
+        for (const [v, label] of o.choices) row.append(h('button', { class: 'btn sm' + (opts[o.key] === v ? ' on' : ''), onclick: () => { opts[o.key] = v; store.set(`opt-${id}-${o.key}`, v); draw(); } }, L(label)));
       };
       draw();
       optBox.append(row);
     }
 
-    const getNick = () => { const v = nick.value.trim() || '플레이어'; store.set('nick', v); return v; };
+    const getNick = () => { const v = nick.value.trim() || T('lobby.defaultNick'); store.set('nick', v); return v; };
 
     async function goOnline(kind) {
       const name = getNick();
       const n = cnt.online;
-      const wait = waitingScreen(def, '연결 중...');
+      const wait = waitingScreen(def, T('wait.connecting'));
       let cancelled = false;
       wait.setLeave(() => (cancelled = true));
       try {
@@ -1112,9 +1313,9 @@ const App = (() => {
     }
     async function joinByCode() {
       const code = codeIn.value.replace(/\D/g, '');
-      if (code.length !== 5) { toast('숫자 5자리 방 코드를 입력하세요'); return; }
+      if (code.length !== 5) { toast(T('lobby.enterCode')); return; }
       const name = getNick();
-      const wait = waitingScreen(def, `방 ${code}에 참가 중...`);
+      const wait = waitingScreen(def, T('wait.joining', { code }));
       try {
         const { client, lobby: lb } = await Net.joinRoom(code, name);
         clientRoom(client, lb, wait);
@@ -1122,12 +1323,13 @@ const App = (() => {
     }
     codeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinByCode(); });
 
-    r.append(topbar(def.name, hub, def),
+    r.append(topbar(L(def.name), hub, def, true),
       h('div', { class: 'lobby-wrap' },
         tabs, body,
-        (def.options || []).length ? h('div', { class: 'panel col' }, h('h4', {}, '게임 설정'), optBox) : null));
+        (def.options || []).length ? h('div', { class: 'panel col' }, h('h4', {}, T('lobby.settings')), optBox) : null));
     renderTabs();
     renderBody();
+    screen = { fn: lobby, arg: id };
     if (!store.get('rules-' + id, '')) { store.set('rules-' + id, '1'); showRules(def); }
   }
 
@@ -1138,31 +1340,32 @@ const App = (() => {
     let onLeave = () => {};
     const statusEl = h('div', { class: 'big' }, msg);
     const body = h('div', { class: 'col' });
-    r.append(topbar(def.name + ' · 대기실', () => { onLeave(); lobby(def.id); }), h('div', { class: 'panel col', style: { maxWidth: '560px' } }, statusEl, body));
-    Net.setStatus((t) => { if (statusEl.isConnected) statusEl.textContent = t; });
+    const panel = h('div', { class: 'panel col', style: { maxWidth: '560px' } }, statusEl, body);
+    r.append(topbar(T('wait.title', { game: L(def.name) }), () => { onLeave(); lobby(def.id); }), panel);
+    Net.setStatus((s) => { if (statusEl.isConnected) statusEl.textContent = s; });
     addCleanup(() => Net.setStatus(null));
     // 연결 진단: 버전과 중계 서버 연결 상태 (서로 같은 버전·같은 서버인지 비교용)
     const diag = h('div', { class: 'diag' });
-    r.querySelector('.panel').append(diag);
+    panel.append(diag);
     const drawDiag = () => {
       const s = typeof MqttRoom !== 'undefined' ? MqttRoom.status() : [];
-      diag.textContent = `${APP_VERSION} · 서버 ` + (s.length ? s.map((x) => `${x.name} ${x.ok ? '✓' : '✕'}`).join(' · ') : '연결 전');
+      diag.textContent = T('wait.diag', { v: APP_VERSION, s: s.length ? s.map((x) => `${x.name} ${x.ok ? '✓' : '✕'}`).join(' · ') : T('wait.diagNone') });
     };
     drawDiag();
     const diagT = setInterval(drawDiag, 1000);
     addCleanup(() => clearInterval(diagT));
     return {
-      status: (t) => (statusEl.textContent = t),
+      status: (s) => (statusEl.textContent = s),
       body, statusEl,
       setLeave: (f) => (onLeave = f),
-      fail: (t) => { statusEl.innerHTML = `<span class="bad">${t}</span>`; body.innerHTML = ''; body.append(h('button', { class: 'btn', onclick: () => lobby(def.id) }, '돌아가기')); },
+      fail: (s) => { statusEl.innerHTML = ''; statusEl.append(h('span', { class: 'bad' }, s)); body.innerHTML = ''; body.append(h('button', { class: 'btn', onclick: () => lobby(def.id) }, T('wait.back'))); },
     };
   }
   function memberList(m) {
     return h('div', { class: 'col' },
-      h('div', { class: 'muted' }, `참가자 ${m.members.length} / ${m.cap}`),
+      h('div', { class: 'muted' }, T('wait.members', { n: m.members.length, cap: m.cap })),
       h('div', { class: 'row' }, ...m.members.map((x, i) => h('span', { class: 'chip' }, (i === 0 ? '👑 ' : '') + x))),
-      h('div', { class: 'row' }, ...U.range(Math.max(0, m.cap - m.members.length)).map(() => h('span', { class: 'chip empty' }, '대기 중'))));
+      h('div', { class: 'row' }, ...U.range(Math.max(0, m.cap - m.members.length)).map(() => h('span', { class: 'chip empty' }, T('wait.waiting')))));
   }
 
   function hostRoom(def, host, wait) {
@@ -1172,40 +1375,39 @@ const App = (() => {
     host.onLobby = (m) => {
       wait.body.innerHTML = '';
       if (m.code) {
-        wait.status('방을 만들었어요');
-        wait.body.append(h('div', { class: 'muted' }, '친구에게 이 코드를 알려 주세요'),
-          h('div', { class: 'room-code', onclick: () => { try { navigator.clipboard.writeText(m.code).then(() => toast('코드를 복사했어요'), () => {}); } catch (e) {} } }, m.code));
-      } else wait.status('랜덤 매칭 대기 중... 사람이 다 모이면 자동으로 시작해요');
+        wait.status(T('wait.created'));
+        wait.body.append(h('div', { class: 'muted' }, T('wait.tellCode')),
+          h('div', { class: 'room-code', onclick: () => { try { navigator.clipboard.writeText(m.code).then(() => toast(T('wait.copied')), () => {}); } catch (e) {} } }, m.code));
+      } else wait.status(T('wait.matchWaiting'));
       const k = m.members.length, need = Math.max(2, def.players.minSeats || 1);
       let label, ok = true;
-      if (k >= m.cap) label = '시작';
-      else if (m.fill) label = `지금 시작 (빈자리 ${Math.max(m.cap, def.players.minSeats || 1) - k}개는 봇)`;
-      else if (k >= need) label = `지금 ${k}명으로 시작`;
-      else { label = `최소 ${need}명이 모여야 시작할 수 있어요`; ok = false; }
+      if (k >= m.cap) label = T('wait.start');
+      else if (m.fill) label = T('wait.startBots', { n: Math.max(m.cap, def.players.minSeats || 1) - k });
+      else if (k >= need) label = T('wait.startN', { n: k });
+      else { label = T('wait.needMin', { n: need }); ok = false; }
       wait.body.append(memberList(m),
-        h('div', { class: 'muted', style: { fontSize: '13px' } }, m.fill ? '부족한 인원은 봇으로 채웁니다.' : '봇 없이 사람끼리만 합니다.'),
+        h('div', { class: 'muted', style: { fontSize: '13px' } }, m.fill ? T('wait.fillOn') : T('wait.fillOff')),
         h('button', { class: 'btn primary', disabled: !ok, onclick: () => host.start() }, label));
     };
     host.onStart = (game) => {
-      play(def, { mode: 'host', game, localSeats: [0], onLeave: () => host.destroy(),
-        restart: () => game.reset() });
+      play(def, { mode: 'host', game, localSeats: [0], onLeave: () => host.destroy(), restart: () => game.reset() });
     };
     host.broadcastLobby();
   }
 
   function clientRoom(client, lb, wait) {
     let def = GAMES.find((g) => g.id === lb.game);
-    if (!def) { wait.fail('이 앱에 없는 게임의 방이에요.'); client.destroy(); return; }
+    if (!def) { wait.fail(T('wait.unknownGame')); client.destroy(); return; }
     wait.setLeave(() => client.destroy());
     let started = false;
     addCleanup(() => { if (!started) client.destroy(); });
     const showLobby = (m) => {
-      wait.status(m.code ? `방 ${m.code} — 방장이 시작하기를 기다리는 중` : '랜덤 매칭 대기 중... 사람이 다 모이면 시작해요');
+      wait.status(m.code ? T('wait.clientRoom', { code: m.code }) : T('wait.clientMatch'));
       wait.body.innerHTML = '';
-      wait.body.append(h('div', { class: 'muted' }, `${def.name} · 정원 ${m.cap}명 · ${m.fill ? '부족한 인원은 봇으로 채움' : '사람끼리만'}`), memberList(m));
+      wait.body.append(h('div', { class: 'muted' }, T('wait.info', { game: L(def.name), cap: m.cap, fill: m.fill ? T('wait.infoFill') : T('wait.infoNoFill') })), memberList(m));
     };
     client.onLobby = showLobby;
-    client.onClose = () => { if (!started) wait.fail('방장이 방을 닫았어요.'); };
+    client.onClose = () => { if (!started) wait.fail(T('wait.hostClosed')); };
     client.onStart = (msg) => {
       started = true;
       def = GAMES.find((g) => g.id === msg.game) || def;
@@ -1229,11 +1431,11 @@ const App = (() => {
     const banner = h('div', { class: 'turn-banner' });
     const stage = h('div', { class: 'stage' });
     const curtain = h('div', { class: 'curtain', style: { display: 'none' } });
-    r.append(topbar(def.name, () => leave(), def), banner, stage, curtain);
     const leave = () => lobby(def.id); // unmount 시 정리 함수가 연결을 끊음
+    r.append(topbar(L(def.name), leave, def), banner, stage, curtain);
     banner.style.display = 'none';
 
-    let displaySeat = null, revealedFor = null, resultShown = false, curView = null;
+    let displaySeat = null, revealedFor = null, resultShown = false;
     const isClient = cfg.mode === 'client';
     const now = () => Date.now() + (isClient ? cfg.client.offset : 0);
     const ctx = {
@@ -1245,7 +1447,6 @@ const App = (() => {
     addCleanup(() => { ui.destroy && ui.destroy(); cfg.onLeave && cfg.onLeave(); });
 
     function render(view) {
-      curView = view;
       try { ui.update(view); } catch (e) { console.error(e); }
       if (view.result && !resultShown) { resultShown = true; setTimeout(() => showResult(view), 700); }
       if (!view.result && resultShown) { resultShown = false; closeModal(); }
@@ -1265,7 +1466,7 @@ const App = (() => {
           }
           if (!E.hidden(game.state)) revealedFor = null;
         } else seat = -1;
-        banner.textContent = seat >= 0 ? `▶ ${game.seats[seat].name} 차례` : '';
+        banner.textContent = seat >= 0 ? T('play.turn', { name: game.seats[seat].name }) : '';
         banner.style.display = seat >= 0 ? '' : 'none';
       }
       curtain.style.display = 'none';
@@ -1277,28 +1478,30 @@ const App = (() => {
       curtain.style.display = 'flex';
       curtain.append(h('div', { class: 'curtain-box' },
         h('div', { class: 'eye-big' }, '◉'),
-        h('div', { class: 'big' }, `${name} 차례`),
-        h('div', { class: 'muted' }, '다른 사람은 화면을 보지 마세요.'),
-        h('button', { class: 'btn primary', onclick: onOk }, '준비됐어요')));
+        h('div', { class: 'big' }, T('play.curtainTurn', { name })),
+        h('div', { class: 'muted' }, T('play.curtainNote')),
+        h('button', { class: 'btn primary', onclick: onOk }, T('play.ready'))));
     }
     function showResult(view) {
       const res = view.result;
-      const rows = res.ranking.map((x) => `<tr class="${x.seat === view.me ? 'me' : ''}"><td>${x.rank}위</td><td>${view.names[x.seat]}</td><td>${x.score}</td></tr>`).join('');
+      const tbl = h('table', { class: 'tbl' }, ...res.ranking.map((x) => h('tr', { class: x.seat === view.me ? 'me' : '' },
+        h('td', {}, T('res.rankCol', { n: x.rank })), h('td', {}, view.names[x.seat]), h('td', {}, scoreText(x.score)))));
       const mine = res.ranking.find((x) => x.seat === view.me);
-      const title = mine && !ctx.local ? (mine.rank === 1 ? '🏆 1위!' : `${mine.rank}위`) : '게임 종료';
-      const body = `<table class="tbl">${rows}</table>${res.note ? `<p class="muted">${res.note}</p>` : ''}`;
+      const title = mine && !ctx.local ? (mine.rank === 1 ? T('res.first') : T('res.rank', { n: mine.rank })) : T('res.over');
+      const box = h('div', {}, tbl,
+        res.note ? h('p', { class: 'muted' }, T(res.note)) : null,
+        isClient ? h('p', { class: 'muted' }, T('res.waitHost')) : null);
       const btns = [];
-      if (cfg.restart) btns.push({ label: '다시 하기', fn: () => cfg.restart() });
-      else btns.push({ label: '닫기' });
-      btns.push({ label: '나가기', fn: leave });
-      modal(title, body + (isClient ? '<p class="muted">방장이 다시 시작하면 새 게임이 열립니다.</p>' : ''), btns);
+      if (cfg.restart) btns.push({ label: T('res.again'), fn: () => cfg.restart() });
+      else btns.push({ label: T('res.close') });
+      btns.push({ label: T('res.leave'), fn: leave });
+      modal(title, box, btns);
     }
 
     if (isClient) {
       displaySeat = cfg.seat;
-      banner.style.display = 'none';
       cfg.client.onView = (v) => render(v);
-      cfg.client.onClose = () => { if (!document.getElementById('modal')) modal('연결 끊김', '방장과의 연결이 끊어졌어요.', [{ label: '나가기', fn: leave }]); };
+      cfg.client.onClose = () => { if (!document.getElementById('modal')) modal(T('res.disconnected'), T('res.disconnectedBody'), [{ label: T('res.leave'), fn: leave }]); };
     } else {
       cfg.game.listeners.push(refresh);
       refresh();
@@ -1307,15 +1510,15 @@ const App = (() => {
 
   // ---------------- 공용 ----------------
   function showRules(def) {
-    modal(def.name + ' 규칙', h('div', { class: 'rules', html: def.rules || '' }), [{ label: '확인' }]);
+    modal(T('rules.title', { game: L(def.name) }), h('div', { class: 'rules', html: L(def.rules) || '' }), [{ label: T('ok') }]);
   }
   function modal(title, body, buttons) {
     closeModal();
     const bg = h('div', { class: 'modal-bg', id: 'modal' });
     const box = h('div', { class: 'modal' },
       h('h3', {}, title),
-      typeof body === 'string' ? h('div', { html: body }) : body,
-      h('div', { class: 'modal-btns' }, ...(buttons || [{ label: '확인' }]).map((b, i) =>
+      typeof body === 'string' ? h('div', {}, body) : body,
+      h('div', { class: 'modal-btns' }, ...(buttons || [{ label: T('ok') }]).map((b, i) =>
         h('button', { class: 'btn' + (i === 0 ? ' primary' : ''), onclick: () => { closeModal(); b.fn && b.fn(); } }, b.label))));
     bg.append(box);
     document.body.append(bg);
@@ -1323,12 +1526,12 @@ const App = (() => {
   function closeModal() { const m = document.getElementById('modal'); if (m) m.remove(); }
   let toastTimer = null;
   function toast(msg) {
-    let t = document.getElementById('toast');
-    if (!t) { t = h('div', { id: 'toast' }); document.body.append(t); }
-    t.textContent = msg;
-    t.classList.add('show');
+    let el = document.getElementById('toast');
+    if (!el) { el = h('div', { id: 'toast' }); document.body.append(el); }
+    el.textContent = msg;
+    el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
   return { hub, lobby, toast, modal };
 })();
@@ -1385,9 +1588,10 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         const key = rc.join(',');
         const s = rectSum(st.P[seat].grid, rc);
         const m = st.msg[seat] ? st.msg[seat].n + 1 : 1;
-        if (st.found[seat].includes(key)) st.msg[seat] = { n: m, text: '이미 찾은 네모예요' };
-        else if (s === st.P[seat].target) { st.found[seat].push(key); st.score[seat]++; st.msg[seat] = { n: m, text: '정답! +1' }; }
-        else { st.score[seat]--; st.msg[seat] = { n: m, text: `합 ${s} — 오답 −1` }; }
+        // 문장 대신 키를 보냄: 각자 화면에서 자기 언어로 표시
+        if (st.found[seat].includes(key)) st.msg[seat] = { n: m, key: 'rect.dup' };
+        else if (s === st.P[seat].target) { st.found[seat].push(key); st.score[seat]++; st.msg[seat] = { n: m, key: 'rect.ok' }; }
+        else { st.score[seat]--; st.msg[seat] = { n: m, key: 'rect.bad', p: { s } }; }
       }
     },
     tick(st, now) {
@@ -1408,7 +1612,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     },
     over(st) {
       if (st.phase.some((p) => p !== 'done')) return null;
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: st.score[x.seat] + '점' })) };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: { k: 'pts', v: st.score[x.seat] } })) };
     },
   };
 
@@ -1439,7 +1643,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
       if (sel) {
         const rc = rectOf();
         for (let r = rc[0]; r <= rc[2]; r++) for (let c = rc[1]; c <= rc[3]; c++) cells[r * N + c].style.background = '#6b2427';
-        sumEl.textContent = `선택 합: ${rectSum(view.grid, rc)}`;
+        sumEl.textContent = T('rect.selSum', { s: rectSum(view.grid, rc) });
       } else sumEl.textContent = ' ';
     }
     const cellAt = (e) => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.dataset && t.dataset.r != null ? [+t.dataset.r, +t.dataset.c] : null; };
@@ -1459,8 +1663,8 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     function tickTimer() {
       if (!view || view.phase !== 'play') { timerEl.textContent = ''; return; }
       const now = ctx.now();
-      if (now < view.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(view.start, now)}</span>`; timerEl.textContent = '1:30'; return; }
-      head.innerHTML = `목표 합 <span class="hl">${view.target}</span>`;
+      if (now < view.start) { head.innerHTML = T('play.startIn', { s: `<span class="hl">${UIx.secs(view.start, now)}</span>` }); timerEl.textContent = '1:30'; return; }
+      head.innerHTML = T('rect.target', { v: `<span class="hl">${+view.target}</span>` });
       const s = UIx.secs(view.deadline, now);
       timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 10);
     }
@@ -1469,9 +1673,9 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     root.append(h('div', { class: 'split' },
       h('div', {}, readyBox, playBox),
       h('div', { class: 'col' },
-        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
         h('div', { class: 'panel' }, foundEl),
-        h('div', { class: 'panel col' }, h('h4', {}, '점수'), scoreBox))));
+        h('div', { class: 'panel col' }, h('h4', {}, T('play.scores')), scoreBox))));
 
     return {
       update(v) {
@@ -1481,15 +1685,15 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         playBox.style.display = showPlay ? '' : 'none';
         if (v.phase === 'ready') {
           readyBox.innerHTML = '';
-          readyBox.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('div', { class: 'muted' }, '시작을 누르면 3초 뒤 90초가 시작됩니다.'),
-            h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작'));
+          readyBox.append(h('div', { class: 'big' }, T('play.readyTitle', { name: v.names[v.me] })), h('div', { class: 'muted' }, T('rect.readyNote')),
+            h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, T('lobby.start')));
         }
-        if (v.phase === 'watch') { readyBox.style.display = ''; readyBox.innerHTML = '<div class="muted">다른 플레이어를 기다리는 중...</div>'; }
+        if (v.phase === 'watch') { readyBox.style.display = ''; readyBox.innerHTML = ''; readyBox.append(h('div', { class: 'muted' }, T('play.waitOthers'))); }
         if (v.grid && v.grid.flat().join() !== gridKey) { gridKey = v.grid.flat().join(); buildGrid(); }
-        if (v.phase === 'done') head.textContent = '종료! 다른 플레이어를 기다리는 중';
+        if (v.phase === 'done') head.textContent = T('rect.doneWait');
         paint(); tickTimer();
         msg(v.msg, v.me);
-        foundEl.textContent = v.grid ? `찾은 네모 ${v.found.length}개 (전체 ${v.total}개 숨어 있음)` : '';
+        foundEl.textContent = v.grid ? T('rect.found', { n: v.found.length, total: v.total }) : '';
         scoreBox.innerHTML = '';
         scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.scores[i], me: i === v.me, sub: v.done[i] ? '✓' : '' }))));
       },
@@ -1497,17 +1701,41 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     };
   }
 
+  I18N.add({
+    ko: { 'rect.dup': '이미 찾은 네모예요', 'rect.ok': '정답! +1', 'rect.bad': '합 {s} — 오답 −1', 'rect.selSum': '선택 합: {s}', 'rect.target': '목표 합 {v}',
+      'rect.readyNote': '시작을 누르면 3초 뒤 90초가 시작됩니다.', 'rect.doneWait': '종료! 다른 플레이어를 기다리는 중', 'rect.found': '찾은 네모 {n}개 (전체 {total}개 숨어 있음)' },
+    en: { 'rect.dup': 'Already found', 'rect.ok': 'Correct! +1', 'rect.bad': 'Sum {s} — wrong −1', 'rect.selSum': 'Selected sum: {s}', 'rect.target': 'Target sum {v}',
+      'rect.readyNote': 'Press Start: a 90-second round begins after 3 seconds.', 'rect.doneWait': 'Time! Waiting for other players', 'rect.found': 'Found {n} (of {total} hidden)' },
+    zh: { 'rect.dup': '这个已经找到过了', 'rect.ok': '正确！+1', 'rect.bad': '总和 {s} — 错误 −1', 'rect.selSum': '选中总和：{s}', 'rect.target': '目标总和 {v}',
+      'rect.readyNote': '点开始后，3秒后进入90秒计时。', 'rect.doneWait': '时间到！等待其他玩家', 'rect.found': '已找到 {n} 个（共藏有 {total} 个）' },
+  });
+
   registerGame({
-    id: 'rectangles', name: '네모 세기', en: 'Count the Rectangles',
-    summary: '숫자 판에서 합이 목표 숫자가 되는 네모(직사각형)를 최대한 많이 찾으세요.',
+    id: 'rectangles', en: 'Count the Rectangles',
+    name: { ko: '네모 세기', en: 'Count the Rectangles', zh: '数方块' },
+    summary: {
+      ko: '숫자 판에서 합이 목표 숫자가 되는 네모(직사각형)를 최대한 많이 찾으세요.',
+      en: 'Find as many rectangles as you can whose numbers add up to the target.',
+      zh: '在数字盘上找出尽可能多的、数字总和等于目标值的长方形。',
+    },
     players: { min: 1, max: 8, default: 1, soloSeats: 4, minSeats: 1 },
-    rules: `
-    <ul>
-      <li>숫자가 적힌 7×7 판과 <b>목표 합</b>이 주어집니다.</li>
-      <li>칸을 드래그해 직사각형(정사각형, 한 줄, 한 칸 포함)을 고르세요. 안의 숫자 합이 목표와 같으면 +1점, 틀리면 −1점. 이미 찾은 네모는 인정되지 않습니다.</li>
-      <li>제한 시간 90초. 점수가 가장 높은 사람이 1위입니다.</li>
-      <li>온라인에서는 모두 같은 판을 동시에 풀고, 한 화면에서는 한 명씩 차례로 (각자 다른 판으로) 풉니다.</li>
-    </ul>`,
+    rules: {
+      ko: `<ul>
+        <li>숫자가 적힌 7×7 판과 <b>목표 합</b>이 주어집니다.</li>
+        <li>칸을 드래그해 직사각형(정사각형, 한 줄, 한 칸 포함)을 고르세요. 안의 숫자 합이 목표와 같으면 +1점, 틀리면 −1점. 이미 찾은 네모는 인정되지 않습니다.</li>
+        <li>제한 시간 90초. 점수가 가장 높은 사람이 1위입니다.</li>
+        <li>온라인에서는 모두 같은 판을 동시에 풀고, 한 화면에서는 한 명씩 차례로 (각자 다른 판으로) 풉니다.</li></ul>`,
+      en: `<ul>
+        <li>You get a 7×7 board of numbers and a <b>target sum</b>.</li>
+        <li>Drag across cells to select a rectangle (squares, single rows and single cells count). If its numbers add up to the target you get +1, otherwise −1. A rectangle you already found doesn't count again.</li>
+        <li>You have 90 seconds. The highest score wins.</li>
+        <li>Online, everyone solves the same board at the same time. On one screen, players take turns, each with a different board.</li></ul>`,
+      zh: `<ul>
+        <li>给出一个写有数字的 7×7 盘面和一个<b>目标总和</b>。</li>
+        <li>拖动选择一个长方形（正方形、一整行、单个格子都算）。里面的数字总和等于目标值得 +1 分，否则 −1 分。已经找到过的长方形不重复计分。</li>
+        <li>限时 90 秒，分数最高的人获胜。</li>
+        <li>线上模式所有人同时解同一个盘面；同屏模式每人轮流解（各自不同的盘面）。</li></ul>`,
+    },
     engine, ui,
   });
 })();
@@ -1599,7 +1827,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     },
     over(st) {
       if (st.phase !== 'end') return null;
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.wins[i]).map((x) => ({ ...x, score: st.wins[x.seat] + '승' })) };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.wins[i]).map((x) => ({ ...x, score: { k: 'wins', v: st.wins[x.seat] } })) };
     },
   };
 
@@ -1640,39 +1868,38 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     function drawActions() {
       actions.innerHTML = '';
       if (view.me < 0) return;
-      if (view.phase === 'memo' && !view.ready[view.me]) actions.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, '다 외웠어요'));
-      if (view.phase === 'pick' && !view.myPick) actions.append(h('button', { class: 'btn primary', disabled: sel.length !== 2, onclick: () => { ctx.send({ t: 'pick', a: sel[0], b: sel[1] }); sel = []; } }, '확정'));
+      if (view.phase === 'memo' && !view.ready[view.me]) actions.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, T('mp.memorized')));
+      if (view.phase === 'pick' && !view.myPick) actions.append(h('button', { class: 'btn primary', disabled: sel.length !== 2, onclick: () => { ctx.send({ t: 'pick', a: sel[0], b: sel[1] }); sel = []; } }, T('mp.confirm')));
     }
     function tickTimer() {
       if (!view) return;
       const s = UIx.secs(view.deadline, ctx.now());
-      if (view.phase === 'memo') status.textContent = `라운드 ${view.round} — 외우세요 ${s}`;
-      else if (view.phase === 'pick') status.textContent = view.myPick ? `다른 플레이어 기다리는 중... ${s}` : `카드 2장을 고르세요 ${s}`;
+      if (view.phase === 'memo') status.textContent = T('mp.memoTitle', { r: view.round, s });
+      else if (view.phase === 'pick') status.textContent = view.myPick ? T('mp.waitOthers', { s }) : T('mp.pickTitle', { s });
     }
     const iv = setInterval(tickTimer, 250);
 
     root.append(h('div', { class: 'split' },
       h('div', { class: 'col' }, status, sub,
         h('div', { class: 'row', style: { alignItems: 'flex-start', gap: '28px' } },
-          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, '보드'), gridEl),
-          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, '공용 카드'), commEl)),
+          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, T('mp.board')), gridEl),
+          h('div', { class: 'col' }, h('h4', { class: 'muted', style: { margin: 0 } }, T('mp.community')), commEl)),
         actions, result),
-      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, `스코어 (${WIN}선승)`), scoreBox))));
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, T('mp.score', { n: WIN })), scoreBox))));
 
     return {
       update(v) {
         if (!view || v.round !== view.round || v.phase !== view.phase || v.me !== view.me) sel = [];
         view = v;
         drawGrid(); drawActions(); tickTimer();
-        sub.textContent = v.phase === 'memo' ? '카드 위치를 기억하세요. 공용 카드는 시간이 끝나면 공개됩니다.'
-          : v.phase === 'pick' ? '공용 카드와 조합해 가장 강한 패가 되도록 고르세요.' : '테두리 색 = 그 카드를 고른 플레이어';
+        sub.textContent = v.phase === 'memo' ? T('mp.memoSub') : v.phase === 'pick' ? T('mp.pickSub') : T('mp.revealSub');
         result.innerHTML = '';
         if (v.reveal) {
-          status.innerHTML = v.reveal.winner >= 0 ? `<span class="hl">${v.names[v.reveal.winner]}</span> 라운드 승리!` : '무승부 — 다시 합니다';
+          status.textContent = v.reveal.winner >= 0 ? T('mp.roundWin', { name: v.names[v.reveal.winner] }) : T('mp.roundDraw');
           v.picks.forEach((p, s) => result.append(h('div', { class: 'row' },
             h('b', { style: { width: '90px', color: PCOL[s % 4] } }, v.names[s]),
             ...v.community.map((c) => Cards.el(c)), h('span', {}, '+'), ...p.map((i) => Cards.el(v.grid[i])),
-            h('span', { class: s === v.reveal.winner ? 'hl' : '' }, Cards.catName[v.reveal.evals[s]]))));
+            h('span', { class: s === v.reveal.winner ? 'hl' : '' }, T('poker.cat' + v.reveal.evals[s])))));
         }
         scoreBox.innerHTML = '';
         scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.wins[i], me: i === v.me, sub: v.phase === 'pick' && v.picked[i] ? '✓' : '' }))));
@@ -1681,19 +1908,52 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     };
   }
 
+  I18N.add({
+    ko: { 'mp.memorized': '다 외웠어요', 'mp.confirm': '확정', 'mp.memoTitle': '라운드 {r} — 외우세요 {s}', 'mp.waitOthers': '다른 플레이어 기다리는 중... {s}',
+      'mp.pickTitle': '카드 2장을 고르세요 {s}', 'mp.board': '보드', 'mp.community': '공용 카드', 'mp.score': '스코어 ({n}선승)',
+      'mp.memoSub': '카드 위치를 기억하세요. 공용 카드는 시간이 끝나면 공개됩니다.', 'mp.pickSub': '공용 카드와 조합해 가장 강한 패가 되도록 고르세요.',
+      'mp.revealSub': '테두리 색 = 그 카드를 고른 플레이어', 'mp.roundWin': '{name} 라운드 승리!', 'mp.roundDraw': '무승부 — 다시 합니다' },
+    en: { 'mp.memorized': "I've memorized it", 'mp.confirm': 'Confirm', 'mp.memoTitle': 'Round {r} — memorize {s}', 'mp.waitOthers': 'Waiting for other players... {s}',
+      'mp.pickTitle': 'Pick 2 cards {s}', 'mp.board': 'Board', 'mp.community': 'Community cards', 'mp.score': 'Score (first to {n})',
+      'mp.memoSub': 'Remember where each card is. The community cards are revealed when time runs out.', 'mp.pickSub': 'Pick the two cards that make the strongest hand with the community cards.',
+      'mp.revealSub': 'Border color = the player who picked that card', 'mp.roundWin': '{name} wins the round!', 'mp.roundDraw': 'Draw — replaying the round' },
+    zh: { 'mp.memorized': '记住了', 'mp.confirm': '确定', 'mp.memoTitle': '第 {r} 轮 — 请记牌 {s}', 'mp.waitOthers': '等待其他玩家... {s}',
+      'mp.pickTitle': '请选 2 张牌 {s}', 'mp.board': '牌面', 'mp.community': '公共牌', 'mp.score': '比分（先赢 {n} 轮）',
+      'mp.memoSub': '记住每张牌的位置。时间结束后会公开公共牌。', 'mp.pickSub': '选出能和公共牌组成最大牌型的两张牌。',
+      'mp.revealSub': '边框颜色 = 选了这张牌的玩家', 'mp.roundWin': '{name} 赢下本轮！', 'mp.roundDraw': '平局 — 重新进行' },
+  });
+
   registerGame({
-    id: 'memorypoker', name: '기억 포커', en: 'Memory Poker',
-    summary: '16장의 카드 위치를 외운 뒤, 뒤집힌 카드 2장을 골라 공용 카드 3장과 최고의 포커 패를 만드세요.',
+    id: 'memorypoker', en: 'Memory Poker',
+    name: { ko: '기억 포커', en: 'Memory Poker', zh: '记忆扑克' },
+    summary: {
+      ko: '16장의 카드 위치를 외운 뒤, 뒤집힌 카드 2장을 골라 공용 카드 3장과 최고의 포커 패를 만드세요.',
+      en: 'Memorize 16 cards, then pick 2 face-down cards to make the best poker hand with 3 community cards.',
+      zh: '记住 16 张牌的位置，然后从背面朝上的牌中选 2 张，和 3 张公共牌组成最大的扑克牌型。',
+    },
     players: { min: 1, max: 4, default: 2, soloSeats: 2, minSeats: 2 },
-    options: [{ key: 'memo', label: '외우기', default: 20, choices: [[30, '30초'], [20, '20초 (원작)'], [10, '10초']] }],
-    rules: `
-    <ul>
-      <li>52장 중 16장이 4×4로 펼쳐지고, 정해진 시간(기본 20초) 동안 외울 수 있습니다.</li>
-      <li>카드가 뒤집히면 공용 카드 3장이 공개됩니다. 각자 뒤집힌 16장 중 <b>2장</b>을 비밀리에 고릅니다(40초). 같은 카드를 골라도 됩니다.</li>
-      <li>공용 3장 + 내가 고른 2장으로 5장 포커 패를 만들어 가장 높은 사람이 라운드를 가져갑니다. 최고 패가 동점이면 무승부입니다.</li>
-      <li>족보: 로열 플러시 &gt; 스트레이트 플러시 &gt; 포카드 &gt; 풀하우스 &gt; 플러시 &gt; 스트레이트 &gt; 트리플 &gt; 투페어 &gt; 원페어 &gt; 하이카드. A가 가장 높고 A-2-3-4-5는 가장 낮은 스트레이트, 무늬로는 비교하지 않습니다.</li>
-      <li>먼저 <b>3라운드</b>를 이긴 사람이 승리합니다.</li>
-    </ul>`,
+    options: [{ key: 'memo', label: { ko: '외우기', en: 'Memorize', zh: '记牌时间' }, default: 20,
+      choices: [[30, { ko: '30초', en: '30s', zh: '30秒' }], [20, { ko: '20초 (원작)', en: '20s (show)', zh: '20秒（原作）' }], [10, { ko: '10초', en: '10s', zh: '10秒' }]] }],
+    rules: {
+      ko: `<ul>
+        <li>52장 중 16장이 4×4로 펼쳐지고, 정해진 시간(기본 20초) 동안 외울 수 있습니다.</li>
+        <li>카드가 뒤집히면 공용 카드 3장이 공개됩니다. 각자 뒤집힌 16장 중 <b>2장</b>을 비밀리에 고릅니다(40초). 같은 카드를 골라도 됩니다.</li>
+        <li>공용 3장 + 내가 고른 2장으로 5장 포커 패를 만들어 가장 높은 사람이 라운드를 가져갑니다. 최고 패가 동점이면 무승부입니다.</li>
+        <li>족보: 로열 플러시 &gt; 스트레이트 플러시 &gt; 포카드 &gt; 풀하우스 &gt; 플러시 &gt; 스트레이트 &gt; 트리플 &gt; 투페어 &gt; 원페어 &gt; 하이카드. A가 가장 높고 A-2-3-4-5는 가장 낮은 스트레이트, 무늬로는 비교하지 않습니다.</li>
+        <li>먼저 <b>3라운드</b>를 이긴 사람이 승리합니다.</li></ul>`,
+      en: `<ul>
+        <li>16 of the 52 cards are laid out 4×4, and you can memorize them for a set time (20 seconds by default).</li>
+        <li>The cards flip face down and 3 community cards are revealed. Each player secretly picks <b>2</b> of the 16 face-down cards (40 seconds). Players may pick the same card.</li>
+        <li>Your hand is the 3 community cards plus your 2 picks. The best 5-card poker hand wins the round. If the best hands tie, the round is a draw.</li>
+        <li>Hand ranks: royal flush &gt; straight flush &gt; four of a kind &gt; full house &gt; flush &gt; straight &gt; three of a kind &gt; two pair &gt; one pair &gt; high card. Aces are high, A-2-3-4-5 is the lowest straight, and suits never break ties.</li>
+        <li>The first player to win <b>3 rounds</b> wins.</li></ul>`,
+      zh: `<ul>
+        <li>从 52 张牌中取 16 张排成 4×4，在规定时间内（默认 20 秒）记住它们。</li>
+        <li>牌翻面后公开 3 张公共牌。每人从背面朝上的 16 张中秘密选 <b>2 张</b>（40 秒），可以和别人选同一张。</li>
+        <li>用 3 张公共牌 + 自己选的 2 张组成 5 张扑克牌型，最大的人赢下本轮。最大牌型相同则为平局。</li>
+        <li>牌型大小：皇家同花顺 &gt; 同花顺 &gt; 四条 &gt; 葫芦 &gt; 同花 &gt; 顺子 &gt; 三条 &gt; 两对 &gt; 一对 &gt; 高牌。A 最大，A-2-3-4-5 是最小的顺子，不比花色。</li>
+        <li>先赢 <b>3 轮</b>的人获胜。</li></ul>`,
+    },
     engine, ui,
   });
 })();
@@ -1702,15 +1962,16 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
   <script>/* js/games/heavy13.js */
 // 1일차 감옥 매치 — 무거운 13
 (() => {
-  const CNAME = { R: '빨강', G: '초록', B: '파랑', W: '무지개' };
   const COL = { R: '#e5383b', G: '#4caf7a', B: '#4a90e2', W: 'linear-gradient(135deg,#e5383b,#f2c14e,#4caf7a,#4a90e2,#9b6dff)' };
+  const cname = (k) => T('h13.c.' + k);
   const fresh = (p) => { p.cards = [0, 1, 2, 3, 4, 5, 6]; p.chips = ['R', 'R', 'G', 'G', 'B', 'B', 'W']; };
   const sum = (st, k) => st.stands[k].reduce((a, b) => a + b, 0);
-  const log = (st, m) => { st.log.unshift(m); if (st.log.length > 40) st.log.pop(); };
+  // 기록은 문장이 아니라 데이터로 남김 → 각자 화면에서 자기 언어로 표시
+  const log = (st, e) => { st.log.unshift(e); if (st.log.length > 40) st.log.pop(); };
 
   function startRound(st) {
     st.round++;
-    if (st.round === 8) { st.P.forEach(fresh); log(st, '<b>— 새 카드·칩 세트 지급 —</b>'); }
+    if (st.round === 8) { st.P.forEach(fresh); log(st, { k: 'fresh' }); }
     st.phase = 'choose';
     st.choice = st.P.map(() => null);
     st.cur = null;
@@ -1726,7 +1987,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
       const wa = st.choice[a].chip === 'W' ? 1 : 0, wb = st.choice[b].chip === 'W' ? 1 : 0;
       return wb - wa || st.choice[b].card - st.choice[a].card || dist(a) - dist(b);
     });
-    log(st, `<span class="muted">라운드 ${st.round} 순서: ${order.map((i) => st.seats[i].name).join(' → ')}</span>`);
+    log(st, { k: 'order', r: st.round, seats: order.slice() }); // 복사본: queue에서 빠져도 기록은 그대로
     st.queue = order; st.passed = []; st.lastPenal = null; st.phase = 'place';
     nextPlacer(st);
   }
@@ -1740,15 +2001,15 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     }
   }
   function place(st, i, k) {
-    const card = st.choice[i].card, t = sum(st, k);
-    if (t + card >= 13) {
+    const card = st.choice[i].card, total = sum(st, k);
+    if (total + card >= 13) {
       const n = st.stands[k].length;
       st.P[i].pen += n; st.P[i].lastPen = ++st.clock; st.lastPenal = i;
-      log(st, `<b>${st.seats[i].name}</b>: ${CNAME[k]}에 ${card} → 합 ${t + card}! <span class="bad">돌 ${n}개 떠안음 (+${n})</span>`);
+      log(st, { k: 'pen', who: i, s: k, card, total: total + card, n });
       st.stands[k] = [card];
     } else {
       st.stands[k].push(card);
-      log(st, `${st.seats[i].name}: ${CNAME[k]}에 ${card} (합 ${t + card})`);
+      log(st, { k: 'place', who: i, s: k, card, total: total + card });
     }
   }
 
@@ -1771,7 +2032,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         const c = st.choice[seat];
         if (a.t === 'pass') {
           if (!st.canPass) return false;
-          c.passed = true; st.passed.push(seat); log(st, `${st.seats[seat].name}: 패스`);
+          c.passed = true; st.passed.push(seat); log(st, { k: 'pass', who: seat });
           nextPlacer(st); return;
         }
         if (a.t === 'place') {
@@ -1796,9 +2057,9 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         for (const card of new Set(p.cards)) for (const chip of new Set(p.chips)) {
           const ks = chip === 'W' ? ['R', 'G', 'B'] : [chip];
           let cost = Math.min(...ks.map((k) => {
-            const t = sum(st, k), n = st.stands[k].length, head = 12 - t - card;
+            const tot = sum(st, k), n = st.stands[k].length, head = 12 - tot - card;
             if (head < 0) return n + 1;
-            return n * Math.max(0, 5 - head) / 6 * (0.4 + (6 - card) / 6) + (t + card) * 0.05;
+            return n * Math.max(0, 5 - head) / 6 * (0.4 + (6 - card) / 6) + (tot + card) * 0.05;
           }));
           if (chip === 'W') cost += 0.8 + (p.chips.length > 3 ? 0.6 : 0);
           cost += card * 0.04 * (p.cards.length < 4 ? -1 : 1) + Math.random() * 0.6;
@@ -1825,8 +2086,8 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     over(st) {
       if (st.phase !== 'end') return null;
       return {
-        ranking: UIx.rankBy(U.range(st.n), (i) => st.P[i].pen * 1000 + st.P[i].lastPen).map((x) => ({ ...x, score: '벌점 ' + st.P[x.seat].pen })),
-        note: '원작 감옥 매치에서는 하위권이 탈락합니다.',
+        ranking: UIx.rankBy(U.range(st.n), (i) => st.P[i].pen * 1000 + st.P[i].lastPen).map((x) => ({ ...x, score: { k: 'pen', v: st.P[x.seat].pen } })),
+        note: 'note.prison',
       };
     },
   };
@@ -1839,78 +2100,140 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     const playersEl = h('table', { class: 'tbl' });
     const logEl = h('div', { class: 'log' });
     const dot = (k, s = 12) => h('span', { style: { display: 'inline-block', width: s + 'px', height: s + 'px', borderRadius: '50%', background: COL[k], verticalAlign: 'middle', marginRight: '5px' } });
+    const total = (k) => view.stands[k].reduce((a, b) => a + b, 0);
+
+    // 기록 한 줄 → 화면 요소 (이름은 사용자 입력이므로 textContent로)
+    function logLine(e) {
+      const nm = (i) => view.names[i];
+      if (e.k === 'fresh') return h('div', {}, h('b', {}, T('h13.log.fresh')));
+      if (e.k === 'order') return h('div', { class: 'muted' }, T('h13.log.order', { r: e.r, order: e.seats.map(nm).join(' → ') }));
+      if (e.k === 'pass') return h('div', {}, T('h13.log.pass', { name: nm(e.who) }));
+      if (e.k === 'place') return h('div', {}, T('h13.log.place', { name: nm(e.who), stand: cname(e.s), card: e.card, total: e.total }));
+      if (e.k === 'pen') return h('div', {}, h('b', {}, T('h13.log.place', { name: nm(e.who), stand: cname(e.s), card: e.card, total: e.total }) + '! '),
+        h('span', { class: 'bad' }, T('h13.log.pen', { n: e.n })));
+      return h('div', {}, '');
+    }
 
     function drawCtrl() {
       ctrl.innerHTML = '';
       const v = view;
       if (v.me < 0) return;
       if (v.phase === 'choose' && !v.myChoice) {
-        ctrl.append(h('h4', { class: 'muted', style: { margin: 0 } }, '돌 카드'),
+        ctrl.append(h('h4', { class: 'muted', style: { margin: 0 } }, T('h13.rocks')),
           h('div', { class: 'row' }, ...[0, 1, 2, 3, 4, 5, 6].map((x) => h('button', { class: 'btn' + (card === x ? ' on' : ''), disabled: !v.myCards.includes(x), style: { width: '44px', fontWeight: 800 }, onclick: () => { card = x; drawCtrl(); } }, x))),
-          h('h4', { class: 'muted', style: { margin: 0 } }, '칩'),
+          h('h4', { class: 'muted', style: { margin: 0 } }, T('h13.chips')),
           h('div', { class: 'row' }, ...['R', 'G', 'B', 'W'].map((k) => {
             const n = v.myChips.filter((c) => c === k).length;
-            return h('button', { class: 'btn' + (chip === k ? ' on' : ''), disabled: !n, onclick: () => { chip = k; drawCtrl(); } }, dot(k, 14), `${CNAME[k]} ×${n}`);
+            return h('button', { class: 'btn' + (chip === k ? ' on' : ''), disabled: !n, onclick: () => { chip = k; drawCtrl(); } }, dot(k, 14), `${cname(k)} ×${n}`);
           })),
-          h('div', {}, h('button', { class: 'btn primary', disabled: card === null || chip === null, onclick: () => { ctx.send({ t: 'choose', card, chip }); card = chip = null; } }, '동시에 내기')));
-      } else if (v.phase === 'choose') ctrl.append(h('div', { class: 'muted' }, `냈습니다: ${v.myChoice.card} / ${CNAME[v.myChoice.chip]} — 다른 플레이어를 기다리는 중`));
+          h('div', {}, h('button', { class: 'btn primary', disabled: card === null || chip === null, onclick: () => { ctx.send({ t: 'choose', card, chip }); card = chip = null; } }, T('h13.submit'))));
+      } else if (v.phase === 'choose') ctrl.append(h('div', { class: 'muted' }, T('h13.submitted', { card: v.myChoice.card, chip: cname(v.myChoice.chip) })));
       if (v.phase === 'place' && v.cur === v.me) {
-        const c = v.choices[v.me], t = (k) => v.stands[k].reduce((a, b) => a + b, 0);
+        const c = v.choices[v.me];
         const row = h('div', { class: 'row' });
-        if (c.chip === 'W') for (const k of ['R', 'G', 'B']) row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place', stand: k }) }, `${CNAME[k]}에 놓기 (→${t(k) + c.card})`));
-        else row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place' }) }, `${CNAME[c.chip]}에 ${c.card} 놓기 (→${t(c.chip) + c.card})`));
-        if (v.canPass) row.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'pass' }) }, '패스 (나중에 놓기)'));
-        ctrl.append(h('div', { class: 'hl' }, '내 차례입니다'), row);
+        if (c.chip === 'W') for (const k of ['R', 'G', 'B']) row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place', stand: k }) }, T('h13.placeOn', { stand: cname(k), total: total(k) + c.card })));
+        else row.append(h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'place' }) }, T('h13.placeCard', { stand: cname(c.chip), card: c.card, total: total(c.chip) + c.card })));
+        if (v.canPass) row.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'pass' }) }, T('h13.pass')));
+        ctrl.append(h('div', { class: 'hl' }, T('h13.yourTurn')), row);
       }
     }
 
     root.append(h('div', { class: 'split' },
       h('div', { class: 'col' }, statusEl, h('div', { class: 'panel' }, standEl), h('div', { class: 'panel col' }, ctrl)),
-      h('div', { class: 'col' }, h('div', { class: 'panel' }, playersEl), h('div', { class: 'panel' }, h('h4', {}, '기록'), logEl))));
+      h('div', { class: 'col' }, h('div', { class: 'panel' }, playersEl), h('div', { class: 'panel' }, h('h4', {}, T('play.log')), logEl))));
 
     return {
       update(v) {
         if (view && (view.me !== v.me || view.round !== v.round)) card = chip = null;
         view = v;
-        statusEl.textContent = v.phase === 'end' ? '게임 종료' : v.phase === 'choose' ? `라운드 ${v.round}/${v.rounds} — 카드와 칩을 고르세요` : `라운드 ${v.round}/${v.rounds} — ${v.names[v.cur]} 차례`;
+        statusEl.textContent = v.phase === 'end' ? T('res.over') : v.phase === 'choose' ? T('h13.statusChoose', { r: v.round, n: v.rounds }) : T('h13.statusPlace', { r: v.round, n: v.rounds, name: v.names[v.cur] });
         standEl.innerHTML = '';
         for (const k of ['R', 'G', 'B']) {
-          const t = v.stands[k].reduce((a, b) => a + b, 0);
+          const tot = total(k);
           standEl.append(h('div', { class: 'col', style: { alignItems: 'center', gap: '4px', width: '110px' } },
             h('div', { style: { display: 'flex', flexDirection: 'column-reverse', gap: '3px', minHeight: '170px' } },
               ...v.stands[k].map((x) => h('div', { style: { width: '70px', height: '22px', borderRadius: '10px', background: '#8d8d99', color: '#111', textAlign: 'center', fontWeight: 800, fontSize: '14px' } }, x))),
             h('div', { style: { width: '100px', height: '12px', borderRadius: '4px', background: COL[k] } }),
-            h('div', { class: t >= 9 ? 'bad' : '' }, h('b', { style: { fontSize: '22px' } }, t), h('span', { class: 'muted' }, ` /13 · ${v.stands[k].length}개`))));
+            h('div', { class: tot >= 9 ? 'bad' : '' }, h('b', { style: { fontSize: '22px' } }, tot), h('span', { class: 'muted' }, ' ' + T('h13.standInfo', { n: v.stands[k].length })))));
         }
         playersEl.innerHTML = '';
-        playersEl.append(h('tr', {}, h('th', {}, '플레이어'), h('th', {}, '이번 라운드'), h('th', {}, '남은 카드'), h('th', {}, '벌점')));
+        playersEl.append(h('tr', {}, h('th', {}, T('h13.col.player')), h('th', {}, T('h13.col.round')), h('th', {}, T('h13.col.cards')), h('th', {}, T('h13.col.pen'))));
         v.players.forEach((p, i) => playersEl.append(h('tr', { class: i === v.me ? 'me' : '' },
           h('td', {}, (v.cur === i ? '▶ ' : '') + (v.tiebreak === i ? '⚑ ' : '') + v.names[i]),
           h('td', {}, v.choices ? h('span', {}, dot(v.choices[i].chip), v.choices[i].card) : p.chosen ? '✓' : '…'),
           h('td', { style: { fontSize: '12px' } }, p.cards.join(' ')),
           h('td', {}, h('b', {}, p.pen)))));
-        logEl.innerHTML = v.log.map((m) => `<div>${m}</div>`).join('');
+        logEl.innerHTML = '';
+        v.log.forEach((e) => logEl.append(logLine(e)));
         drawCtrl();
       },
     };
   }
 
+  I18N.add({
+    ko: { 'h13.c.R': '빨강', 'h13.c.G': '초록', 'h13.c.B': '파랑', 'h13.c.W': '무지개',
+      'h13.log.fresh': '— 새 카드·칩 세트 지급 —', 'h13.log.order': '라운드 {r} 순서: {order}', 'h13.log.pass': '{name}: 패스',
+      'h13.log.place': '{name}: {stand}에 {card} (합 {total})', 'h13.log.pen': '돌 {n}개 떠안음 (+{n})',
+      'h13.rocks': '돌 카드', 'h13.chips': '칩', 'h13.submit': '동시에 내기', 'h13.submitted': '냈습니다: {card} / {chip} — 다른 플레이어를 기다리는 중',
+      'h13.placeOn': '{stand}에 놓기 (→{total})', 'h13.placeCard': '{stand}에 {card} 놓기 (→{total})', 'h13.pass': '패스 (나중에 놓기)', 'h13.yourTurn': '내 차례입니다',
+      'h13.statusChoose': '라운드 {r}/{n} — 카드와 칩을 고르세요', 'h13.statusPlace': '라운드 {r}/{n} — {name} 차례', 'h13.standInfo': '/13 · {n}개',
+      'h13.col.player': '플레이어', 'h13.col.round': '이번 라운드', 'h13.col.cards': '남은 카드', 'h13.col.pen': '벌점' },
+    en: { 'h13.c.R': 'Red', 'h13.c.G': 'Green', 'h13.c.B': 'Blue', 'h13.c.W': 'Rainbow',
+      'h13.log.fresh': '— New set of cards and chips dealt —', 'h13.log.order': 'Round {r} order: {order}', 'h13.log.pass': '{name}: pass',
+      'h13.log.place': '{name}: {card} on {stand} (total {total})', 'h13.log.pen': 'takes {n} rock(s) (+{n})',
+      'h13.rocks': 'Rock cards', 'h13.chips': 'Chips', 'h13.submit': 'Reveal together', 'h13.submitted': 'Played: {card} / {chip} — waiting for other players',
+      'h13.placeOn': 'Place on {stand} (→{total})', 'h13.placeCard': 'Place {card} on {stand} (→{total})', 'h13.pass': 'Pass (place later)', 'h13.yourTurn': 'Your turn',
+      'h13.statusChoose': 'Round {r}/{n} — pick a card and a chip', 'h13.statusPlace': "Round {r}/{n} — {name}'s turn", 'h13.standInfo': '/13 · {n} rocks',
+      'h13.col.player': 'Player', 'h13.col.round': 'This round', 'h13.col.cards': 'Cards left', 'h13.col.pen': 'Penalty' },
+    zh: { 'h13.c.R': '红', 'h13.c.G': '绿', 'h13.c.B': '蓝', 'h13.c.W': '彩虹',
+      'h13.log.fresh': '— 发放新的一套卡牌和筹码 —', 'h13.log.order': '第 {r} 轮顺序：{order}', 'h13.log.pass': '{name}：跳过',
+      'h13.log.place': '{name}：在{stand}放 {card}（总和 {total}）', 'h13.log.pen': '收下 {n} 块石头（+{n}）',
+      'h13.rocks': '石头卡', 'h13.chips': '筹码', 'h13.submit': '同时亮出', 'h13.submitted': '已出：{card} / {chip} — 等待其他玩家',
+      'h13.placeOn': '放在{stand}（→{total}）', 'h13.placeCard': '在{stand}放 {card}（→{total}）', 'h13.pass': '跳过（稍后再放）', 'h13.yourTurn': '轮到你了',
+      'h13.statusChoose': '第 {r}/{n} 轮 — 请选择卡牌和筹码', 'h13.statusPlace': '第 {r}/{n} 轮 — 轮到 {name}', 'h13.standInfo': '/13 · {n} 块',
+      'h13.col.player': '玩家', 'h13.col.round': '本轮', 'h13.col.cards': '剩余卡牌', 'h13.col.pen': '罚分' },
+  });
+
   registerGame({
-    id: 'heavy13', name: '무거운 13', en: 'Heavy 13',
-    summary: '돌 카드와 색 칩을 동시에 내서 받침대에 돌을 쌓습니다. 13을 넘기면 위에 있던 돌을 전부 떠안습니다.',
+    id: 'heavy13', en: 'Heavy 13',
+    name: { ko: '무거운 13', en: 'Heavy 13', zh: '沉重的13' },
+    summary: {
+      ko: '돌 카드와 색 칩을 동시에 내서 받침대에 돌을 쌓습니다. 13을 넘기면 위에 있던 돌을 전부 떠안습니다.',
+      en: 'Play a rock card and a color chip at the same time to stack rocks. Push a stand to 13 and you take every rock on it.',
+      zh: '同时出石头卡和颜色筹码，把石头叠到底座上。总和达到 13 的人要收下上面所有的石头。',
+    },
     players: { min: 1, max: 8, default: 3, soloSeats: 5, minSeats: 3 },
-    options: [{ key: 'rounds', label: '라운드', default: 7, choices: [[7, '빠른 7'], [14, '원작 14']] }],
-    rules: `
-    <ul>
-      <li>각자 <b>돌 카드 0~6</b> 7장과 <b>칩 7개</b>(빨강 2, 초록 2, 파랑 2, 무지개 1)를 가집니다. 받침대는 빨강·초록·파랑 3개입니다.</li>
-      <li>매 라운드 모두 카드 1장과 칩 1개를 <b>동시에</b> 냅니다. 칩 색이 받침대를, 카드 숫자가 돌의 무게를 정합니다. 무지개 칩은 자기 차례에 받침대를 고릅니다.</li>
-      <li>놓는 순서: <b>무지개 칩</b> 먼저, 그다음 <b>큰 숫자부터</b>. 같으면 타이브레이크(⚑) 보유자부터 시계 방향.</li>
-      <li>자기 차례에 <b>패스</b>하면 모두가 놓은 뒤에 놓습니다(먼저 패스한 사람이 가장 마지막). 줄의 마지막 사람은 패스할 수 없습니다.</li>
-      <li>받침대 합이 <b>13 이상</b>이 되면 그 받침대에 있던 돌을 모두 가져갑니다. 돌 1개당 벌점 1점(0도 1점)이며, 방금 놓은 돌은 남습니다.</li>
-      <li>그 라운드 마지막으로 벌점을 받은 사람이 다음 타이브레이크를 가집니다.</li>
-      <li>7라운드(빠른) 또는 14라운드(원작, 7라운드 뒤 새 세트). <b>벌점이 가장 적은 사람</b>이 이기고, 동점이면 나중에 벌점을 받은 사람이 아래입니다.</li>
-    </ul>
-    <div class="note">3명 미만이면 봇이 채웁니다.</div>`,
+    options: [{ key: 'rounds', label: { ko: '라운드', en: 'Rounds', zh: '轮数' }, default: 7,
+      choices: [[7, { ko: '빠른 7', en: 'Quick 7', zh: '快速 7轮' }], [14, { ko: '원작 14', en: 'Show 14', zh: '原作 14轮' }]] }],
+    rules: {
+      ko: `<ul>
+        <li>각자 <b>돌 카드 0~6</b> 7장과 <b>칩 7개</b>(빨강 2, 초록 2, 파랑 2, 무지개 1)를 가집니다. 받침대는 빨강·초록·파랑 3개입니다.</li>
+        <li>매 라운드 모두 카드 1장과 칩 1개를 <b>동시에</b> 냅니다. 칩 색이 받침대를, 카드 숫자가 돌의 무게를 정합니다. 무지개 칩은 자기 차례에 받침대를 고릅니다.</li>
+        <li>놓는 순서: <b>무지개 칩</b> 먼저, 그다음 <b>큰 숫자부터</b>. 같으면 타이브레이크(⚑) 보유자부터 시계 방향.</li>
+        <li>자기 차례에 <b>패스</b>하면 모두가 놓은 뒤에 놓습니다(먼저 패스한 사람이 가장 마지막). 줄의 마지막 사람은 패스할 수 없습니다.</li>
+        <li>받침대 합이 <b>13 이상</b>이 되면 그 받침대에 있던 돌을 모두 가져갑니다. 돌 1개당 벌점 1점(0도 1점)이며, 방금 놓은 돌은 남습니다.</li>
+        <li>그 라운드 마지막으로 벌점을 받은 사람이 다음 타이브레이크를 가집니다.</li>
+        <li>7라운드(빠른) 또는 14라운드(원작, 7라운드 뒤 새 세트). <b>벌점이 가장 적은 사람</b>이 이기고, 동점이면 나중에 벌점을 받은 사람이 아래입니다.</li></ul>
+        <div class="note">3명 미만이면 봇이 채웁니다.</div>`,
+      en: `<ul>
+        <li>Each player has 7 <b>rock cards numbered 0–6</b> and <b>7 chips</b> (2 red, 2 green, 2 blue, 1 rainbow). There are 3 stands: red, green and blue.</li>
+        <li>Each round everyone plays 1 card and 1 chip <b>at the same time</b>. The chip color picks the stand and the card number is the rock's weight. A rainbow chip lets you choose the stand on your turn.</li>
+        <li>Placing order: <b>rainbow chips</b> first, then <b>highest numbers first</b>. Ties go clockwise from the tiebreak holder (⚑).</li>
+        <li>On your turn you may <b>pass</b> and place after everyone else (the first to pass places last). The last player in line can't pass.</li>
+        <li>If your rock brings a stand to <b>13 or more</b>, you take every rock that was on it: 1 penalty point per rock (a 0 counts too). Your new rock stays on the stand.</li>
+        <li>The last player penalized in a round holds the tiebreak next round.</li>
+        <li>7 rounds (quick) or 14 rounds (show, with a new set after round 7). <b>Fewest penalty points</b> wins. On a tie, whoever was penalized later ranks lower.</li></ul>
+        <div class="note">Bots fill in if there are fewer than 3 players.</div>`,
+      zh: `<ul>
+        <li>每人有 7 张<b>石头卡（0~6）</b>和 <b>7 个筹码</b>（红 2、绿 2、蓝 2、彩虹 1）。底座有红、绿、蓝 3 个。</li>
+        <li>每轮所有人<b>同时</b>出 1 张卡和 1 个筹码。筹码颜色决定底座，卡上的数字是石头的重量。彩虹筹码在自己的回合再选底座。</li>
+        <li>放置顺序：<b>彩虹筹码</b>先放，然后<b>数字大的先放</b>。数字相同时，从持有平局标记（⚑）的人开始按顺时针。</li>
+        <li>轮到自己时可以<b>跳过</b>，等所有人放完再放（先跳过的人最后放）。队伍最后一人不能跳过。</li>
+        <li>放下后底座总和<b>达到 13 或以上</b>，就要收下底座上原有的全部石头。每块罚 1 分（0 也算 1 分），刚放的石头留在底座上。</li>
+        <li>本轮最后一个被罚分的人，下一轮持有平局标记。</li>
+        <li>7 轮（快速）或 14 轮（原作，第 7 轮后发新的一套）。<b>罚分最少</b>的人获胜；同分时，较晚被罚的人排名靠后。</li></ul>
+        <div class="note">不足 3 人时由机器人补位。</div>`,
+    },
     engine, ui,
   });
 })();
@@ -2002,7 +2325,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     },
     over(st) {
       if (st.phase !== 'end') return null;
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: st.score[x.seat] + '점' })), note: '원작에서는 최하위가 탈락합니다.' };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -st.score[i]).map((x) => ({ ...x, score: { k: 'pts', v: st.score[x.seat] } })), note: 'note.lastOut' };
     },
   };
 
@@ -2042,20 +2365,20 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
       ctrl.innerHTML = '';
       const v = view;
       if (v.me < 0) return;
-      if (v.phase === 'memo') ctrl.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, '다 외웠어요'));
-      if (v.phase === 'find' && !v.myMarks) ctrl.append(h('button', { class: 'btn primary', disabled: marks.size !== CH, onclick: () => ctx.send({ t: 'submit', marks: [...marks] }) }, `제출 (${marks.size}/5)`));
+      if (v.phase === 'memo') ctrl.append(h('button', { class: 'btn', onclick: () => ctx.send({ t: 'ready' }) }, T('mp.memorized')));
+      if (v.phase === 'find' && !v.myMarks) ctrl.append(h('button', { class: 'btn primary', disabled: marks.size !== CH, onclick: () => ctx.send({ t: 'submit', marks: [...marks] }) }, T('sd.submit', { n: marks.size })));
     }
     function tickTimer() {
       if (!view) return;
       const s = UIx.secs(view.deadline, ctx.now()), v = view;
-      if (v.phase === 'memo') status.textContent = `라운드 ${v.round}/${ROUNDS} — 외우세요 ${s}`;
-      else if (v.phase === 'find') status.textContent = v.myMarks ? `제출 완료 — 다른 사람을 기다리는 중 ${s}` : `달라진 곳 5개를 고르세요 ${s}`;
+      if (v.phase === 'memo') status.textContent = T('sd.memo', { r: v.round, n: ROUNDS, s });
+      else if (v.phase === 'find') status.textContent = v.myMarks ? T('sd.submitted', { s }) : T('sd.find', { s });
     }
     const iv = setInterval(tickTimer, 250);
 
     root.append(h('div', { class: 'split' },
       h('div', { class: 'col', style: { alignItems: 'center' } }, status, area, ctrl),
-      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, '점수'), scoreBox))));
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, T('play.scores')), scoreBox))));
     return {
       update(v) {
         const k = `${v.round}-${v.phase}-${v.me}`;
@@ -2063,8 +2386,8 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         view = v;
         drawGrid(); drawCtrl(); tickTimer();
         if (v.phase === 'result' || v.phase === 'end') {
-          const mine = v.me >= 0 ? `내 정답 ${v.hits[v.me]}/5 · ` : '';
-          status.innerHTML = `${mine}<span class="muted" style="font-size:14px">초록 테두리 = 정답 칸</span>`;
+          status.innerHTML = '';
+          status.append(v.me >= 0 ? T('sd.myHits', { n: v.hits[v.me] }) + ' · ' : '', h('span', { class: 'muted', style: { fontSize: '14px' } }, T('sd.legend')));
         }
         scoreBox.innerHTML = '';
         scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.score[i], me: i === v.me, sub: v.hits ? `(+${v.hits[i]})` : v.phase === 'find' && v.submitted[i] ? '✓' : '' }))));
@@ -2073,18 +2396,44 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     };
   }
 
+  I18N.add({
+    ko: { 'sd.submit': '제출 ({n}/5)', 'sd.memo': '라운드 {r}/{n} — 외우세요 {s}', 'sd.submitted': '제출 완료 — 다른 사람을 기다리는 중 {s}',
+      'sd.find': '달라진 곳 5개를 고르세요 {s}', 'sd.myHits': '내 정답 {n}/5', 'sd.legend': '초록 테두리 = 정답 칸' },
+    en: { 'sd.submit': 'Submit ({n}/5)', 'sd.memo': 'Round {r}/{n} — memorize {s}', 'sd.submitted': 'Submitted — waiting for others {s}',
+      'sd.find': 'Mark the 5 changes {s}', 'sd.myHits': 'You found {n}/5', 'sd.legend': 'Green border = a changed cell' },
+    zh: { 'sd.submit': '提交（{n}/5）', 'sd.memo': '第 {r}/{n} 轮 — 请记住 {s}', 'sd.submitted': '已提交 — 等待其他人 {s}',
+      'sd.find': '请选出 5 处不同 {s}', 'sd.myHits': '你答对 {n}/5', 'sd.legend': '绿色边框 = 正确答案' },
+  });
+
   registerGame({
-    id: 'spotdiff', name: '달라진 그림 찾기', en: 'Spot the Difference',
-    summary: '그림을 외운 뒤, 바뀐 그림에서 달라진 곳 5군데를 X로 표시하세요.',
+    id: 'spotdiff', en: 'Spot the Difference',
+    name: { ko: '달라진 그림 찾기', en: 'Spot the Difference', zh: '找不同' },
+    summary: {
+      ko: '그림을 외운 뒤, 바뀐 그림에서 달라진 곳 5군데를 X로 표시하세요.',
+      en: 'Memorize the picture, then mark the 5 spots that changed.',
+      zh: '先记住图案，再在变化后的图中标出 5 处不同。',
+    },
     players: { min: 1, max: 8, default: 1, soloSeats: 3, minSeats: 1 },
-    rules: `
-    <ul>
-      <li>그림이 정해진 시간 동안 공개됩니다(20초 → 15초 → 12초). 잘 외워 두세요.</li>
-      <li>그림이 사라지고 <b>5군데가 바뀐</b> 그림이 나옵니다(모양·색 변경, 사라짐, 새로 생김).</li>
-      <li>달라졌다고 생각하는 칸을 정확히 <b>5개</b> 골라 제출하세요(45초). 맞힌 개수가 점수입니다.</li>
-      <li>3라운드 합산 점수로 순위를 정합니다.</li>
-      <li>한 화면에서 할 때는 외우기는 다 같이, 고르기는 한 명씩 화면을 가리고 합니다.</li>
-    </ul>`,
+    rules: {
+      ko: `<ul>
+        <li>그림이 정해진 시간 동안 공개됩니다(20초 → 15초 → 12초). 잘 외워 두세요.</li>
+        <li>그림이 사라지고 <b>5군데가 바뀐</b> 그림이 나옵니다(모양·색 변경, 사라짐, 새로 생김).</li>
+        <li>달라졌다고 생각하는 칸을 정확히 <b>5개</b> 골라 제출하세요(45초). 맞힌 개수가 점수입니다.</li>
+        <li>3라운드 합산 점수로 순위를 정합니다.</li>
+        <li>한 화면에서 할 때는 외우기는 다 같이, 고르기는 한 명씩 화면을 가리고 합니다.</li></ul>`,
+      en: `<ul>
+        <li>A picture is shown for a limited time (20s → 15s → 12s). Memorize it.</li>
+        <li>It disappears and comes back with <b>5 changes</b> (shape or color changed, something removed, something added).</li>
+        <li>Pick exactly <b>5</b> cells you think changed and submit (45 seconds). Each correct cell is 1 point.</li>
+        <li>Rankings use the total over 3 rounds.</li>
+        <li>On one screen, everyone memorizes together, then each player picks in turn while the screen is covered.</li></ul>`,
+      zh: `<ul>
+        <li>图案会公开一段时间（20秒 → 15秒 → 12秒），请记住它。</li>
+        <li>图案消失后，会出现一张有 <b>5 处变化</b>的图（形状或颜色改变、消失、新增）。</li>
+        <li>选出你认为变化了的 <b>5 个</b>格子并提交（45 秒）。每答对一格得 1 分。</li>
+        <li>按 3 轮总分排名。</li>
+        <li>同屏模式下大家一起记图，选格子时每人轮流、遮住画面进行。</li></ul>`,
+    },
     engine, ui,
   });
 })();
@@ -2206,7 +2555,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     },
     over(st) {
       if (st.phase.some((p) => p === 'ready' || p === 'play')) return null;
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? '실패' : (st.time[x.seat] / 1000).toFixed(1) + '초' })) };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? { k: 'fail' } : { k: 'sec', v: (st.time[x.seat] / 1000).toFixed(1) } })) };
     },
   };
 
@@ -2258,8 +2607,8 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     function tickTimer() {
       const v = view; if (!v || v.phase !== 'play') { timerEl.textContent = ''; return; }
       const now = ctx.now();
-      if (now < v.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(v.start, now)}</span>`; return; }
-      head.textContent = '닫힌 고리 하나를 만드세요';
+      if (now < v.start) { head.innerHTML = T('play.startIn', { s: `<span class="hl">${UIx.secs(v.start, now)}</span>` }); return; }
+      head.textContent = T('lf.goal');
       const s = UIx.secs(v.deadline, now);
       timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 30);
     }
@@ -2268,20 +2617,20 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     root.append(h('div', { class: 'split' },
       h('div', { class: 'col', style: { alignItems: 'center' } }, head, box, svgWrap),
       h('div', { class: 'col' },
-        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
-        h('div', { class: 'panel col' }, h('h4', {}, '진행 상황'), scoreBox),
-        h('div', { class: 'panel col' }, h('div', { class: 'muted', style: { fontSize: '13px' } }, '변 클릭: 선 → ✕ → 빈칸 / 우클릭: ✕'),
-          h('div', {}, h('button', { class: 'btn', onclick: () => { edges = {}; draw(); ctx.send({ t: 'lines', lines: [] }); } }, '전부 지우기'))))));
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, h('h4', {}, T('play.progress')), scoreBox),
+        h('div', { class: 'panel col' }, h('div', { class: 'muted', style: { fontSize: '13px' } }, T('lf.help')),
+          h('div', {}, h('button', { class: 'btn', onclick: () => { edges = {}; draw(); ctx.send({ t: 'lines', lines: [] }); } }, T('lf.clear')))))));
 
     return {
       update(v) {
         if (v.pid !== pid) { pid = v.pid; edges = {}; }
         view = v;
         box.innerHTML = '';
-        if (v.phase === 'ready') box.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작'));
-        if (v.phase === 'watch') box.append(h('div', { class: 'muted' }, '다른 플레이어를 기다리는 중...'));
-        if (v.phase === 'done') head.innerHTML = '<span class="good">완성!</span> 다른 플레이어를 기다리는 중';
-        if (v.phase === 'out') head.innerHTML = '<span class="bad">시간 초과</span> — 정답 고리를 보여 드려요';
+        if (v.phase === 'ready') box.append(h('div', { class: 'big' }, T('play.readyTitle', { name: v.names[v.me] })), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, T('lobby.start')));
+        if (v.phase === 'watch') box.append(h('div', { class: 'muted' }, T('play.waitOthers')));
+        if (v.phase === 'done') { head.innerHTML = ''; head.append(h('span', { class: 'good' }, T('play.doneWait'))); }
+        if (v.phase === 'out') { head.innerHTML = ''; head.append(h('span', { class: 'bad' }, T('play.timeout')), ' — ' + T('lf.showAnswer')); }
         if (v.phase === 'ready' || v.phase === 'watch') { svgWrap.innerHTML = ''; head.textContent = ''; } else draw();
         tickTimer();
         scoreBox.innerHTML = '';
@@ -2291,19 +2640,43 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     };
   }
 
+  I18N.add({
+    ko: { 'lf.goal': '닫힌 고리 하나를 만드세요', 'lf.help': '변 클릭: 선 → ✕ → 빈칸 / 우클릭: ✕', 'lf.clear': '전부 지우기', 'lf.showAnswer': '정답 고리를 보여 드려요' },
+    en: { 'lf.goal': 'Draw one closed loop', 'lf.help': 'Click an edge: line → ✕ → empty / right-click: ✕', 'lf.clear': 'Clear all', 'lf.showAnswer': "here's the solution" },
+    zh: { 'lf.goal': '连出一个闭合的环', 'lf.help': '点击边：线 → ✕ → 空 / 右键：✕', 'lf.clear': '全部清除', 'lf.showAnswer': '显示正确答案' },
+  });
+
   registerGame({
-    id: 'loopfence', name: '울타리 치기', en: 'Loop Fence Puzzle',
-    summary: '숫자를 만족하도록 점과 점을 이어 하나의 닫힌 울타리를 만드세요. 여럿이면 누가 먼저 푸나 대결!',
+    id: 'loopfence', en: 'Loop Fence Puzzle',
+    name: { ko: '울타리 치기', en: 'Loop Fence', zh: '围栏' },
+    summary: {
+      ko: '숫자를 만족하도록 점과 점을 이어 하나의 닫힌 울타리를 만드세요. 여럿이면 누가 먼저 푸나 대결!',
+      en: 'Connect the dots into one closed fence that matches every number. With friends, race to solve first!',
+      zh: '连接点与点，围出一个满足所有数字的闭合围栏。多人时比谁先解开！',
+    },
     players: { min: 1, max: 8, default: 1, soloSeats: 1, minSeats: 1 },
-    options: [{ key: 'size', label: '크기', default: 7, choices: [[5, '5×5'], [7, '7×7'], [10, '10×10 (원작)']] }],
-    rules: `
-    <ul>
-      <li>점 사이의 선을 이어 <b>하나의 닫힌 고리</b>를 만듭니다. 고리는 갈라지거나 교차할 수 없습니다.</li>
-      <li>칸 안의 숫자는 그 칸의 네 변 중 <b>울타리가 지나가는 변의 개수</b>입니다.</li>
-      <li>변을 클릭하면 <b>선 → ✕ → 빈칸</b> 순으로 바뀝니다. 우클릭은 바로 ✕.</li>
-      <li>숫자를 모두 만족하는 고리가 완성되면 자동으로 완료됩니다. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li>
-      <li>제한 시간: 5×5 5분, 7×7 10분, 10×10 15분.</li>
-    </ul>`,
+    options: [{ key: 'size', label: { ko: '크기', en: 'Size', zh: '大小' }, default: 7,
+      choices: [[5, '5×5'], [7, '7×7'], [10, { ko: '10×10 (원작)', en: '10×10 (show)', zh: '10×10（原作）' }]] }],
+    rules: {
+      ko: `<ul>
+        <li>점 사이의 선을 이어 <b>하나의 닫힌 고리</b>를 만듭니다. 고리는 갈라지거나 교차할 수 없습니다.</li>
+        <li>칸 안의 숫자는 그 칸의 네 변 중 <b>울타리가 지나가는 변의 개수</b>입니다.</li>
+        <li>변을 클릭하면 <b>선 → ✕ → 빈칸</b> 순으로 바뀝니다. 우클릭은 바로 ✕.</li>
+        <li>숫자를 모두 만족하는 고리가 완성되면 자동으로 완료됩니다. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li>
+        <li>제한 시간: 5×5 5분, 7×7 10분, 10×10 15분.</li></ul>`,
+      en: `<ul>
+        <li>Draw lines between dots to make <b>one closed loop</b>. The loop can't branch or cross itself.</li>
+        <li>A number in a cell is <b>how many of its four sides the fence runs along</b>.</li>
+        <li>Clicking an edge cycles <b>line → ✕ → empty</b>. Right-click marks ✕ directly.</li>
+        <li>The puzzle completes automatically once the loop satisfies every number. With several players, <b>fastest solve</b> ranks first.</li>
+        <li>Time limit: 5×5 5 min, 7×7 10 min, 10×10 15 min.</li></ul>`,
+      zh: `<ul>
+        <li>在点与点之间连线，围出<b>一个闭合的环</b>。环不能分叉或交叉。</li>
+        <li>格子里的数字表示这个格子四条边中<b>有几条是围栏</b>。</li>
+        <li>点击边会按 <b>线 → ✕ → 空</b> 切换，右键直接标 ✕。</li>
+        <li>环满足所有数字后自动完成。多人时按<b>解题速度</b>排名。</li>
+        <li>限时：5×5 5分钟，7×7 10分钟，10×10 15分钟。</li></ul>`,
+    },
     engine, ui,
   });
 })();
@@ -2474,7 +2847,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     over(st) {
       if (st.phase !== 'end') return null;
       const sc = scores(st);
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => -sc[i]).map((x) => ({ ...x, score: sc[x.seat] + '칸' })) };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => -sc[i]).map((x) => ({ ...x, score: { k: 'cells', v: sc[x.seat] } })) };
     },
   };
 
@@ -2538,7 +2911,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
 
     root.append(h('div', { class: 'split' },
       h('div', { class: 'col', style: { alignItems: 'center' } }, status, svgWrap),
-      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, '확정 영역'), scoreBox, info))));
+      h('div', { class: 'col' }, h('div', { class: 'panel col' }, h('h4', {}, T('wg.area')), scoreBox, info))));
 
     return {
       update(v) {
@@ -2546,29 +2919,58 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         view = v;
         if (turnChanged || !myTurn()) selPiece = reach = dest = null;
         const who = v.phase === 'place' ? v.placer : v.turn;
-        if (v.phase === 'end') status.textContent = '게임 종료';
-        else if (myTurn()) status.innerHTML = v.phase === 'place' ? '<span class="hl">말을 놓을 빈칸을 고르세요</span>' : '<span class="hl">내 차례</span> — 말 → 이동할 칸 → 벽 순서로 고르세요';
-        else status.innerHTML = `<span style="color:${COL[who]}">●</span> ${v.names[who]} 차례`;
+        status.innerHTML = '';
+        if (v.phase === 'end') status.textContent = T('res.over');
+        else if (myTurn()) status.append(v.phase === 'place' ? h('span', { class: 'hl' }, T('wg.placeHint')) : h('span', {}, h('span', { class: 'hl' }, T('wg.myTurn')), ' — ' + T('wg.moveHint')));
+        else status.append(h('span', { style: { color: COL[who] } }, '● '), T('play.curtainTurn', { name: v.names[who] }));
         draw();
         scoreBox.innerHTML = '';
         scoreBox.append(UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.scores[i], me: i === v.me }))));
-        info.innerHTML = v.names.map((n, i) => `<span style="color:${COL[i]}">●</span> ${n}`).join(' &nbsp; ') + '<br>확정 영역 = 한 사람의 말만 있는 닫힌 구역의 칸 수';
+        info.innerHTML = '';
+        info.append(h('div', { class: 'row', style: { gap: '10px' } }, ...v.names.map((n, i) => h('span', {}, h('span', { style: { color: COL[i] } }, '● '), n))),
+          h('div', {}, T('wg.areaNote')));
       },
     };
   }
 
+  I18N.add({
+    ko: { 'wg.area': '확정 영역', 'wg.placeHint': '말을 놓을 빈칸을 고르세요', 'wg.myTurn': '내 차례', 'wg.moveHint': '말 → 이동할 칸 → 벽 순서로 고르세요',
+      'wg.areaNote': '확정 영역 = 한 사람의 말만 있는 닫힌 구역의 칸 수' },
+    en: { 'wg.area': 'Secured area', 'wg.placeHint': 'Pick an empty cell for your piece', 'wg.myTurn': 'Your turn', 'wg.moveHint': 'pick a piece → a cell to move to → a wall',
+      'wg.areaNote': 'Secured area = cells in closed regions that only one player has pieces in' },
+    zh: { 'wg.area': '已确定领地', 'wg.placeHint': '请选择放棋子的空格', 'wg.myTurn': '轮到你了', 'wg.moveHint': '依次选择：棋子 → 移动到的格子 → 墙',
+      'wg.areaNote': '已确定领地 = 只有一个人棋子的封闭区域的格数' },
+  });
+
   registerGame({
-    id: 'wallgo', name: '벽바둑 2', en: 'Wall Go II',
-    summary: '말을 옮기고 벽을 세워 내 말만 있는 구역을 최대한 넓게 만드세요.',
+    id: 'wallgo', en: 'Wall Go II',
+    name: { ko: '벽바둑 2', en: 'Wall Go II', zh: '墙围棋 2' },
+    summary: {
+      ko: '말을 옮기고 벽을 세워 내 말만 있는 구역을 최대한 넓게 만드세요.',
+      en: 'Move your pieces and build walls to claim the biggest area that holds only your pieces.',
+      zh: '移动棋子并筑墙，围出尽可能大、只有自己棋子的区域。',
+    },
     players: { min: 1, max: 4, default: 2, soloSeats: 2, minSeats: 2 },
-    rules: `
-    <ul>
-      <li>7×7 판. 말 개수는 2명이면 4개씩, 3명이면 3개씩, 4명이면 2개씩입니다. 먼저 번갈아(뱀 순서) 원하는 빈칸에 모두 놓습니다.</li>
-      <li>자기 차례에 말 하나를 <b>0~2칸</b> 상하좌우로 옮깁니다(꺾어도 되지만 벽과 말은 통과 불가).</li>
-      <li>옮긴 뒤에는 반드시 그 말이 있는 칸의 한 변에 <b>벽</b>을 세웁니다.</li>
-      <li>모든 구역에 <b>한 사람의 말만</b> 남으면 끝. 내 말만 있는 구역의 칸 수 합이 점수입니다.</li>
-    </ul>
-    <div class="note">「벽바둑 2」의 세부 규칙은 공개되지 않아 시즌 2 「벽바둑」 기본 규칙을 따랐습니다.</div>`,
+    rules: {
+      ko: `<ul>
+        <li>7×7 판. 말 개수는 2명이면 4개씩, 3명이면 3개씩, 4명이면 2개씩입니다. 먼저 번갈아(뱀 순서) 원하는 빈칸에 모두 놓습니다.</li>
+        <li>자기 차례에 말 하나를 <b>0~2칸</b> 상하좌우로 옮깁니다(꺾어도 되지만 벽과 말은 통과 불가).</li>
+        <li>옮긴 뒤에는 반드시 그 말이 있는 칸의 한 변에 <b>벽</b>을 세웁니다.</li>
+        <li>모든 구역에 <b>한 사람의 말만</b> 남으면 끝. 내 말만 있는 구역의 칸 수 합이 점수입니다.</li></ul>
+        <div class="note">「벽바둑 2」의 세부 규칙은 공개되지 않아 시즌 2 「벽바둑」 기본 규칙을 따랐습니다.</div>`,
+      en: `<ul>
+        <li>7×7 board. Each player has 4 pieces with 2 players, 3 with 3 players, 2 with 4 players. First, players take turns (snake order) placing all pieces on any empty cells.</li>
+        <li>On your turn, move one piece <b>0–2 cells</b> up, down, left or right (turning is allowed, but you can't pass through walls or pieces).</li>
+        <li>After moving, you must build a <b>wall</b> on one side of that piece's cell.</li>
+        <li>The game ends when every region holds <b>only one player's pieces</b>. Your score is the total cells in regions that hold only your pieces.</li></ul>
+        <div class="note">The exact rules of "Wall Go II" weren't published, so this follows the basic Season 2 "Wall Go" rules.</div>`,
+      zh: `<ul>
+        <li>7×7 棋盘。2 人时每人 4 枚棋子，3 人时 3 枚，4 人时 2 枚。先按蛇形顺序轮流把棋子全部放到任意空格。</li>
+        <li>轮到自己时，选一枚棋子上下左右移动 <b>0~2 格</b>（可以转弯，但不能穿过墙或棋子）。</li>
+        <li>移动后必须在该棋子所在格子的一条边上筑一道<b>墙</b>。</li>
+        <li>所有区域都<b>只剩一个人的棋子</b>时游戏结束。只有自己棋子的区域格数总和就是得分。</li></ul>
+        <div class="note">「墙围棋 2」的详细规则未公开，这里按第二季「墙围棋」的基本规则制作。</div>`,
+    },
     engine, ui,
   });
 })();
@@ -2578,7 +2980,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
 // 4일차 유배지 매치 — 대칭 퍼즐
 (() => {
   const MODES = { V: { syms: ['V'], n: 8 }, VH: { syms: ['V', 'H'], n: 8 }, DR: { syms: ['D', 'R'], n: 8 }, ALL: { syms: ['V', 'H', 'D'], n: 10 } };
-  const SYM_NAME = { V: '좌우 대칭(세로축)', H: '상하 대칭(가로축)', D: '대각선 대칭(↘)', R: '90° 회전 대칭' };
+  const symName = (s) => T('sym.s.' + s);
   const COLORS = ['#e5383b', '#f2c14e', '#4a90e2'];
   const TIME = 180000, COUNTDOWN = 3000;
 
@@ -2647,7 +3049,7 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     },
     over(st) {
       if (st.phase.some((p) => p === 'ready' || p === 'play')) return null;
-      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? '실패' : (st.time[x.seat] / 1000).toFixed(1) + '초' })) };
+      return { ranking: UIx.rankBy(U.range(st.n), (i) => (st.time[i] == null ? 1e12 : st.time[i])).map((x) => ({ ...x, score: st.time[x.seat] == null ? { k: 'fail' } : { k: 'sec', v: (st.time[x.seat] / 1000).toFixed(1) } })) };
     },
   };
 
@@ -2695,25 +3097,25 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
       palette.innerHTML = '';
       [...COLORS, null].forEach((col, i) => palette.append(h('button', {
         class: 'btn' + ((col ? i : -1) === color ? ' on' : ''), style: { width: '52px', height: '40px', background: col || 'transparent' },
-        onclick: () => { color = col ? i : -1; renderPalette(); } }, col ? '' : '지우개')));
+        onclick: () => { color = col ? i : -1; renderPalette(); } }, col ? '' : T('sym.eraser'))));
     }
     function tickTimer() {
       const v = view; if (!v || v.phase !== 'play') { timerEl.textContent = ''; return; }
       const now = ctx.now();
-      if (now < v.start) { head.innerHTML = `시작까지 <span class="hl">${UIx.secs(v.start, now)}</span>`; return; }
-      head.textContent = '대칭이 되도록 칠하세요';
+      if (now < v.start) { head.innerHTML = T('play.startIn', { s: `<span class="hl">${UIx.secs(v.start, now)}</span>` }); return; }
+      head.textContent = T('sym.goal');
       const s = UIx.secs(v.deadline, now);
       timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 20);
     }
     const iv = setInterval(tickTimer, 250);
 
     root.append(h('div', { class: 'split' },
-      h('div', { class: 'col', style: { alignItems: 'center' } }, head, box, boardEl, h('div', { class: 'muted', style: { fontSize: '13px' } }, '◆ = 단서 칸 (바꿀 수 없음)')),
+      h('div', { class: 'col', style: { alignItems: 'center' } }, head, box, boardEl, h('div', { class: 'muted', style: { fontSize: '13px' } }, T('sym.clueNote'))),
       h('div', { class: 'col' },
-        h('div', { class: 'panel row' }, h('span', {}, '남은 시간'), h('span', { style: { flex: 1 } }), timerEl),
-        h('div', { class: 'panel col' }, h('h4', {}, '만족해야 할 대칭'), symEl),
-        h('div', { class: 'panel col' }, h('h4', {}, '색'), palette),
-        h('div', { class: 'panel col' }, h('h4', {}, '진행 상황'), scoreBox))));
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, h('h4', {}, T('sym.required')), symEl),
+        h('div', { class: 'panel col' }, h('h4', {}, T('sym.color')), palette),
+        h('div', { class: 'panel col' }, h('h4', {}, T('play.progress')), scoreBox))));
     renderPalette();
 
     return {
@@ -2723,11 +3125,12 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         const playing = v.phase !== 'ready' && v.phase !== 'watch';
         boardEl.style.display = playing ? '' : 'none';
         box.innerHTML = '';
-        if (v.phase === 'ready') { head.textContent = ''; box.append(h('div', { class: 'big' }, `${v.names[v.me]} 님 준비`), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, '시작')); }
-        if (v.phase === 'watch') { head.textContent = ''; box.append(h('div', { class: 'muted' }, '다른 플레이어를 기다리는 중...')); }
-        if (v.phase === 'done') head.innerHTML = '<span class="good">완성!</span> 다른 플레이어를 기다리는 중';
-        if (v.phase === 'out') head.innerHTML = '<span class="bad">시간 초과</span> — 정답을 보여 드려요';
-        symEl.innerHTML = v.syms ? v.syms.map((s) => SYM_NAME[s]).join('<br>') : '';
+        if (v.phase === 'ready') { head.textContent = ''; box.append(h('div', { class: 'big' }, T('play.readyTitle', { name: v.names[v.me] })), h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'begin' }) }, T('lobby.start'))); }
+        if (v.phase === 'watch') { head.textContent = ''; box.append(h('div', { class: 'muted' }, T('play.waitOthers'))); }
+        if (v.phase === 'done') { head.innerHTML = ''; head.append(h('span', { class: 'good' }, T('play.doneWait'))); }
+        if (v.phase === 'out') { head.innerHTML = ''; head.append(h('span', { class: 'bad' }, T('play.timeout')), ' — ' + T('sym.showAnswer')); }
+        symEl.innerHTML = '';
+        if (v.syms) v.syms.forEach((s) => symEl.append(h('div', {}, symName(s))));
         if (playing) draw();
         tickTimer();
         scoreBox.innerHTML = '';
@@ -2737,18 +3140,47 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
     };
   }
 
+  I18N.add({
+    ko: { 'sym.s.V': '좌우 대칭(세로축)', 'sym.s.H': '상하 대칭(가로축)', 'sym.s.D': '대각선 대칭(↘)', 'sym.s.R': '90° 회전 대칭',
+      'sym.eraser': '지우개', 'sym.goal': '대칭이 되도록 칠하세요', 'sym.clueNote': '◆ = 단서 칸 (바꿀 수 없음)', 'sym.required': '만족해야 할 대칭',
+      'sym.color': '색', 'sym.showAnswer': '정답을 보여 드려요' },
+    en: { 'sym.s.V': 'Left-right symmetry (vertical axis)', 'sym.s.H': 'Top-bottom symmetry (horizontal axis)', 'sym.s.D': 'Diagonal symmetry (↘)', 'sym.s.R': '90° rotational symmetry',
+      'sym.eraser': 'Eraser', 'sym.goal': 'Paint the picture so it is symmetric', 'sym.clueNote': "◆ = clue cell (can't be changed)", 'sym.required': 'Required symmetry',
+      'sym.color': 'Color', 'sym.showAnswer': "here's the solution" },
+    zh: { 'sym.s.V': '左右对称（竖轴）', 'sym.s.H': '上下对称（横轴）', 'sym.s.D': '对角线对称（↘）', 'sym.s.R': '90° 旋转对称',
+      'sym.eraser': '橡皮擦', 'sym.goal': '把图涂成对称的', 'sym.clueNote': '◆ = 提示格（不能修改）', 'sym.required': '需要满足的对称',
+      'sym.color': '颜色', 'sym.showAnswer': '显示正确答案' },
+  });
+
   registerGame({
-    id: 'symmetry', name: '대칭 퍼즐', en: 'Symmetrical Puzzle',
-    summary: '흩어진 단서 칸을 보고, 주어진 대칭축에 맞게 그림 전체를 완성하세요. 여럿이면 누가 먼저 푸나 대결!',
+    id: 'symmetry', en: 'Symmetrical Puzzle',
+    name: { ko: '대칭 퍼즐', en: 'Symmetry Puzzle', zh: '对称拼图' },
+    summary: {
+      ko: '흩어진 단서 칸을 보고, 주어진 대칭축에 맞게 그림 전체를 완성하세요. 여럿이면 누가 먼저 푸나 대결!',
+      en: 'Use the scattered clue cells to complete the whole picture along the given symmetry. With friends, race to solve first!',
+      zh: '根据零散的提示格，按给定的对称轴补全整幅图。多人时比谁先完成！',
+    },
     players: { min: 1, max: 8, default: 1, soloSeats: 1, minSeats: 1 },
-    options: [{ key: 'mode', label: '대칭', default: 'VH', choices: [['V', '좌우'], ['VH', '좌우+상하'], ['DR', '대각선+회전'], ['ALL', '8방향']] }],
-    rules: `
-    <ul>
-      <li>격자 위에 색칠된 <b>단서 칸(◆)</b> 몇 개와 <b>대칭 조건</b>이 주어집니다.</li>
-      <li>완성된 그림은 주어진 대칭을 <b>모두</b> 만족해야 합니다. 단서를 대칭으로 옮겨 나머지 칸을 칠하세요.</li>
-      <li>색을 고르고 칸을 클릭(또는 드래그)해 칠합니다. 필요한 칸만 정확히 칠해지면 자동 완료.</li>
-      <li>제한 시간 3분. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li>
-    </ul>`,
+    options: [{ key: 'mode', label: { ko: '대칭', en: 'Symmetry', zh: '对称' }, default: 'VH',
+      choices: [['V', { ko: '좌우', en: 'Left-right', zh: '左右' }], ['VH', { ko: '좌우+상하', en: 'LR + TB', zh: '左右+上下' }],
+        ['DR', { ko: '대각선+회전', en: 'Diagonal + rotation', zh: '对角+旋转' }], ['ALL', { ko: '8방향', en: '8-way', zh: '8方向' }]] }],
+    rules: {
+      ko: `<ul>
+        <li>격자 위에 색칠된 <b>단서 칸(◆)</b> 몇 개와 <b>대칭 조건</b>이 주어집니다.</li>
+        <li>완성된 그림은 주어진 대칭을 <b>모두</b> 만족해야 합니다. 단서를 대칭으로 옮겨 나머지 칸을 칠하세요.</li>
+        <li>색을 고르고 칸을 클릭(또는 드래그)해 칠합니다. 필요한 칸만 정확히 칠해지면 자동 완료.</li>
+        <li>제한 시간 3분. 여럿이 하면 <b>빨리 푼 순서</b>로 순위가 정해집니다.</li></ul>`,
+      en: `<ul>
+        <li>You get a grid with a few colored <b>clue cells (◆)</b> and one or more <b>symmetry rules</b>.</li>
+        <li>The finished picture must satisfy <b>every</b> symmetry rule. Mirror the clues to paint the remaining cells.</li>
+        <li>Pick a color and click (or drag) cells to paint. The puzzle completes automatically when exactly the right cells are painted.</li>
+        <li>Time limit: 3 minutes. With several players, <b>fastest solve</b> ranks first.</li></ul>`,
+      zh: `<ul>
+        <li>格子上有几个涂了色的<b>提示格（◆）</b>和<b>对称条件</b>。</li>
+        <li>完成的图必须<b>全部</b>满足给定的对称。把提示格按对称关系复制，涂满其余格子。</li>
+        <li>选好颜色后点击（或拖动）格子上色。只有正确的格子都涂好时自动完成。</li>
+        <li>限时 3 分钟。多人时按<b>解题速度</b>排名。</li></ul>`,
+    },
     engine, ui,
   });
 })();
