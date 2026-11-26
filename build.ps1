@@ -19,6 +19,14 @@ $html = [regex]::Replace($html, '<script src="(?!https?:)([^"]+)"></script>', {
   "<script>/* $($m.Groups[1].Value) */`n$js`n</script>"
 })
 
+# 아이콘 파일(href="icon.svg" / "icon-180.png") → data: 주소로 넣기 (파일 하나만 올려도 아이콘이 보이도록)
+$html = [regex]::Replace($html, 'href="(?!https?:|data:)([^"]+\.(svg|png))"', {
+  param($m)
+  $bytes = [System.IO.File]::ReadAllBytes((Join-Path $root $m.Groups[1].Value))
+  $mime = if ($m.Groups[2].Value -eq 'svg') { 'image/svg+xml' } else { 'image/png' }
+  'href="data:' + $mime + ';base64,' + [Convert]::ToBase64String($bytes) + '"'
+})
+
 $out = Join-Path $root 'index.html'
 [System.IO.File]::WriteAllText($out, $html, $utf8)
 Write-Host ("Built index.html ({0:N0} KB)" -f ((Get-Item $out).Length / 1KB))

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 데블스 게임룸 아이콘: 뿔 달린 장기말 (원작 로고와 무관한 자체 디자인) -->
+  <rect width="64" height="64" rx="14" fill="#141418"/>
+  <path d="M22 18 C20 11 22 6 26 3 C25 8 27 12 29 14 Z" fill="#e5383b"/>
+  <path d="M42 18 C44 11 42 6 38 3 C39 8 37 12 35 14 Z" fill="#e5383b"/>
+  <circle cx="32" cy="22" r="9" fill="#e5383b"/>
+  <path d="M25 33 L39 33 L37 44 L43 50 L43 55 L21 55 L21 50 L27 44 Z" fill="#e5383b"/>
+  <rect x="18" y="54" width="28" height="4" rx="2" fill="#f4f1ea"/>
+  <circle cx="29" cy="21" r="1.6" fill="#141418"/>
+  <circle cx="35" cy="21" r="1.6" fill="#141418"/>
+</svg>
