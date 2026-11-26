@@ -120,6 +120,59 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 .scores { display: flex; flex-wrap: wrap; gap: 6px; }
 .scores .stat.me b { color: var(--gold); }
 
+/* 수식 신호등 */
+.eq-row { display: flex; gap: 5px; margin: 3px 0; }
+.eq-cell { width: 40px; height: 46px; border: 2px solid var(--line); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; background: var(--bg3); }
+.eq-keys { display: grid; grid-template-columns: repeat(8, 44px); gap: 5px; }
+.eq-key { padding: 8px 0; font-size: 18px; font-weight: 800; }
+.eq-legend { font-size: 13px; }
+@media (max-width: 480px) { .eq-cell { width: 32px; height: 40px; font-size: 18px; } .eq-keys { grid-template-columns: repeat(8, 1fr); } }
+
+/* 그라데이션 */
+.gr-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gr-cup { width: 52px; height: 64px; border-radius: 6px 6px 16px 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px #000; border: 2px solid transparent; }
+.gr-cup.click { cursor: pointer; border-color: var(--gold); }
+.gr-cup.dim { opacity: .3; }
+.gr-cup.sel { box-shadow: 0 0 0 3px var(--gold); }
+.gr-swatch { display: inline-block; width: 40px; height: 24px; border-radius: 4px; margin-left: 8px; }
+
+/* HIT, STAY */
+.hs-card { width: 34px; height: 46px; border-radius: 5px; background: #f4f1ea; color: #111; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.hs-card.back { background: repeating-linear-gradient(45deg, var(--red2), var(--red2) 5px, #7a1013 5px, #7a1013 10px); }
+.hs-card.neg { color: #c0262b; }
+.hs-card.up { box-shadow: 0 0 0 2px var(--gold); }
+.hs-seat { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg2); }
+.hs-seat.turn { border-color: var(--gold); }
+.hs-seat.me b { color: var(--gold); }
+.hs-seat.win { background: #1e3a2a; }
+.hs-seat.out { opacity: .4; }
+.hs-die { width: 70px; height: 70px; border-radius: 14px; background: var(--red2); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+.hs-die b { font-size: 30px; line-height: 1; }
+.hs-die small { font-size: 11px; opacity: .8; }
+
+/* 만국기 */
+.flag-grid { display: grid; grid-template-columns: repeat(5, auto); gap: 8px; }
+.flag-cell { padding: 4px; border-radius: 6px; border: 3px solid transparent; }
+.flag-cell.click { cursor: pointer; }
+.flag-cell.sel { border-color: var(--gold); }
+.flag-cell.ans { border-color: var(--green); }
+.flag-cell.wrong { border-color: var(--red); }
+@media (max-width: 480px) { .flag-grid svg { width: 54px !important; height: 36px !important; } }
+
+/* 카드 장기 */
+.cj-cards { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cj-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg3); font-size: 13px; font-weight: 700; min-width: 70px; }
+.cj-card.click { cursor: pointer; }
+.cj-card.on { border-color: var(--gold); }
+.cj-card.dim { opacity: .35; }
+.cj-mini { display: grid; gap: 1px; }
+.cj-badge { position: absolute; top: -8px; right: -8px; background: var(--gold); color: #111; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+/* 게임 결과 칸 (판을 가리지 않음) */
+.result-box { background: var(--bg2); border: 2px solid var(--gold); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+.result-head { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+.result-body p { margin: 4px 0; }
+
 /* 모달 & 토스트 */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
 .modal { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; max-width: 620px; width: 100%; max-height: 86vh; overflow: auto; }
@@ -225,9 +278,10 @@ I18N.add({
     'play.readyTitle': '{name} 님 준비', 'play.waitOthers': '다른 플레이어를 기다리는 중...', 'play.startIn': '시작까지 {s}', 'play.timeLeft': '남은 시간',
     'play.progress': '진행 상황', 'play.scores': '점수', 'play.log': '기록', 'play.doneWait': '완성! 다른 플레이어를 기다리는 중', 'play.timeout': '시간 초과',
     'res.first': '🏆 1위!', 'res.rank': '{n}위', 'res.rankCol': '{n}위', 'res.over': '게임 종료', 'res.again': '다시 하기', 'res.close': '닫기', 'res.leave': '나가기',
-    'res.waitHost': '방장이 다시 시작하면 새 게임이 열립니다.', 'res.disconnected': '연결 끊김', 'res.disconnectedBody': '방장과의 연결이 끊어졌어요.',
+    'res.waitHost': '방장이 다시 시작하면 새 게임이 열립니다.', 'res.hide': '접기 ▲', 'res.show': '결과 펼치기 ▼', 'res.disconnected': '연결 끊김', 'res.disconnectedBody': '방장과의 연결이 끊어졌어요.',
     'rules.title': '{game} 규칙', 'ok': '확인', 'err.generic': '오류가 발생했어요: {m}',
     'score.pts': '{v}점', 'score.wins': '{v}승', 'score.pen': '벌점 {v}', 'score.cells': '{v}칸', 'score.sec': '{v}초', 'score.fail': '실패',
+    'score.chips': '{v}칩', 'score.solved': '{v}번 만에 정답', 'score.unsolved': '못 맞힘', 'score.matches': '{v}매치 승', 'score.win': '승리', 'score.lose': '패배', 'score.out': '{v}번째 탈락',
     'note.prison': '원작 감옥 매치에서는 하위권이 탈락합니다.', 'note.lastOut': '원작에서는 최하위가 탈락합니다.',
     'net.s1': '① 온라인 서버에 연결 중...', 'net.s2': '② 방을 찾는 중...', 'net.s3': '③ 방장과 연결하는 중...',
     'net.s3nudge': '③ 방장과 연결하는 중... 방장에게 게임 화면을 켜 달라고 하세요',
@@ -272,9 +326,10 @@ I18N.add({
     'play.readyTitle': '{name}, get ready', 'play.waitOthers': 'Waiting for other players...', 'play.startIn': 'Starting in {s}', 'play.timeLeft': 'Time left',
     'play.progress': 'Progress', 'play.scores': 'Scores', 'play.log': 'Log', 'play.doneWait': 'Solved! Waiting for other players', 'play.timeout': 'Time up',
     'res.first': '🏆 1st place!', 'res.rank': 'Place #{n}', 'res.rankCol': '#{n}', 'res.over': 'Game over', 'res.again': 'Play again', 'res.close': 'Close', 'res.leave': 'Leave',
-    'res.waitHost': 'A new game opens when the host restarts.', 'res.disconnected': 'Disconnected', 'res.disconnectedBody': 'Lost the connection to the host.',
+    'res.waitHost': 'A new game opens when the host restarts.', 'res.hide': 'Collapse ▲', 'res.show': 'Show results ▼', 'res.disconnected': 'Disconnected', 'res.disconnectedBody': 'Lost the connection to the host.',
     'rules.title': '{game} rules', 'ok': 'OK', 'err.generic': 'Something went wrong: {m}',
     'score.pts': '{v} pts', 'score.wins': '{v} wins', 'score.pen': '{v} penalty', 'score.cells': '{v} cells', 'score.sec': '{v}s', 'score.fail': 'Failed',
+    'score.chips': '{v} chips', 'score.solved': 'solved in {v}', 'score.unsolved': 'not solved', 'score.matches': '{v} match(es) won', 'score.win': 'Win', 'score.lose': 'Loss', 'score.out': 'out #{v}',
     'note.prison': 'In the show, the lowest players are eliminated in prison matches.', 'note.lastOut': 'In the show, last place is eliminated.',
     'net.s1': '① Connecting to the online server...', 'net.s2': '② Looking for the room...', 'net.s3': '③ Connecting to the host...',
     'net.s3nudge': '③ Connecting to the host... ask the host to keep the game screen open',
@@ -319,9 +374,10 @@ I18N.add({
     'play.readyTitle': '{name}，请准备', 'play.waitOthers': '等待其他玩家...', 'play.startIn': '{s} 秒后开始', 'play.timeLeft': '剩余时间',
     'play.progress': '进度', 'play.scores': '分数', 'play.log': '记录', 'play.doneWait': '完成！等待其他玩家', 'play.timeout': '时间到',
     'res.first': '🏆 第1名！', 'res.rank': '第{n}名', 'res.rankCol': '第{n}名', 'res.over': '游戏结束', 'res.again': '再来一局', 'res.close': '关闭', 'res.leave': '离开',
-    'res.waitHost': '房主重新开始后会开启新的一局。', 'res.disconnected': '连接断开', 'res.disconnectedBody': '与房主的连接已断开。',
+    'res.waitHost': '房主重新开始后会开启新的一局。', 'res.hide': '收起 ▲', 'res.show': '展开结果 ▼', 'res.disconnected': '连接断开', 'res.disconnectedBody': '与房主的连接已断开。',
     'rules.title': '{game} 规则', 'ok': '确定', 'err.generic': '出错了：{m}',
     'score.pts': '{v}分', 'score.wins': '{v}胜', 'score.pen': '罚分 {v}', 'score.cells': '{v}格', 'score.sec': '{v}秒', 'score.fail': '失败',
+    'score.chips': '{v}筹码', 'score.solved': '第{v}次猜中', 'score.unsolved': '未猜中', 'score.matches': '赢{v}局', 'score.win': '胜', 'score.lose': '负', 'score.out': '第{v}个淘汰',
     'note.prison': '原作的监狱赛中，排名靠后的玩家会被淘汰。', 'note.lastOut': '原作中最后一名会被淘汰。',
     'net.s1': '① 正在连接线上服务器...', 'net.s2': '② 正在寻找房间...', 'net.s3': '③ 正在连接房主...',
     'net.s3nudge': '③ 正在连接房主……请让房主打开游戏画面',
@@ -347,7 +403,7 @@ const scoreText = (s) => (s && typeof s === 'object' ? T('score.' + s.k, { v: s.
   <script>/* js/util.js */
 // 공용 유틸리티
 // 화면에 보이는 버전. 업데이트할 때마다 올려서, 서로 같은 버전인지 대기실에서 확인할 수 있게 합니다.
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v12';
 const U = {
   rnd: (n) => Math.floor(Math.random() * n),
   rint: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -1429,10 +1485,11 @@ const App = (() => {
     unmount();
     const r = root(); r.innerHTML = '';
     const banner = h('div', { class: 'turn-banner' });
+    const resultBox = h('div', { class: 'result-box', hidden: true }); // 게임판을 가리지 않고 위에 결과를 보여 줌
     const stage = h('div', { class: 'stage' });
     const curtain = h('div', { class: 'curtain', style: { display: 'none' } });
     const leave = () => lobby(def.id); // unmount 시 정리 함수가 연결을 끊음
-    r.append(topbar(L(def.name), leave, def), banner, stage, curtain);
+    r.append(topbar(L(def.name), leave, def), banner, resultBox, stage, curtain);
     banner.style.display = 'none';
 
     let displaySeat = null, revealedFor = null, resultShown = false;
@@ -1448,15 +1505,18 @@ const App = (() => {
 
     function render(view) {
       try { ui.update(view); } catch (e) { console.error(e); }
-      if (view.result && !resultShown) { resultShown = true; setTimeout(() => showResult(view), 700); }
-      if (!view.result && resultShown) { resultShown = false; closeModal(); }
+      if (view.result && !resultShown) { resultShown = true; showResult(view); }
+      if (!view.result && resultShown) { resultShown = false; resultBox.hidden = true; resultBox.innerHTML = ''; }
     }
     function refresh() {
       const game = cfg.game, E = def.engine;
       const locals = cfg.localSeats;
       let seat;
       if (locals.length === 1) seat = locals[0];
-      else {
+      else if (E.over(game.state)) { // 끝난 판은 가림막 없이 그대로 보여 줌
+        seat = locals[0];
+        banner.style.display = 'none';
+      } else {
         const A = E.over(game.state) ? [] : E.active(game.state).filter((s) => locals.includes(s));
         if (A.length) {
           seat = A[0];
@@ -1488,20 +1548,31 @@ const App = (() => {
         h('td', {}, T('res.rankCol', { n: x.rank })), h('td', {}, view.names[x.seat]), h('td', {}, scoreText(x.score)))));
       const mine = res.ranking.find((x) => x.seat === view.me);
       const title = mine && !ctx.local ? (mine.rank === 1 ? T('res.first') : T('res.rank', { n: mine.rank })) : T('res.over');
-      const box = h('div', {}, tbl,
+      // 팝업 대신 게임판 위에 결과 칸: 판은 그대로 보이고, 나갈지 다시 할지는 플레이어가 정함
+      let open = true;
+      const body = h('div', { class: 'result-body' }, tbl,
         res.note ? h('p', { class: 'muted' }, T(res.note)) : null,
         isClient ? h('p', { class: 'muted' }, T('res.waitHost')) : null);
-      const btns = [];
-      if (cfg.restart) btns.push({ label: T('res.again'), fn: () => cfg.restart() });
-      else btns.push({ label: T('res.close') });
-      btns.push({ label: T('res.leave'), fn: leave });
-      modal(title, box, btns);
+      const toggle = h('button', { class: 'btn sm ghost' }, T('res.hide'));
+      toggle.onclick = () => { open = !open; body.hidden = !open; toggle.textContent = open ? T('res.hide') : T('res.show'); };
+      resultBox.innerHTML = '';
+      resultBox.append(
+        h('div', { class: 'result-head' }, h('b', {}, title), h('span', { style: { flex: 1 } }), toggle),
+        body,
+        h('div', { class: 'row' },
+          cfg.restart ? h('button', { class: 'btn primary', onclick: () => cfg.restart() }, T('res.again')) : null,
+          h('button', { class: 'btn', onclick: leave }, T('res.leave'))));
+      resultBox.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     if (isClient) {
       displaySeat = cfg.seat;
       cfg.client.onView = (v) => render(v);
-      cfg.client.onClose = () => { if (!document.getElementById('modal')) modal(T('res.disconnected'), T('res.disconnectedBody'), [{ label: T('res.leave'), fn: leave }]); };
+      cfg.client.onClose = () => {
+        if (resultShown) { toast(T('res.disconnectedBody')); return; } // 끝난 판은 계속 볼 수 있게 가리지 않음
+        if (!document.getElementById('modal')) modal(T('res.disconnected'), T('res.disconnectedBody'), [{ label: T('res.leave'), fn: leave }]);
+      };
     } else {
       cfg.game.listeners.push(refresh);
       refresh();
@@ -2970,6 +3041,1676 @@ window.addEventListener('DOMContentLoaded', () => App.hub());
         <li>移动后必须在该棋子所在格子的一条边上筑一道<b>墙</b>。</li>
         <li>所有区域都<b>只剩一个人的棋子</b>时游戏结束。只有自己棋子的区域格数总和就是得分。</li></ul>
         <div class="note">「墙围棋 2」的详细规则未公开，这里按第二季「墙围棋」的基本规则制作。</div>`,
+    },
+    engine, ui,
+  });
+})();
+
+</script>
+  <!-- 5~7일차 (11~14화) -->
+  <script>/* js/games/hitstay.js */
+// 6일차 메인 매치 — HIT, STAY
+(() => {
+  const START_CHIPS = 30, MAX_ROUNDS = 40, ACT_MS = 60000, SHOW_MS = 6000;
+  // 덱 35장: 1×7, 2×6, 3×5, 4×4, 5×3, 6×2, 7×1, −1×7
+  const DECK = [...[1, 2, 3, 4, 5, 6, 7].flatMap((v) => Array(8 - v).fill(v)), ...Array(7).fill(-1)];
+  const total = (hand) => hand.reduce((a, c) => a + c.v, 0);
+  const log = (st, e) => { st.log.unshift(e); if (st.log.length > 30) st.log.pop(); };
+
+  const inHand = (st, i) => st.inRound[i] && !st.folded[i];
+  const canAct = (st, i) => inHand(st, i) && st.chips[i] > 0; // 칩이 0이면 올인 상태
+  const nextFrom = (st, start, pred) => { for (let k = 0; k < st.n; k++) { const i = (start + k) % st.n; if (pred(i)) return i; } return -1; };
+
+  function newRound(st, now) {
+    st.round++;
+    st.base = 1 + Math.floor((st.round - 1) / 10); // 10라운드마다 기본 베팅 +1
+    st.limit = U.rint(5, 12);                        // 5~12가 나오는 8면체 주사위
+    st.deck = U.shuffle(DECK.slice());
+    st.pot = 0; st.result = null;
+    for (let i = 0; i < st.n; i++) {
+      st.inRound[i] = !st.out[i]; st.folded[i] = false; st.stayed[i] = false; st.hand[i] = [];
+      if (!st.inRound[i]) continue;
+      const ante = Math.min(st.base, st.chips[i]);
+      st.chips[i] -= ante; st.pot += ante;
+      st.hand[i] = [0, 1, 2].map((k) => ({ v: st.deck.pop(), up: k === 0 })); // 한 장은 공개
+    }
+    log(st, { k: 'round', r: st.round, limit: st.limit, base: st.base });
+    startBetting(st, 'bet1', now);
+  }
+  function startBetting(st, phase, now) {
+    st.phase = phase; st.bet = 0; st.put = st.put.map(() => 0); st.acted = st.acted.map(() => false);
+    const actors = U.range(st.n).filter((i) => canAct(st, i));
+    st.cap = actors.length ? Math.min(...actors.map((i) => st.chips[i])) : 0; // 최대 베팅 = 가장 적은 칩
+    if (actors.length < 2 || U.range(st.n).filter((i) => inHand(st, i)).length < 2) return afterBetting(st, now);
+    st.turn = nextFrom(st, st.first, (i) => canAct(st, i));
+    st.deadline = now + ACT_MS;
+  }
+  function bettingDone(st) {
+    return U.range(st.n).every((i) => !canAct(st, i) || (st.acted[i] && st.put[i] === st.bet));
+  }
+  function afterAction(st, now) {
+    const alive = U.range(st.n).filter((i) => inHand(st, i));
+    if (alive.length === 1) return showdown(st, now);
+    if (st.phase === 'hit') {
+      const nxt = nextFrom(st, (st.turn + 1) % st.n, (i) => inHand(st, i) && !st.stayed[i]);
+      if (nxt < 0 || !st.deck.length) return startBetting(st, 'bet2', now);
+      st.turn = nxt; st.deadline = now + ACT_MS; return;
+    }
+    if (bettingDone(st)) return afterBetting(st, now);
+    st.turn = nextFrom(st, (st.turn + 1) % st.n, (i) => canAct(st, i) && !(st.acted[i] && st.put[i] === st.bet));
+    st.deadline = now + ACT_MS;
+  }
+  function afterBetting(st, now) {
+    if (st.phase === 'bet1') {
+      st.phase = 'hit';
+      st.turn = nextFrom(st, st.first, (i) => inHand(st, i) && !st.stayed[i]);
+      if (st.turn < 0 || U.range(st.n).filter((i) => inHand(st, i)).length < 2) return showdown(st, now);
+      st.deadline = now + ACT_MS; return;
+    }
+    showdown(st, now);
+  }
+  function showdown(st, now) {
+    const alive = U.range(st.n).filter((i) => inHand(st, i));
+    const tot = {}; alive.forEach((i) => (tot[i] = total(st.hand[i])));
+    let winners;
+    const under = alive.filter((i) => tot[i] <= st.limit);
+    if (alive.length === 1) winners = alive;
+    else if (!under.length) winners = alive; // 모두 버스트면 나눠 가짐
+    else {
+      const best = Math.max(...under.map((i) => tot[i]));
+      let w = under.filter((i) => tot[i] === best);
+      const most = Math.max(...w.map((i) => st.hand[i].length)); // 합이 같으면 카드가 많은 쪽
+      winners = w.filter((i) => st.hand[i].length === most);
+    }
+    const share = Math.floor(st.pot / winners.length);
+    let rem = st.pot - share * winners.length;
+    winners.forEach((i) => (st.chips[i] += share));
+    for (let k = 0; rem > 0 && k < st.n * 2; k++) { const i = (st.first + k) % st.n; if (winners.includes(i)) { st.chips[i]++; rem--; } }
+    st.result = { winners, totals: tot, pot: st.pot };
+    log(st, { k: 'win', who: winners, pot: st.pot });
+    st.pot = 0;
+    st.phase = 'show'; st.deadline = now + SHOW_MS; st.turn = -1;
+  }
+  function endRound(st, now) {
+    for (let i = 0; i < st.n; i++) if (!st.out[i] && st.chips[i] <= 0) { st.out[i] = true; st.outOrder.push(i); log(st, { k: 'out', who: i }); }
+    const alive = U.range(st.n).filter((i) => !st.out[i]);
+    if (alive.length <= 1 || st.round >= MAX_ROUNDS) { st.phase = 'end'; return; }
+    st.first = nextFrom(st, (st.first + 1) % st.n, (i) => !st.out[i]); // 선 플레이어는 시계 방향으로
+    newRound(st, now);
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const n = seats.length;
+      const st = { seats, n, chips: Array(n).fill(START_CHIPS), out: Array(n).fill(false), outOrder: [], round: 0, first: U.rnd(n),
+        inRound: Array(n).fill(true), folded: Array(n).fill(false), stayed: Array(n).fill(false), hand: Array(n).fill([]),
+        put: Array(n).fill(0), acted: Array(n).fill(false), log: [], turn: -1 };
+      newRound(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (seat !== st.turn) return false;
+      if (st.phase === 'bet1' || st.phase === 'bet2') {
+        const toCall = st.bet - st.put[seat];
+        if (a.t === 'call') {
+          const amt = Math.min(toCall, st.chips[seat]);
+          st.chips[seat] -= amt; st.pot += amt; st.put[seat] += amt; st.acted[seat] = true;
+          log(st, amt ? { k: 'call', who: seat, amt } : { k: 'check', who: seat });
+        } else if (a.t === 'raise') {
+          const to = a.to | 0;
+          if (to <= st.bet || to > st.cap) return false;
+          const amt = to - st.put[seat];
+          if (amt > st.chips[seat]) return false;
+          st.chips[seat] -= amt; st.pot += amt; st.put[seat] = to; st.bet = to;
+          st.acted = st.acted.map(() => false); st.acted[seat] = true;
+          log(st, { k: 'raise', who: seat, to });
+        } else if (a.t === 'fold') {
+          st.folded[seat] = true; log(st, { k: 'fold', who: seat });
+        } else return false;
+        afterAction(st, now); return;
+      }
+      if (st.phase === 'hit') {
+        if (a.t === 'hit' && st.deck.length) { const v = st.deck.pop(); st.hand[seat].push({ v, up: true }); log(st, { k: 'hit', who: seat, v }); }
+        else if (a.t === 'stay') { st.stayed[seat] = true; log(st, { k: 'stay', who: seat }); }
+        else return false;
+        afterAction(st, now); return;
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'show') { endRound(st, now); return true; }
+      if (st.turn >= 0) { // 시간 초과: 체크 가능하면 체크, 아니면 폴드 / 히트 단계는 스테이
+        const s = st.turn;
+        const a = st.phase === 'hit' ? { t: 'stay' } : st.bet - st.put[s] === 0 ? { t: 'call' } : { t: 'fold' };
+        engine.action(st, s, a, now); return true;
+      }
+      return false;
+    },
+    active: (st) => (['bet1', 'hit', 'bet2'].includes(st.phase) && st.turn >= 0 ? [st.turn] : []),
+    hidden: (st) => ['bet1', 'hit', 'bet2'].includes(st.phase),
+    botDelay: () => 700 + Math.random() * 800,
+    botAct(st, me) {
+      const T0 = total(st.hand[me]), d = st.limit - T0;
+      if (st.phase === 'hit') return d >= 4 || (d >= 2 && Math.random() < 0.35) ? { t: 'hit' } : { t: 'stay' };
+      const toCall = st.bet - st.put[me];
+      const early = st.phase === 'bet1';
+      let strength; // 0~1
+      if (d < 0) strength = early ? 0.15 : 0;      // 버스트 (−1 카드로 돌아올 수도)
+      else if (d <= 1) strength = 0.9;
+      else if (d <= 3) strength = early ? 0.6 : 0.45;
+      else strength = early ? 0.5 : 0.15;
+      strength += (Math.random() - 0.5) * 0.2;
+      if (strength > 0.75 && st.cap > st.bet) return { t: 'raise', to: Math.min(st.cap, st.bet + U.rint(1, 3) * st.base) };
+      if (toCall === 0) return { t: 'call' };
+      if (strength > 0.35 || toCall <= st.base) return { t: 'call' };
+      return { t: 'fold' };
+    },
+    view(st, me) {
+      const showAll = st.phase === 'show' || st.phase === 'end';
+      return {
+        phase: st.phase, round: st.round, base: st.base, limit: st.limit, pot: st.pot, chips: st.chips, out: st.out, first: st.first,
+        turn: st.turn, bet: st.bet, cap: st.cap, put: st.put, folded: st.folded, stayed: st.stayed, inRound: st.inRound,
+        deadline: st.deadline, deckLeft: st.deck.length, log: st.log.slice(0, 18),
+        hands: st.hand.map((hd, i) => hd.map((c) => (c.up || i === me || showAll ? { v: c.v, up: c.up } : { v: null, up: false }))),
+        roundResult: st.result, // ※ 'result'는 프레임워크가 게임 종료 결과로 쓰는 이름이라 피함
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      const alive = U.range(st.n).filter((i) => !st.out[i]).sort((a, b) => st.chips[b] - st.chips[a]);
+      const order = [...alive, ...st.outOrder.slice().reverse()];
+      let rank = 0, prev = null;
+      return {
+        ranking: order.map((i, k) => {
+          const key = st.out[i] ? 'out' + i : st.chips[i];
+          if (key !== prev) { rank = k + 1; prev = key; }
+          return { seat: i, rank, score: st.out[i] ? { k: 'out', v: st.outOrder.indexOf(i) + 1 } : { k: 'chips', v: st.chips[i] } };
+        }),
+      };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, raiseTo = 0, key = null;
+    const status = h('div', { class: 'big' });
+    const center = h('div', { class: 'row', style: { gap: '18px', alignItems: 'center' } });
+    const table = h('div', { class: 'col' });
+    const ctrl = h('div', { class: 'col' });
+    const logEl = h('div', { class: 'log' });
+    const timerEl = h('span', { class: 'timer' });
+
+    const cardEl = (c) => h('div', { class: 'hs-card' + (c.v == null ? ' back' : '') + (c.v === -1 ? ' neg' : '') + (c.up ? ' up' : '') }, c.v == null ? '' : c.v);
+    function logLine(e) {
+      const nm = (i) => view.names[i];
+      const m = {
+        round: () => T('hs.log.round', { r: e.r, limit: e.limit, base: e.base }),
+        call: () => T('hs.log.call', { name: nm(e.who), n: e.amt }), check: () => T('hs.log.check', { name: nm(e.who) }),
+        raise: () => T('hs.log.raise', { name: nm(e.who), n: e.to }), fold: () => T('hs.log.fold', { name: nm(e.who) }),
+        hit: () => T('hs.log.hit', { name: nm(e.who), v: e.v }), stay: () => T('hs.log.stay', { name: nm(e.who) }),
+        win: () => T('hs.log.win', { names: e.who.map(nm).join(', '), n: e.pot }), out: () => T('hs.log.out', { name: nm(e.who) }),
+      }[e.k];
+      return h('div', { class: e.k === 'round' ? 'muted' : e.k === 'win' || e.k === 'out' ? 'hl' : '' }, m ? m() : '');
+    }
+    function draw() {
+      const v = view;
+      center.innerHTML = '';
+      center.append(
+        h('div', { class: 'hs-die' }, h('small', {}, T('hs.limit')), h('b', {}, v.limit)),
+        h('div', { class: 'stat' }, h('b', {}, v.pot), h('span', {}, T('hs.pot'))),
+        h('div', { class: 'stat' }, h('b', {}, v.base), h('span', {}, T('hs.base'))),
+        h('div', { class: 'stat' }, h('b', {}, v.phase === 'bet1' || v.phase === 'bet2' ? v.bet : '—'), h('span', {}, T('hs.currentBet'))));
+      table.innerHTML = '';
+      v.names.forEach((n, i) => {
+        if (v.out[i]) { table.append(h('div', { class: 'hs-seat out' }, h('b', {}, n), h('span', { class: 'muted' }, T('hs.outTag')))); return; }
+        const hd = v.hands[i] || [];
+        const tags = [];
+        if (v.first === i) tags.push(T('hs.firstTag'));
+        if (v.folded[i]) tags.push(T('hs.foldTag'));
+        else if (v.stayed[i] && v.phase === 'hit') tags.push(T('hs.stayTag'));
+        if (v.chips[i] === 0 && !v.folded[i] && v.inRound[i]) tags.push(T('hs.allinTag'));
+        const known = hd.every((c) => c.v != null) ? hd.reduce((a, c) => a + c.v, 0) : null;
+        const win = v.roundResult && v.roundResult.winners.includes(i);
+        table.append(h('div', { class: 'hs-seat' + (v.turn === i ? ' turn' : '') + (i === v.me ? ' me' : '') + (win ? ' win' : '') },
+          h('div', { class: 'col', style: { gap: '2px', minWidth: '110px' } }, h('b', {}, (v.turn === i ? '▶ ' : '') + n),
+            h('span', { class: 'muted', style: { fontSize: '12px' } }, `${T('hs.chips')} ${v.chips[i]}` + (v.put[i] ? ` · ${T('hs.putTag', { n: v.put[i] })}` : ''))),
+          h('div', { class: 'row', style: { gap: '4px' } }, ...hd.map(cardEl)),
+          known != null && !v.folded[i] ? h('span', { class: known > v.limit ? 'bad' : 'good' }, `= ${known}`) : null,
+          h('span', { class: 'muted', style: { fontSize: '12px' } }, tags.join(' · '))));
+      });
+      drawCtrl();
+      logEl.innerHTML = ''; v.log.forEach((e) => logEl.append(logLine(e)));
+    }
+    function drawCtrl() {
+      const v = view;
+      ctrl.innerHTML = '';
+      if (v.me < 0 || v.turn !== v.me) {
+        if (v.phase === 'show' && v.roundResult) ctrl.append(h('div', { class: 'hl' }, T('hs.roundWinners', { names: v.roundResult.winners.map((i) => v.names[i]).join(', '), n: v.roundResult.pot })));
+        else if (v.turn >= 0) ctrl.append(h('div', { class: 'muted' }, T('hs.waiting', { name: v.names[v.turn] })));
+        return;
+      }
+      if (v.phase === 'hit') {
+        ctrl.append(h('div', { class: 'hl' }, T('hs.hitQ')),
+          h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: !v.deckLeft, onclick: () => ctx.send({ t: 'hit' }) }, 'HIT'),
+            h('button', { class: 'btn', onclick: () => ctx.send({ t: 'stay' }) }, 'STAY')));
+        return;
+      }
+      const toCall = v.bet - v.put[v.me];
+      const minRaise = v.bet + 1;
+      raiseTo = U.clamp(raiseTo || minRaise, minRaise, v.cap);
+      const canRaise = v.cap >= minRaise;
+      ctrl.append(h('div', { class: 'hl' }, T('hs.betQ')),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'call' }) }, toCall ? T('hs.call', { n: toCall }) : T('hs.check')),
+          h('button', { class: 'btn', onclick: () => ctx.send({ t: 'fold' }) }, T('hs.fold'))),
+        canRaise ? h('div', { class: 'row' },
+          h('button', { class: 'btn sm', disabled: raiseTo <= minRaise, onclick: () => { raiseTo--; drawCtrl(); } }, '−'),
+          h('b', { style: { minWidth: '34px', textAlign: 'center' } }, raiseTo),
+          h('button', { class: 'btn sm', disabled: raiseTo >= v.cap, onclick: () => { raiseTo++; drawCtrl(); } }, '+'),
+          h('button', { class: 'btn', onclick: () => ctx.send({ t: 'raise', to: raiseTo }) }, T('hs.raiseTo', { n: raiseTo })),
+          h('button', { class: 'btn', onclick: () => ctx.send({ t: 'raise', to: v.cap }) }, T('hs.allin', { n: v.cap }))) : '',
+        h('div', { class: 'muted', style: { fontSize: '12px' } }, T('hs.capNote', { n: v.cap })));
+    }
+    function tickTimer() {
+      if (!view) return;
+      timerEl.textContent = view.turn >= 0 && view.phase !== 'show' && view.phase !== 'end' ? UIx.mmss(UIx.secs(view.deadline, ctx.now())) : '';
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col' }, status, center, table, h('div', { class: 'panel col' }, ctrl)),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel' }, h('h4', {}, T('play.log')), logEl))));
+
+    return {
+      update(v) {
+        const k = `${v.round}-${v.phase}-${v.turn}-${v.bet}`;
+        if (k !== key) { key = k; raiseTo = 0; }
+        view = v;
+        status.textContent = v.phase === 'end' ? T('res.over') : T('hs.phase.' + v.phase, { r: v.round });
+        draw(); tickTimer();
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  I18N.add({
+    ko: { 'hs.limit': '리밋', 'hs.pot': '판돈', 'hs.base': '기본 베팅', 'hs.currentBet': '현재 베팅', 'hs.outTag': '탈락', 'hs.firstTag': '선', 'hs.foldTag': '폴드',
+      'hs.stayTag': '스테이', 'hs.allinTag': '올인', 'hs.chips': '칩', 'hs.putTag': '이번에 {n}', 'hs.roundWinners': '{names} 승리 — 판돈 {n}칩',
+      'hs.waiting': '{name}의 차례를 기다리는 중', 'hs.hitQ': '카드를 더 받을까요?', 'hs.betQ': '베팅하세요', 'hs.call': '콜 ({n})', 'hs.check': '체크',
+      'hs.fold': '폴드', 'hs.raiseTo': '{n}까지 레이즈', 'hs.allin': '최대 ({n})', 'hs.capNote': '이번 베팅의 최대치는 {n}칩 (가장 적은 칩을 가진 사람 기준)',
+      'hs.phase.bet1': '라운드 {r} — 첫 번째 베팅', 'hs.phase.hit': '라운드 {r} — 히트 / 스테이', 'hs.phase.bet2': '라운드 {r} — 두 번째 베팅', 'hs.phase.show': '라운드 {r} — 공개',
+      'hs.log.round': '— 라운드 {r} · 리밋 {limit} · 기본 베팅 {base} —', 'hs.log.call': '{name}: 콜 {n}', 'hs.log.check': '{name}: 체크', 'hs.log.raise': '{name}: {n}까지 레이즈',
+      'hs.log.fold': '{name}: 폴드', 'hs.log.hit': '{name}: 히트 ({v})', 'hs.log.stay': '{name}: 스테이', 'hs.log.win': '{names}: 판돈 {n}칩 획득', 'hs.log.out': '{name} 탈락' },
+    en: { 'hs.limit': 'Limit', 'hs.pot': 'Pot', 'hs.base': 'Base bet', 'hs.currentBet': 'Current bet', 'hs.outTag': 'Out', 'hs.firstTag': 'First', 'hs.foldTag': 'Folded',
+      'hs.stayTag': 'Stayed', 'hs.allinTag': 'All-in', 'hs.chips': 'Chips', 'hs.putTag': '{n} in', 'hs.roundWinners': '{names} win(s) — pot {n} chips',
+      'hs.waiting': "Waiting for {name}'s move", 'hs.hitQ': 'Take another card?', 'hs.betQ': 'Your bet', 'hs.call': 'Call ({n})', 'hs.check': 'Check',
+      'hs.fold': 'Fold', 'hs.raiseTo': 'Raise to {n}', 'hs.allin': 'Max ({n})', 'hs.capNote': 'Max bet this round is {n} chips (the smallest stack at the table)',
+      'hs.phase.bet1': 'Round {r} — first betting', 'hs.phase.hit': 'Round {r} — hit or stay', 'hs.phase.bet2': 'Round {r} — second betting', 'hs.phase.show': 'Round {r} — showdown',
+      'hs.log.round': '— Round {r} · limit {limit} · base bet {base} —', 'hs.log.call': '{name}: call {n}', 'hs.log.check': '{name}: check', 'hs.log.raise': '{name}: raise to {n}',
+      'hs.log.fold': '{name}: fold', 'hs.log.hit': '{name}: hit ({v})', 'hs.log.stay': '{name}: stay', 'hs.log.win': '{names}: won the pot of {n}', 'hs.log.out': '{name} is out' },
+    zh: { 'hs.limit': '上限', 'hs.pot': '底池', 'hs.base': '基础下注', 'hs.currentBet': '当前下注', 'hs.outTag': '淘汰', 'hs.firstTag': '先手', 'hs.foldTag': '弃牌',
+      'hs.stayTag': '停牌', 'hs.allinTag': '全押', 'hs.chips': '筹码', 'hs.putTag': '本轮 {n}', 'hs.roundWinners': '{names} 获胜 — 底池 {n} 筹码',
+      'hs.waiting': '等待 {name} 行动', 'hs.hitQ': '要再拿一张牌吗？', 'hs.betQ': '请下注', 'hs.call': '跟注（{n}）', 'hs.check': '过牌',
+      'hs.fold': '弃牌', 'hs.raiseTo': '加注到 {n}', 'hs.allin': '最大（{n}）', 'hs.capNote': '本轮最多下注 {n} 筹码（按筹码最少的人计算）',
+      'hs.phase.bet1': '第 {r} 轮 — 第一次下注', 'hs.phase.hit': '第 {r} 轮 — 要牌 / 停牌', 'hs.phase.bet2': '第 {r} 轮 — 第二次下注', 'hs.phase.show': '第 {r} 轮 — 亮牌',
+      'hs.log.round': '— 第 {r} 轮 · 上限 {limit} · 基础下注 {base} —', 'hs.log.call': '{name}：跟注 {n}', 'hs.log.check': '{name}：过牌', 'hs.log.raise': '{name}：加注到 {n}',
+      'hs.log.fold': '{name}：弃牌', 'hs.log.hit': '{name}：要牌（{v}）', 'hs.log.stay': '{name}：停牌', 'hs.log.win': '{names}：赢得底池 {n}', 'hs.log.out': '{name} 被淘汰' },
+  });
+
+  registerGame({
+    id: 'hitstay', en: 'Hit, Stay',
+    name: { ko: 'HIT, STAY', en: 'Hit, Stay', zh: 'HIT, STAY' },
+    summary: {
+      ko: '주사위로 정해진 리밋에 가장 가깝게 카드 합을 맞추는 베팅 게임. 칩을 모두 잃으면 탈락합니다.',
+      en: 'A betting game: get your card total closest to a dice-rolled limit without going over. Lose all your chips and you\'re out.',
+      zh: '下注游戏：让手牌总和最接近骰子决定的上限且不超过。筹码输光就淘汰。',
+    },
+    players: { min: 1, max: 6, default: 3, soloSeats: 5, minSeats: 2 },
+    rules: {
+      ko: `<ul>
+        <li>각자 <b>칩 30개</b>로 시작합니다. 덱은 35장: 1×7, 2×6, 3×5, 4×4, 5×3, 6×2, 7×1, <b>−1×7</b>.</li>
+        <li>매 라운드 모두 <b>기본 베팅</b>(1칩, 10라운드마다 +1)을 내고, 5~12가 나오는 주사위로 <b>리밋</b>을 정합니다.</li>
+        <li>각자 카드 3장을 받고 그중 1장을 공개합니다. 나머지는 자기만 봅니다.</li>
+        <li><b>1차 베팅</b>: 콜·레이즈·폴드. 한 번에 걸 수 있는 최대치는 <b>가장 적은 칩을 가진 사람의 칩 수</b>입니다.</li>
+        <li><b>히트/스테이</b>: 선 플레이어부터 돌아가며 카드를 더 받거나(공개) 멈춥니다. 모두 멈추거나 카드가 떨어질 때까지.</li>
+        <li><b>2차 베팅</b> 후 모든 카드를 공개합니다. 리밋을 넘으면 버스트. 넘지 않은 사람 중 리밋에 가장 가까운 사람이 판돈을 가져갑니다. 합이 같으면 카드가 많은 쪽, 그래도 같거나 모두 버스트면 나눠 가집니다.</li>
+        <li>선 플레이어는 라운드마다 시계 방향으로 넘어갑니다. 칩이 0이 되면 탈락, 마지막 1명이 남으면 끝(최대 40라운드 후에는 칩 순).</li></ul>
+        <div class="note">원작의 피스-칩 교환과 양자택일 보너스는 넣지 않았습니다.</div>`,
+      en: `<ul>
+        <li>Everyone starts with <b>30 chips</b>. The deck has 35 cards: 1×7, 2×6, 3×5, 4×4, 5×3, 6×2, 7×1, <b>−1×7</b>.</li>
+        <li>Each round everyone pays the <b>base bet</b> (1 chip, +1 every 10 rounds), and a die showing 5–12 sets the <b>limit</b>.</li>
+        <li>Each player gets 3 cards and reveals 1. Only you can see the other two.</li>
+        <li><b>First betting</b>: call, raise or fold. The most anyone can bet is <b>the chip count of the smallest stack</b>.</li>
+        <li><b>Hit or stay</b>: starting with the first player, take another card (face up) or stop. Repeat until everyone stays or the deck runs out.</li>
+        <li>After the <b>second betting</b>, all cards are revealed. Going over the limit is a bust. Of those not over, the closest to the limit wins the pot. A tied total goes to whoever has more cards; still tied, or everyone busts, the pot is split.</li>
+        <li>The first player moves clockwise each round. Hit 0 chips and you're out; the last player standing wins (after 40 rounds, most chips wins).</li></ul>
+        <div class="note">The show's Piece-for-chip exchange and Either-Or bonus aren't included.</div>`,
+      zh: `<ul>
+        <li>每人起始 <b>30 个筹码</b>。牌堆 35 张：1×7、2×6、3×5、4×4、5×3、6×2、7×1、<b>−1×7</b>。</li>
+        <li>每轮所有人先交<b>基础下注</b>（1 个，每 10 轮 +1），再用 5~12 的骰子决定<b>上限</b>。</li>
+        <li>每人发 3 张牌并公开其中 1 张，其余只有自己能看。</li>
+        <li><b>第一次下注</b>：跟注、加注或弃牌。单轮最多只能下注到<b>筹码最少那个人的筹码数</b>。</li>
+        <li><b>要牌/停牌</b>：从先手开始轮流选择再拿一张（公开）或停止，直到所有人停牌或牌拿完。</li>
+        <li><b>第二次下注</b>后全部亮牌。超过上限即爆牌。没爆牌的人里最接近上限的赢得底池；总和相同则牌多者胜，仍相同或全部爆牌则平分。</li>
+        <li>先手每轮按顺时针轮换。筹码归零即淘汰，剩最后一人时结束（40 轮后按筹码排名）。</li></ul>
+        <div class="note">未加入原作中的碎片换筹码和二选一奖励。</div>`,
+    },
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/gradation.js */
+// 6일차 감옥 매치 — 그라데이션
+(() => {
+  const CUPS = 7, MAX_SUM = 30, SETUP_MS = 300000, PICK_MS = 60000, REVEAL_MS = 3000, MATCHES_TO_WIN = 2;
+  // 컵 색: 양 끝이 가장 진하고 가운데로 갈수록 연함 → 같은 색 컵이 두 개씩 (가운데만 하나)
+  const shade = (i) => Math.min(i, CUPS - 1 - i); // 0 진함 … 3 연함
+  const SHADES = ['#3b1c4a', '#6a3d7d', '#9c72ad', '#cfb3da'];
+
+  // 큐브 규칙: 0~9 각 2개 중 7개, 합 30 이하, 왼쪽→오른쪽 작아지지 않게
+  function checkSetup(vals) {
+    if (!Array.isArray(vals) || vals.length !== CUPS) return 'gr.err.count';
+    if (vals.some((v) => !Number.isInteger(v) || v < 0 || v > 9)) return 'gr.err.count';
+    const cnt = {};
+    for (const v of vals) { cnt[v] = (cnt[v] || 0) + 1; if (cnt[v] > 2) return 'gr.err.twice'; }
+    if (vals.some((v, i) => i && v < vals[i - 1])) return 'gr.err.order';
+    if (vals.reduce((a, b) => a + b, 0) > MAX_SUM) return 'gr.err.sum';
+    return null;
+  }
+  function randomSetup() {
+    for (;;) {
+      const pool = U.shuffle(U.range(20).map((i) => i >> 1));
+      const vals = pool.slice(0, CUPS).sort((a, b) => a - b);
+      if (!checkSetup(vals)) return vals;
+    }
+  }
+
+  function newMatch(st, now) {
+    st.match++;
+    st.phase = 'setup'; st.deadline = now + SETUP_MS;
+    st.cups = [null, null]; st.used = [Array(CUPS).fill(false), Array(CUPS).fill(false)];
+    st.score = [0, 0]; st.history = []; st.round = 0;
+  }
+  function newRound(st, now) {
+    st.round++;
+    st.phase = 'lead'; st.leadCup = null; st.followCup = null; st.deadline = now + PICK_MS;
+  }
+  function reveal(st, now) {
+    const L = st.leader, F = 1 - L;
+    const a = st.cups[L][st.leadCup], b = st.cups[F][st.followCup];
+    st.used[L][st.leadCup] = true; st.used[F][st.followCup] = true;
+    const w = a > b ? L : b > a ? F : -1;
+    if (w >= 0) st.score[w]++;
+    st.history.push({ r: st.round, leader: L, lc: st.leadCup, fc: st.followCup, lv: a, fv: b, w });
+    if (w >= 0) st.leader = w; // 이긴 사람이 다음 라운드를 먼저 (비기면 그대로)
+    st.phase = 'reveal'; st.deadline = now + REVEAL_MS;
+  }
+  function afterReveal(st, now) {
+    const left = CUPS - st.round, d = Math.abs(st.score[0] - st.score[1]);
+    if (st.round >= CUPS || d > left) {
+      if (st.score[0] === st.score[1]) { newMatch(st, now); return; } // 비긴 매치는 다시
+      const w = st.score[0] > st.score[1] ? 0 : 1;
+      st.matchWins[w]++; st.leader = w;
+      if (st.matchWins[w] >= MATCHES_TO_WIN) { st.phase = 'end'; st.winner = w; return; }
+      newMatch(st, now);
+      return;
+    }
+    newRound(st, now);
+  }
+  const autoPick = (st, seat) => st.used[seat].findIndex((u) => !u);
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: 2, match: 0, matchWins: [0, 0], leader: U.rnd(2), winner: null };
+      newMatch(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (st.phase === 'setup' && a.t === 'setup' && !st.cups[seat]) {
+        const vals = (a.vals || []).map((x) => x | 0);
+        if (checkSetup(vals)) return false;
+        st.cups[seat] = vals;
+        if (st.cups.every(Boolean)) newRound(st, now);
+        return;
+      }
+      const ok = (i) => Number.isInteger(i) && i >= 0 && i < CUPS && !st.used[seat][i];
+      if (st.phase === 'lead' && a.t === 'pick' && seat === st.leader && ok(a.cup)) { st.leadCup = a.cup; st.phase = 'follow'; st.deadline = now + PICK_MS; return; }
+      if (st.phase === 'follow' && a.t === 'pick' && seat === 1 - st.leader && ok(a.cup)) { st.followCup = a.cup; reveal(st, now); return; }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'setup') { st.cups = st.cups.map((c) => c || randomSetup()); newRound(st, now); return true; }
+      if (st.phase === 'lead') { st.leadCup = autoPick(st, st.leader); st.phase = 'follow'; st.deadline = now + PICK_MS; return true; }
+      if (st.phase === 'follow') { st.followCup = autoPick(st, 1 - st.leader); reveal(st, now); return true; }
+      if (st.phase === 'reveal') { afterReveal(st, now); return true; }
+      return false;
+    },
+    active(st) {
+      if (st.phase === 'setup') return [0, 1].filter((i) => !st.cups[i]);
+      if (st.phase === 'lead') return [st.leader];
+      if (st.phase === 'follow') return [1 - st.leader];
+      return [];
+    },
+    hidden: () => true,
+    botDelay: (st) => (st.phase === 'setup' ? 1200 : 900 + Math.random() * 900),
+    botAct(st, me) {
+      if (st.phase === 'setup') return { t: 'setup', vals: randomSetup() };
+      const mine = st.cups[me].map((v, i) => ({ v, i })).filter((x) => !st.used[me][x.i]);
+      if (st.phase === 'lead') return { t: 'pick', cup: U.pick(mine).i };
+      // 상대 컵의 색으로 위치 후보를 좁혀 값을 추정 (위치별 평균 대략값)
+      const typical = [0, 1, 2, 4, 5, 7, 9];
+      const sh = shade(st.leadCup);
+      const est = (typical[sh] + typical[CUPS - 1 - sh]) / 2;
+      const beat = mine.filter((x) => x.v > est + 0.5).sort((a, b) => a.v - b.v)[0];
+      return { t: 'pick', cup: (beat || mine.sort((a, b) => a.v - b.v)[0]).i };
+    },
+    view(st, me) {
+      const opp = 1 - me;
+      return {
+        phase: st.phase, match: st.match, round: st.round, deadline: st.deadline, leader: st.leader,
+        score: st.score, matchWins: st.matchWins, history: st.history, winner: st.winner,
+        setupDone: st.cups.map(Boolean),
+        myCups: me >= 0 ? st.cups[me] : null, myUsed: me >= 0 ? st.used[me] : null,
+        oppUsed: me >= 0 ? st.used[opp] : null,
+        leadShade: st.leadCup != null ? shade(st.leadCup) : null,
+        myLead: me >= 0 && me === st.leader ? st.leadCup : null,
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      return { ranking: UIx.rankBy([0, 1], (i) => -st.matchWins[i]).map((x) => ({ ...x, score: { k: 'matches', v: st.matchWins[x.seat] } })) };
+    },
+  };
+
+  function ui(root, ctx) {
+    let view = null, draft = null, key = null;
+    const status = h('div', { class: 'big' });
+    const sub = h('div', { class: 'muted' });
+    const area = h('div', { class: 'col', style: { gap: '18px' } });
+    const timerEl = h('span', { class: 'timer' });
+    const side = h('div', { class: 'col' });
+
+    const cup = (i, label, opts = {}) => h('div', {
+      class: 'gr-cup' + (opts.click ? ' click' : '') + (opts.dim ? ' dim' : '') + (opts.sel ? ' sel' : ''),
+      style: { background: SHADES[shade(i)] }, onclick: opts.click,
+    }, h('span', {}, label));
+
+    function drawSetup() {
+      const v = view;
+      if (v.myCups) { area.append(h('div', { class: 'muted' }, T('gr.waitSetup'))); return; }
+      const e = checkSetup(draft), sum = draft.reduce((a, b) => a + b, 0);
+      const row = h('div', { class: 'gr-row' });
+      draft.forEach((x, i) => row.append(h('div', { class: 'col', style: { alignItems: 'center', gap: '4px' } },
+        h('button', { class: 'btn sm', disabled: x >= 9, onclick: () => { draft[i]++; draw(); } }, '+'),
+        cup(i, x),
+        h('button', { class: 'btn sm', disabled: x <= 0, onclick: () => { draft[i]--; draw(); } }, '−'))));
+      area.append(h('div', {}, T('gr.setupHint')), row,
+        h('div', { class: sum > MAX_SUM ? 'bad' : 'muted' }, T('gr.sum', { s: sum, max: MAX_SUM })),
+        e ? h('div', { class: 'bad' }, T(e)) : '',
+        h('div', {}, h('button', { class: 'btn primary', disabled: !!e, onclick: () => ctx.send({ t: 'setup', vals: draft.slice() }) }, T('gr.lock'))));
+    }
+    function drawPlay() {
+      const v = view;
+      const myTurn = v.me >= 0 && ((v.phase === 'lead' && v.leader === v.me) || (v.phase === 'follow' && v.leader !== v.me));
+      // 상대 컵 (색만 보임, 쓴 컵은 값 공개)
+      const oppRow = h('div', { class: 'gr-row' });
+      for (let i = 0; i < 7; i++) {
+        const hst = v.history.find((x) => (x.leader === v.me ? x.fc : x.lc) === i);
+        oppRow.append(cup(i, hst ? (hst.leader === v.me ? hst.fv : hst.lv) : '?', { dim: !!hst }));
+      }
+      const myRow = h('div', { class: 'gr-row' });
+      v.myCups.forEach((x, i) => myRow.append(cup(i, x, { dim: v.myUsed[i], sel: v.myLead === i, click: myTurn && !v.myUsed[i] ? () => ctx.send({ t: 'pick', cup: i }) : null })));
+      area.append(h('h4', { style: { margin: 0 } }, T('gr.oppCups')), oppRow);
+      if (v.phase === 'follow' && v.leadShade != null) area.append(h('div', { class: 'row' }, T('gr.leadIs'), h('span', { class: 'gr-swatch', style: { background: SHADES[v.leadShade] } })));
+      area.append(h('h4', { style: { margin: 0 } }, T('gr.myCups')), myRow);
+      if (myTurn) area.append(h('div', { class: 'hl' }, v.phase === 'lead' ? T('gr.pickLead') : T('gr.pickFollow')));
+      const last = v.history[v.history.length - 1];
+      if ((v.phase === 'reveal' || v.phase === 'end') && last) {
+        const lv = last.leader === v.me ? last.lv : last.fv, ov = last.leader === v.me ? last.fv : last.lv;
+        area.append(h('div', { class: 'big' }, `${lv} : ${ov} — `, last.w < 0 ? T('gr.tie') : last.w === v.me ? h('span', { class: 'good' }, T('gr.roundWin')) : h('span', { class: 'bad' }, T('gr.roundLose'))));
+      }
+    }
+    function draw() {
+      const v = view;
+      area.innerHTML = '';
+      if (v.me < 0) { area.append(h('div', { class: 'muted' }, T('play.waitOthers'))); return; }
+      if (v.phase === 'setup') drawSetup(); else if (v.myCups) drawPlay();
+    }
+    function tickTimer() {
+      if (!view) return;
+      const v = view;
+      timerEl.textContent = ['setup', 'lead', 'follow'].includes(v.phase) ? UIx.mmss(UIx.secs(v.deadline, ctx.now())) : '';
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col' }, status, sub, area),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, side))));
+
+    return {
+      update(v) {
+        const k = `${v.match}-${v.me}`;
+        if (k !== key) { key = k; draft = [0, 1, 2, 4, 5, 7, 9]; }
+        view = v;
+        status.textContent = v.phase === 'end' ? T('res.over') : v.phase === 'setup' ? T('gr.setupTitle', { m: v.match }) : T('gr.roundTitle', { m: v.match, r: v.round });
+        sub.textContent = v.phase === 'setup' || v.phase === 'end' ? '' : T('gr.leaderIs', { name: v.names[v.leader] });
+        draw(); tickTimer();
+        side.innerHTML = '';
+        side.append(h('h4', {}, T('gr.matchScore')),
+          UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.score[i], me: i === v.me }))),
+          h('h4', { style: { marginTop: '8px' } }, T('gr.matchesWon', { n: MATCHES_TO_WIN })),
+          UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.matchWins[i], me: i === v.me }))));
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  I18N.add({
+    ko: { 'gr.err.count': '컵 7개에 0~9를 하나씩 넣어야 해요.', 'gr.err.twice': '같은 숫자는 2개까지만 쓸 수 있어요.', 'gr.err.order': '왼쪽에서 오른쪽으로 갈수록 작아지면 안 돼요.',
+      'gr.err.sum': '합이 30을 넘으면 안 돼요.', 'gr.waitSetup': '상대가 큐브를 배치하는 중...', 'gr.setupHint': '컵마다 큐브(0~9)를 하나씩 넣으세요.',
+      'gr.sum': '합계 {s} / {max}', 'gr.lock': '배치 확정', 'gr.oppCups': '상대 컵 (색만 보임)', 'gr.myCups': '내 컵', 'gr.leadIs': '상대가 낸 컵의 색:',
+      'gr.pickLead': '먼저 낼 컵을 고르세요', 'gr.pickFollow': '맞설 컵을 고르세요', 'gr.tie': '무승부', 'gr.roundWin': '라운드 승리', 'gr.roundLose': '라운드 패배',
+      'gr.setupTitle': '{m}번째 매치 — 큐브 배치', 'gr.roundTitle': '{m}번째 매치 · 라운드 {r}/7', 'gr.leaderIs': '이번 라운드 먼저 내는 사람: {name}',
+      'gr.matchScore': '이번 매치 점수', 'gr.matchesWon': '이긴 매치 ({n}승 하면 승리)' },
+    en: { 'gr.err.count': 'Put one cube (0–9) in each of the 7 cups.', 'gr.err.twice': 'Each number can be used at most twice.', 'gr.err.order': "Values can't decrease from left to right.",
+      'gr.err.sum': "The total can't be more than 30.", 'gr.waitSetup': 'Your opponent is placing cubes...', 'gr.setupHint': 'Put one cube (0–9) in each cup.',
+      'gr.sum': 'Total {s} / {max}', 'gr.lock': 'Lock in', 'gr.oppCups': "Opponent's cups (color only)", 'gr.myCups': 'My cups', 'gr.leadIs': "Color of your opponent's cup:",
+      'gr.pickLead': 'Pick a cup to play first', 'gr.pickFollow': 'Pick a cup to answer with', 'gr.tie': 'Tie', 'gr.roundWin': 'Round won', 'gr.roundLose': 'Round lost',
+      'gr.setupTitle': 'Match {m} — place your cubes', 'gr.roundTitle': 'Match {m} · round {r}/7', 'gr.leaderIs': 'Plays first this round: {name}',
+      'gr.matchScore': 'This match', 'gr.matchesWon': 'Matches won (first to {n})' },
+    zh: { 'gr.err.count': '7 个杯子里各放一个方块（0~9）。', 'gr.err.twice': '同一个数字最多用 2 次。', 'gr.err.order': '从左到右不能变小。',
+      'gr.err.sum': '总和不能超过 30。', 'gr.waitSetup': '对手正在放方块...', 'gr.setupHint': '每个杯子放一个方块（0~9）。',
+      'gr.sum': '总和 {s} / {max}', 'gr.lock': '确定摆放', 'gr.oppCups': '对手的杯子（只能看到颜色）', 'gr.myCups': '我的杯子', 'gr.leadIs': '对手出的杯子颜色：',
+      'gr.pickLead': '选一个杯子先出', 'gr.pickFollow': '选一个杯子应战', 'gr.tie': '平局', 'gr.roundWin': '本轮获胜', 'gr.roundLose': '本轮失败',
+      'gr.setupTitle': '第 {m} 局 — 摆放方块', 'gr.roundTitle': '第 {m} 局 · 第 {r}/7 轮', 'gr.leaderIs': '本轮先出：{name}',
+      'gr.matchScore': '本局比分', 'gr.matchesWon': '赢得的局数（先赢 {n} 局获胜）' },
+  });
+
+  registerGame({
+    id: 'gradation', en: 'Gradation',
+    name: { ko: '그라데이션', en: 'Gradation', zh: '渐变' },
+    summary: {
+      ko: '7개의 컵에 숫자 큐브를 숨기고 하나씩 맞대결. 상대 컵은 색만 보입니다.',
+      en: 'Hide number cubes in 7 cups and duel one cup at a time. You only see the color of your opponent\'s cup.',
+      zh: '在 7 个杯子里藏好数字方块，一杯一杯对决。对手的杯子只能看到颜色。',
+    },
+    players: { min: 1, max: 2, default: 2, soloSeats: 2, minSeats: 2 },
+    rules: {
+      ko: `<ul>
+        <li>컵 7개는 양 끝이 가장 진하고 가운데로 갈수록 연합니다. 같은 색 컵이 두 개씩(가운데는 하나) 있습니다.</li>
+        <li>큐브는 0~9가 <b>2개씩</b>(총 20개). 5분 안에 컵마다 하나씩 넣습니다. 합은 <b>30 이하</b>, 왼쪽→오른쪽으로 <b>작아지면 안 됩니다</b>.</li>
+        <li>먼저 내는 사람이 컵을 하나 냅니다. 상대는 그 컵의 <b>색만</b> 보고 자기 컵을 냅니다. 큰 숫자가 1점, 같으면 점수 없음.</li>
+        <li>이긴 사람이 다음 라운드를 먼저 냅니다(비기면 그대로). 7라운드(뒤집을 수 없으면 일찍 끝남) 뒤 점수가 높은 쪽이 매치 승리, 비기면 매치를 다시 합니다.</li>
+        <li>먼저 <b>2매치</b>를 이긴 사람이 승리합니다.</li></ul>
+        <div class="note">원작은 3명이 돌아가며 1:1 매치를 했습니다. 여기서는 1:1로 만들었습니다.</div>`,
+      en: `<ul>
+        <li>The 7 cups are darkest at the ends and lighter toward the middle, so cups come in matching color pairs (the middle one is unique).</li>
+        <li>Cubes are 0–9, <b>two of each</b> (20 total). Within 5 minutes, put one in each cup. The total must be <b>30 or less</b>, and values <b>can't decrease</b> from left to right.</li>
+        <li>The lead player plays a cup. The other player sees <b>only its color</b> and answers with a cup. Higher number scores 1 point; a tie scores nothing.</li>
+        <li>The round winner leads next (on a tie, the leader stays). After 7 rounds (or earlier if the result can't change), the higher score wins the match. A tied match is replayed.</li>
+        <li>The first to win <b>2 matches</b> wins.</li></ul>
+        <div class="note">In the show, 3 players played 1-on-1 matches in rotation. This version is 1-on-1.</div>`,
+      zh: `<ul>
+        <li>7 个杯子两端颜色最深，越往中间越浅，所以颜色相同的杯子成对出现（中间的只有一个）。</li>
+        <li>方块是 0~9 <b>各 2 个</b>（共 20 个）。5 分钟内每个杯子放一个，总和<b>不超过 30</b>，从左到右<b>不能变小</b>。</li>
+        <li>先出的人出一个杯子，对方<b>只能看到颜色</b>，然后出自己的杯子。数字大的得 1 分，相同不得分。</li>
+        <li>本轮赢家下一轮先出（平局则不变）。7 轮后（若比分已无法反超则提前结束）得分高者赢下本局，平局则重赛。</li>
+        <li>先赢 <b>2 局</b>的人获胜。</li></ul>
+        <div class="note">原作是 3 人轮流进行一对一比赛，这里做成一对一。</div>`,
+    },
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/pointgomoku.js */
+// 6일차 유배지 결승 — 포인트 오목
+(() => {
+  const N = 11, NEW_PTS = 10, SELECT_MS = 60000, BID_MS = 90000, REVEAL_MS = 3500;
+  const DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  const inB = (r, c) => r >= 0 && c >= 0 && r < N && c < N;
+  const COL = ['#111', '#f4f1ea']; // 흑, 백
+
+  // 연속 3칸(가로·세로·대각선, 모두 빈칸)인지
+  function validTriple(board, cells) {
+    if (!Array.isArray(cells) || cells.length !== 3) return false;
+    const s = cells.map(([r, c]) => [r | 0, c | 0]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    if (s.some(([r, c]) => !inB(r, c) || board[r][c] !== -1)) return false;
+    const dr = s[1][0] - s[0][0], dc = s[1][1] - s[0][1];
+    if (Math.max(Math.abs(dr), Math.abs(dc)) !== 1) return false;
+    return s[2][0] - s[1][0] === dr && s[2][1] - s[1][1] === dc;
+  }
+  function allTriples(board) {
+    const out = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) for (const [dr, dc] of DIRS) {
+      const t = [[r, c], [r + dr, c + dc], [r + 2 * dr, c + 2 * dc]];
+      if (t.every(([a, b]) => inB(a, b) && board[a][b] === -1)) out.push(t);
+    }
+    return out;
+  }
+  // 다섯 줄 개수 (같은 줄을 한 번만 셈)
+  function fiveLines(board, who) {
+    let n = 0;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) for (const [dr, dc] of DIRS) {
+      if (board[r][c] !== who) continue;
+      const pr = r - dr, pc = c - dc;
+      if (inB(pr, pc) && board[pr][pc] === who) continue; // 줄의 시작에서만 셈
+      let len = 0, rr = r, cc = c;
+      while (inB(rr, cc) && board[rr][cc] === who) { len++; rr += dr; cc += dc; }
+      if (len >= 5) n++;
+    }
+    return n;
+  }
+  // 봇 평가: 그 칸에 놓았을 때 who에게 얼마나 좋은가
+  function cellValue(board, r, c, who) {
+    let v = 0;
+    for (const [dr, dc] of DIRS) {
+      let len = 1, open = 0;
+      for (const s of [1, -1]) {
+        let rr = r + dr * s, cc = c + dc * s;
+        while (inB(rr, cc) && board[rr][cc] === who) { len++; rr += dr * s; cc += dc * s; }
+        if (inB(rr, cc) && board[rr][cc] === -1) open++;
+      }
+      v += len >= 5 ? 100000 : Math.pow(len, 3) * (open + 1) * (open ? 1 : 0.2);
+    }
+    return v;
+  }
+
+  function newRound(st, now) {
+    st.round++;
+    st.budget = st.budget.map((b, i) => (st.round === 1 ? NEW_PTS : Math.floor(st.left[i] / 2) + NEW_PTS));
+    if (st.round > 1) st.selector = 1 - st.selector;
+    st.phase = 'select'; st.triple = null; st.bids = [null, null]; st.deadline = now + SELECT_MS;
+    if (!allTriples(st.board).length) finish(st, -1);
+  }
+  function resolve(st, now) {
+    st.bids = st.bids.map((b) => b || [1, 1, 1]);
+    const owners = st.triple.map(([r, c], k) => {
+      const a = st.bids[0][k], b = st.bids[1][k];
+      const w = a > b ? 0 : b > a ? 1 : 1 - st.selector; // 같으면 고르지 않은 사람
+      st.board[r][c] = w;
+      return w;
+    });
+    st.left = st.bids.map((b, i) => st.budget[i] - b.reduce((x, y) => x + y, 0));
+    st.last = { triple: st.triple, bids: st.bids, owners };
+    st.phase = 'reveal'; st.deadline = now + REVEAL_MS;
+    const f = [fiveLines(st.board, 0), fiveLines(st.board, 1)];
+    if (f[0] || f[1]) { if (f[0] !== f[1]) finish(st, f[0] > f[1] ? 0 : 1); }
+  }
+  function finish(st, winner) {
+    st.phase = 'end'; st.winner = winner;
+  }
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: 2, board: U.range(N).map(() => Array(N).fill(-1)), round: 0, budget: [0, 0], left: [0, 0], selector: U.rnd(2), last: null, winner: null };
+      newRound(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (st.phase === 'select' && a.t === 'select' && seat === st.selector) {
+        if (!validTriple(st.board, a.cells)) return false;
+        st.triple = a.cells.map(([r, c]) => [r | 0, c | 0]);
+        st.phase = 'bid'; st.deadline = now + BID_MS;
+        return;
+      }
+      if (st.phase === 'bid' && a.t === 'bid' && !st.bids[seat]) {
+        const b = (a.b || []).map((x) => x | 0);
+        if (b.length !== 3 || b.some((x) => x < 1) || b.reduce((x, y) => x + y, 0) > st.budget[seat]) return false;
+        st.bids[seat] = b;
+        if (st.bids.every(Boolean)) resolve(st, now);
+        return;
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'select') { st.triple = U.pick(allTriples(st.board)); st.phase = 'bid'; st.deadline = now + BID_MS; return true; }
+      if (st.phase === 'bid') { resolve(st, now); return true; }
+      if (st.phase === 'reveal') { newRound(st, now); return true; }
+      return false;
+    },
+    active(st) {
+      if (st.phase === 'select') return [st.selector];
+      if (st.phase === 'bid') return [0, 1].filter((i) => !st.bids[i]);
+      return [];
+    },
+    hidden: (st) => st.phase === 'bid',
+    botDelay: () => 900 + Math.random() * 900,
+    botAct(st, me) {
+      const opp = 1 - me;
+      if (st.phase === 'select') {
+        let best = null;
+        for (const t of allTriples(st.board)) {
+          const v = t.reduce((s, [r, c]) => s + cellValue(st.board, r, c, me) + 0.8 * cellValue(st.board, r, c, opp), 0) + Math.random() * 5;
+          if (!best || v > best.v) best = { v, t };
+        }
+        return { t: 'select', cells: best.t };
+      }
+      // 칸마다 가치에 비례해 점수 배분, 일부는 다음 라운드를 위해 남김
+      const vals = st.triple.map(([r, c]) => cellValue(st.board, r, c, me) + 1.1 * cellValue(st.board, r, c, opp) + 1);
+      const urgent = Math.max(...vals) > 5000;
+      const spend = Math.max(3, Math.round(st.budget[me] * (urgent ? 0.95 : 0.6 + Math.random() * 0.25)));
+      const tot = vals.reduce((a, b) => a + b, 0);
+      const b = vals.map((v) => Math.max(1, Math.floor(((spend - 3) * v) / tot) + 1));
+      while (b.reduce((x, y) => x + y, 0) > st.budget[me]) b[b.indexOf(Math.max(...b))]--;
+      return { t: 'bid', b };
+    },
+    view(st, me) {
+      return {
+        phase: st.phase, round: st.round, deadline: st.deadline, board: st.board, selector: st.selector, triple: st.triple,
+        myBudget: me >= 0 ? st.budget[me] : null, bidDone: st.bids.map(Boolean), last: st.phase === 'reveal' || st.phase === 'end' ? st.last : null,
+        lines: [fiveLines(st.board, 0), fiveLines(st.board, 1)], winner: st.winner,
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      if (st.winner < 0) {
+        const cnt = [0, 1].map((w) => st.board.flat().filter((x) => x === w).length);
+        return { ranking: UIx.rankBy([0, 1], (i) => -cnt[i]).map((x) => ({ ...x, score: { k: 'cells', v: cnt[x.seat] } })) };
+      }
+      return { ranking: [{ seat: st.winner, rank: 1, score: { k: 'win' } }, { seat: 1 - st.winner, rank: 2, score: { k: 'lose' } }] };
+    },
+  };
+
+  function ui(root, ctx) {
+    const S = 40, M = 22, W = (N - 1) * S + M * 2;
+    let view = null, pick = [], bids = [1, 1, 1], key = null;
+    const status = h('div', { class: 'big' });
+    const sub = h('div', { class: 'muted' });
+    const svgWrap = h('div');
+    const ctrl = h('div', { class: 'col' });
+    const timerEl = h('span', { class: 'timer' });
+    const info = h('div', { class: 'col' });
+
+    function draw() {
+      const v = view;
+      let s = `<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:${W}px;background:#c99a58;border-radius:8px">`;
+      for (let i = 0; i < N; i++) {
+        s += `<line x1="${M}" y1="${M + i * S}" x2="${M + (N - 1) * S}" y2="${M + i * S}" stroke="#5b4426"/>`;
+        s += `<line x1="${M + i * S}" y1="${M}" x2="${M + i * S}" y2="${M + (N - 1) * S}" stroke="#5b4426"/>`;
+      }
+      const mark = (cells, col, labels) => cells.forEach(([r, c], k) => {
+        s += `<circle cx="${M + c * S}" cy="${M + r * S}" r="${S * 0.42}" fill="none" stroke="${col}" stroke-width="3"/>`;
+        if (labels) s += `<text x="${M + c * S}" y="${M + r * S + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="${col}">${labels[k]}</text>`;
+      });
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        const o = v.board[r][c];
+        if (o >= 0) s += `<circle cx="${M + c * S}" cy="${M + r * S}" r="${S * 0.42}" fill="${COL[o]}" stroke="#000" stroke-width="1"/>`;
+        else s += `<rect data-cell="${r},${c}" x="${M + c * S - S / 2}" y="${M + r * S - S / 2}" width="${S}" height="${S}" fill="transparent" style="cursor:pointer"/>`;
+      }
+      if (v.triple && v.phase === 'bid') mark(v.triple, '#e5383b', ['1', '2', '3']);
+      if (v.last && v.phase !== 'bid') mark(v.last.triple, '#e5383b');
+      if (pick.length) mark(pick, '#2a7fff');
+      svgWrap.innerHTML = s + '</svg>';
+    }
+    svgWrap.addEventListener('click', (e) => {
+      const d = e.target.dataset && e.target.dataset.cell;
+      if (!d || !view || view.phase !== 'select' || view.selector !== view.me) return;
+      const [r, c] = d.split(',').map(Number);
+      const i = pick.findIndex(([a, b]) => a === r && b === c);
+      if (i >= 0) pick.splice(i, 1); else if (pick.length < 3) pick.push([r, c]);
+      draw(); drawCtrl();
+    });
+
+    function drawCtrl() {
+      const v = view;
+      ctrl.innerHTML = '';
+      if (v.me < 0) return;
+      if (v.phase === 'select' && v.selector === v.me) {
+        const ok = pick.length === 3 && validTriple(v.board, pick);
+        ctrl.append(h('div', {}, T('pg.selectHint')),
+          h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: !ok, onclick: () => { ctx.send({ t: 'select', cells: pick }); pick = []; } }, T('pg.confirmSpots')),
+            h('button', { class: 'btn', onclick: () => { pick = []; draw(); drawCtrl(); } }, T('lf.clear'))),
+          pick.length === 3 && !ok ? h('div', { class: 'bad' }, T('pg.badTriple')) : '');
+      }
+      if (v.phase === 'bid' && !v.bidDone[v.me]) {
+        const used = bids.reduce((a, b) => a + b, 0), left = v.myBudget - used;
+        const row = h('div', { class: 'row' });
+        bids.forEach((b, k) => row.append(h('div', { class: 'col', style: { alignItems: 'center', gap: '4px' } },
+          h('b', { class: 'bad' }, `#${k + 1}`),
+          h('div', { class: 'row' },
+            h('button', { class: 'btn sm', disabled: b <= 1, onclick: () => { bids[k]--; drawCtrl(); } }, '−'),
+            h('b', { style: { fontSize: '22px', minWidth: '30px', textAlign: 'center' } }, b),
+            h('button', { class: 'btn sm', disabled: left <= 0, onclick: () => { bids[k]++; drawCtrl(); } }, '+')))));
+        ctrl.append(h('div', {}, T('pg.bidHint', { b: v.myBudget })), row,
+          h('div', { class: 'muted' }, T('pg.left', { n: left, c: Math.floor(left / 2) })),
+          h('div', {}, h('button', { class: 'btn primary', onclick: () => ctx.send({ t: 'bid', b: bids.slice() }) }, T('pg.submitBid'))));
+      }
+    }
+    function tickTimer() {
+      if (!view) return;
+      const v = view;
+      timerEl.textContent = v.phase === 'select' || v.phase === 'bid' ? UIx.mmss(UIx.secs(v.deadline, ctx.now())) : '';
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, status, sub, svgWrap),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, ctrl),
+        h('div', { class: 'panel col' }, info))));
+
+    return {
+      update(v) {
+        const k = `${v.round}-${v.phase}-${v.me}`;
+        if (k !== key) { key = k; pick = []; bids = [1, 1, 1]; }
+        view = v;
+        const selName = v.names[v.selector];
+        if (v.phase === 'end') status.textContent = T('res.over');
+        else if (v.phase === 'select') status.textContent = T('pg.selecting', { r: v.round, name: selName });
+        else if (v.phase === 'bid') status.textContent = T('pg.bidding', { r: v.round });
+        else status.textContent = T('pg.reveal', { r: v.round });
+        sub.innerHTML = '';
+        if (v.last && (v.phase === 'reveal' || v.phase === 'end')) {
+          sub.append(...v.last.triple.map((_, k) => h('span', { style: { marginRight: '12px' } },
+            `#${k + 1}: ${v.names[0]} ${v.last.bids[0][k]} · ${v.names[1]} ${v.last.bids[1][k]} → `, h('b', {}, v.names[v.last.owners[k]]))));
+        }
+        draw(); drawCtrl(); tickTimer();
+        info.innerHTML = '';
+        info.append(h('h4', {}, T('pg.players')),
+          ...[0, 1].map((i) => h('div', { class: 'row' + (i === v.me ? ' hl' : '') },
+            h('span', { style: { display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', background: COL[i], border: '1px solid #888' } }),
+            v.names[i], v.selector === i && v.phase !== 'end' ? ' ' + T('pg.selectorTag') : '', v.phase === 'bid' && v.bidDone[i] ? ' ✓' : '')),
+          v.myBudget != null ? h('div', { class: 'muted' }, T('pg.myBudget', { n: v.myBudget })) : '');
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  I18N.add({
+    ko: { 'pg.selectHint': '연속된 빈칸 3개(가로·세로·대각선)를 고르세요.', 'pg.confirmSpots': '이 3칸으로 정하기', 'pg.badTriple': '한 줄로 이어진 빈칸 3개여야 해요.',
+      'pg.bidHint': '이번 라운드 점수 {b}점을 3칸에 나눠 거세요 (칸마다 최소 1점).', 'pg.left': '남는 점수 {n}점 → 다음 라운드에 절반({c}점)이 넘어갑니다.',
+      'pg.submitBid': '배분 확정', 'pg.selecting': '라운드 {r} — 칸 선택: {name}', 'pg.bidding': '라운드 {r} — 점수를 배분하세요',
+      'pg.reveal': '라운드 {r} 결과', 'pg.players': '플레이어', 'pg.selectorTag': '(칸 선택)', 'pg.myBudget': '내 이번 라운드 점수: {n}점' },
+    en: { 'pg.selectHint': 'Pick 3 empty points in a row (horizontal, vertical or diagonal).', 'pg.confirmSpots': 'Use these 3 points', 'pg.badTriple': 'They must be 3 empty points in one straight line.',
+      'pg.bidHint': 'Split your {b} points this round across the 3 spots (at least 1 each).', 'pg.left': '{n} point(s) left → half ({c}) carries to next round.',
+      'pg.submitBid': 'Lock in bids', 'pg.selecting': 'Round {r} — {name} is picking 3 points', 'pg.bidding': 'Round {r} — place your bids',
+      'pg.reveal': 'Round {r} result', 'pg.players': 'Players', 'pg.selectorTag': '(picks spots)', 'pg.myBudget': 'My points this round: {n}' },
+    zh: { 'pg.selectHint': '选出连成一线的 3 个空点（横、竖或斜）。', 'pg.confirmSpots': '确定这 3 个点', 'pg.badTriple': '必须是连成一条直线的 3 个空点。',
+      'pg.bidHint': '把本轮的 {b} 点分配到 3 个位置（每个至少 1 点）。', 'pg.left': '剩余 {n} 点 → 一半（{c} 点）带到下一轮。',
+      'pg.submitBid': '确定分配', 'pg.selecting': '第 {r} 轮 — 选点：{name}', 'pg.bidding': '第 {r} 轮 — 请分配点数',
+      'pg.reveal': '第 {r} 轮结果', 'pg.players': '玩家', 'pg.selectorTag': '（选点）', 'pg.myBudget': '我本轮的点数：{n}' },
+  });
+
+  registerGame({
+    id: 'pointgomoku', en: 'Point Gomoku',
+    name: { ko: '포인트 오목', en: 'Point Gomoku', zh: '点数五子棋' },
+    summary: {
+      ko: '점수를 몰래 걸어 돌을 차지하는 오목. 한 사람이 3칸을 고르면 둘이 점수를 나눠 걸고, 더 많이 건 쪽이 돌을 놓습니다.',
+      en: 'Gomoku where you win stones by secret bidding. One player picks 3 spots, both split points across them, and the higher bid takes each stone.',
+      zh: '用暗中下注抢棋子的五子棋。一人选 3 个点，双方分配点数下注，出价高的人得到该位置的棋子。',
+    },
+    players: { min: 1, max: 2, default: 2, soloSeats: 2, minSeats: 2 },
+    rules: {
+      ko: `<ul>
+        <li>11×11 오목판. 매 라운드 <b>선택자</b>(라운드마다 번갈아)가 한 줄로 이어진 빈칸 <b>3개</b>를 고릅니다.</li>
+        <li>두 사람은 이번 라운드 점수를 3칸에 비밀리에 나눠 겁니다(칸마다 최소 1점, 90초). 라운드마다 <b>10점</b>을 새로 받고, 지난 라운드에 남긴 점수의 <b>절반(내림)</b>이 더해집니다.</li>
+        <li>칸마다 더 많이 건 사람의 돌이 놓입니다. 같으면 <b>선택자가 아닌 사람</b>의 돌이 놓입니다.</li>
+        <li>먼저 <b>다섯 개를 한 줄</b>로 만든 사람이 승리. 동시에 만들면 다섯 줄이 더 많은 쪽이 이깁니다.</li></ul>
+        <div class="note">원작의 판 크기는 공개되지 않아 11×11로 정했습니다.</div>`,
+      en: `<ul>
+        <li>11×11 board. Each round the <b>selector</b> (alternating every round) picks <b>3</b> empty points in a straight line.</li>
+        <li>Both players secretly split their points for the round across those 3 spots (at least 1 each, 90 seconds). You get <b>10 new points</b> each round, plus <b>half (rounded down)</b> of what you left last round.</li>
+        <li>For each spot, the higher bidder gets a stone there. On a tie, the <b>non-selector</b> gets it.</li>
+        <li>The first to make <b>five in a row</b> wins. If both do at once, whoever has more five-in-a-row lines wins.</li></ul>
+        <div class="note">The show's board size wasn't published, so this uses 11×11.</div>`,
+      zh: `<ul>
+        <li>11×11 棋盘。每轮由<b>选点人</b>（每轮轮换）选出连成一线的 <b>3 个</b>空点。</li>
+        <li>双方把本轮点数秘密分配到这 3 个位置（每个至少 1 点，90 秒）。每轮新得 <b>10 点</b>，再加上上一轮剩余点数的<b>一半（向下取整）</b>。</li>
+        <li>每个位置出价高的人在那里落子。出价相同时，由<b>不是选点人</b>的一方落子。</li>
+        <li>先连成<b>五子一线</b>的人获胜。同时连成时，五连线数多的一方获胜。</li></ul>
+        <div class="note">原作棋盘大小未公开，这里采用 11×11。</div>`,
+    },
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/cardjanggi.js */
+// 7일차 결승 1라운드 — 카드 장기
+(() => {
+  const N = 5, PLAN_MS = 180000, MOVE_MS = 90000, ROUND_END_MS = 3500, WINS = 2;
+  const CARDS = ['rat', 'horse', 'monkey', 'elephant', 'giraffe'];
+  // 이동 칸: [dr, dc, 막는 칸(dr, dc) 또는 null]  — 모든 카드는 상하좌우 대칭이라 방향 구분 없음
+  const MOVES = {
+    rat: [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => [a, b, null]),
+    monkey: [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => [a, b, null]),
+    giraffe: [[2, 0], [-2, 0], [0, 2], [0, -2]].map(([a, b]) => [a, b, [a / 2, b / 2]]),
+    elephant: [[1, 1], [1, -1], [-1, 1], [-1, -1]].flatMap(([a, b]) => [[a, b, null], [2 * a, 2 * b, [a, b]]]),
+    horse: [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]].map(([a, b]) => [a, b, Math.abs(a) === 2 ? [a / 2, 0] : [0, b / 2]]),
+  };
+  // 시작 위치: 0번(아래쪽) / 1번(위쪽). K = 대장말, S = 졸
+  const START = [
+    [{ k: 'K', r: 4, c: 2 }, { k: 'S', r: 4, c: 1 }, { k: 'S', r: 4, c: 3 }, { k: 'S', r: 3, c: 2 }],
+    [{ k: 'K', r: 0, c: 2 }, { k: 'S', r: 0, c: 1 }, { k: 'S', r: 0, c: 3 }, { k: 'S', r: 1, c: 2 }],
+  ];
+  const HOME = [[4, 2], [0, 2]]; // 상대 대장말 시작 칸에 내 대장말이 들어가면 승리
+
+  const pieceAt = (st, r, c) => st.pieces.find((p) => p.r === r && p.c === c);
+  function legalMoves(st, who, card) {
+    const out = [];
+    for (const p of st.pieces.filter((q) => q.o === who)) {
+      for (const [dr, dc, blk] of MOVES[card]) {
+        const r = p.r + dr, c = p.c + dc;
+        if (r < 0 || c < 0 || r >= N || c >= N) continue;
+        if (blk && pieceAt(st, p.r + blk[0], p.c + blk[1])) continue; // 중간 칸이 막히면 못 감
+        const t = pieceAt(st, r, c);
+        if (t && t.o === who) continue;
+        out.push({ from: [p.r, p.c], to: [r, c] });
+      }
+    }
+    return out;
+  }
+
+  function newRound(st, now) {
+    st.round++;
+    st.pieces = START.flatMap((list, o) => list.map((p) => ({ ...p, o })));
+    st.queue = [null, null];
+    st.need = st.round === 1 ? [0, 0] : st.need;
+    st.need[st.first] = 5; st.need[1 - st.first] = 4; // 두 번째 사람은 처음에 4장만
+    st.planners = [0, 1];
+    st.turn = st.first; st.last = null; st.roundWinner = null;
+    st.phase = 'plan'; st.deadline = now + PLAN_MS;
+  }
+  function startTurn(st, now) {
+    // 이번 차례 사람의 카드가 비었으면 다시 순서를 정함
+    if (!st.queue[st.turn].length) { st.planners = [st.turn]; st.need[st.turn] = 5; st.phase = 'plan'; st.deadline = now + PLAN_MS; return; }
+    st.phase = 'move'; st.deadline = now + MOVE_MS;
+  }
+  function doMove(st, who, mv, now) {
+    const card = st.queue[who].shift();
+    let captured = null, win = false;
+    if (mv) {
+      const p = pieceAt(st, mv.from[0], mv.from[1]);
+      const t = pieceAt(st, mv.to[0], mv.to[1]);
+      if (t) { captured = t.k; st.pieces = st.pieces.filter((x) => x !== t); }
+      p.r = mv.to[0]; p.c = mv.to[1];
+      const goal = HOME[1 - who];
+      if (captured === 'K' || (p.k === 'K' && p.r === goal[0] && p.c === goal[1])) win = true;
+    }
+    st.last = { who, card, from: mv && mv.from, to: mv && mv.to, captured };
+    if (win) {
+      st.roundWins[who]++; st.roundWinner = who; st.phase = 'roundEnd'; st.deadline = now + ROUND_END_MS;
+      return;
+    }
+    st.turn = 1 - who;
+    startTurn(st, now);
+  }
+  const randomOrder = (k) => U.shuffle(CARDS.slice()).slice(0, k);
+
+  const engine = {
+    setup(seats, opts) {
+      const st = { seats, n: 2, round: 0, first: U.rnd(2), roundWins: [0, 0], need: [5, 4] };
+      newRound(st, opts.now);
+      return st;
+    },
+    action(st, seat, a, now) {
+      if (st.phase === 'plan' && a.t === 'plan' && st.planners.includes(seat)) {
+        const o = a.order || [];
+        if (o.length !== st.need[seat] || new Set(o).size !== o.length || o.some((c) => !CARDS.includes(c))) return false;
+        st.queue[seat] = o.slice();
+        st.planners = st.planners.filter((x) => x !== seat);
+        if (!st.planners.length) startTurn(st, now);
+        return;
+      }
+      if (st.phase === 'move' && seat === st.turn) {
+        const card = st.queue[seat][0];
+        const legal = legalMoves(st, seat, card);
+        if (a.t === 'pass') { if (legal.length) return false; doMove(st, seat, null, now); return; }
+        if (a.t === 'move') {
+          const mv = legal.find((m) => m.from[0] === a.from[0] && m.from[1] === a.from[1] && m.to[0] === a.to[0] && m.to[1] === a.to[1]);
+          if (!mv) return false;
+          doMove(st, seat, mv, now); return;
+        }
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'plan') {
+        for (const s of st.planners) st.queue[s] = randomOrder(st.need[s]);
+        st.planners = []; startTurn(st, now); return true;
+      }
+      if (st.phase === 'move') { // 시간 초과: 가능한 이동 중 하나를 대신 둠
+        const legal = legalMoves(st, st.turn, st.queue[st.turn][0]);
+        doMove(st, st.turn, legal.length ? U.pick(legal) : null, now); return true;
+      }
+      if (st.phase === 'roundEnd') {
+        if (Math.max(...st.roundWins) >= WINS) { st.phase = 'end'; return true; }
+        st.first = 1 - st.first; newRound(st, now); return true;
+      }
+      return false;
+    },
+    active(st) {
+      if (st.phase === 'plan') return st.planners.slice();
+      if (st.phase === 'move') return [st.turn];
+      return [];
+    },
+    // 이동 단계에도 내 카드 순서 전체가 보이므로, 한 화면에서 할 때는 차례마다 가림
+    hidden: (st) => st.phase === 'plan' || st.phase === 'move',
+    botDelay: (st) => (st.phase === 'plan' ? 1200 : 900 + Math.random() * 700),
+    botAct(st, me) {
+      if (st.phase === 'plan') return { t: 'plan', order: randomOrder(st.need[me]) };
+      const opp = 1 - me, card = st.queue[me][0];
+      const legal = legalMoves(st, me, card);
+      if (!legal.length) return { t: 'pass' };
+      const oppCard = st.queue[opp][0] || null; // 상대의 다음 카드는 공개되어 있음
+      let best = null;
+      for (const mv of legal) {
+        // 한 수 둬 보고 평가
+        const saved = st.pieces.map((p) => ({ ...p }));
+        const p = pieceAt(st, mv.from[0], mv.from[1]);
+        const t = pieceAt(st, mv.to[0], mv.to[1]);
+        let v = 0;
+        if (t) { v += t.k === 'K' ? 10000 : 30; st.pieces = st.pieces.filter((x) => x !== t); }
+        p.r = mv.to[0]; p.c = mv.to[1];
+        const goal = HOME[opp];
+        if (p.k === 'K' && p.r === goal[0] && p.c === goal[1]) v += 10000;
+        const myK = st.pieces.find((q) => q.o === me && q.k === 'K');
+        if (myK) v -= (Math.abs(myK.r - goal[0]) + Math.abs(myK.c - goal[1])) * 2;
+        // 상대가 다음 카드로 내 대장말을 잡거나 골인할 수 있으면 크게 감점
+        if (oppCard && v < 10000) {
+          for (const om of legalMoves(st, opp, oppCard)) {
+            const tt = pieceAt(st, om.to[0], om.to[1]);
+            const mover = pieceAt(st, om.from[0], om.from[1]);
+            const og = HOME[me];
+            if ((tt && tt.k === 'K') || (mover.k === 'K' && om.to[0] === og[0] && om.to[1] === og[1])) { v -= 5000; break; }
+            if (tt) v -= 8;
+          }
+        }
+        v += Math.random() * 3;
+        st.pieces = saved;
+        if (!best || v > best.v) best = { v, mv };
+      }
+      return { t: 'move', from: best.mv.from, to: best.mv.to };
+    },
+    view(st, me) {
+      const opp = me >= 0 ? 1 - me : 1;
+      return {
+        phase: st.phase, round: st.round, first: st.first, turn: st.turn, deadline: st.deadline, pieces: st.pieces,
+        roundWins: st.roundWins, roundWinner: st.roundWinner, last: st.last, planners: st.planners,
+        myNeed: me >= 0 ? st.need[me] : 0,
+        myQueue: me >= 0 ? st.queue[me] : null,
+        // 상대 카드는 다음에 쓸 1장만 공개, 나머지는 장수만
+        oppNext: st.queue[opp] && st.queue[opp].length ? st.queue[opp][0] : null,
+        oppLeft: st.queue[opp] ? st.queue[opp].length : 0,
+        curCard: st.phase === 'move' ? st.queue[st.turn][0] : null,
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      return { ranking: UIx.rankBy([0, 1], (i) => -st.roundWins[i]).map((x) => ({ ...x, score: { k: 'wins', v: st.roundWins[x.seat] } })) };
+    },
+  };
+
+  // ---------- 화면 ----------
+  const COL = ['#f2c14e', '#4a90e2'];
+  function cardDiagram(card, size = 9) {
+    // 5×5 작은 격자에 가운데 말과 갈 수 있는 칸 표시
+    const g = h('div', { class: 'cj-mini', style: { gridTemplateColumns: `repeat(5, ${size}px)` } });
+    const set = new Set(MOVES[card].map(([a, b]) => `${a + 2},${b + 2}`));
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+      g.append(h('div', { style: { width: size + 'px', height: size + 'px', background: r === 2 && c === 2 ? '#ececf1' : set.has(`${r},${c}`) ? '#e5383b' : '#2c2c36' } }));
+    }
+    return g;
+  }
+  const cardChip = (card, opts = {}) => h('div', { class: 'cj-card' + (opts.on ? ' on' : '') + (opts.dim ? ' dim' : '') + (opts.click ? ' click' : ''), onclick: opts.click },
+    cardDiagram(card), h('span', {}, T('cj.card.' + card)), opts.badge ? h('b', { class: 'cj-badge' }, opts.badge) : null);
+
+  function ui(root, ctx) {
+    const S = 64, M = 8;
+    let view = null, order = [], sel = null, key = null;
+    const status = h('div', { class: 'big' });
+    const sub = h('div', { class: 'muted' });
+    const boardWrap = h('div');
+    const ctrl = h('div', { class: 'col' });
+    const side = h('div', { class: 'col' });
+    const timerEl = h('span', { class: 'timer' });
+
+    const flip = () => view.me === 1; // 내 말이 아래쪽에 보이도록 1번은 판을 뒤집어 그림
+    const toScreen = (r, c) => (flip() ? [N - 1 - r, N - 1 - c] : [r, c]);
+    const myTurn = () => view && view.me >= 0 && view.phase === 'move' && view.turn === view.me;
+    function targets() {
+      if (!sel || !myTurn()) return [];
+      const st = { pieces: view.pieces };
+      return legalMoves(st, view.me, view.curCard).filter((m) => m.from[0] === sel[0] && m.from[1] === sel[1]);
+    }
+    function drawBoard() {
+      const v = view, W = N * S + M * 2;
+      const tg = targets();
+      let s = `<svg viewBox="0 0 ${W} ${W}" width="100%" style="max-width:${W}px">`;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        const [sr, sc] = toScreen(r, c);
+        const home = HOME.findIndex(([a, b]) => a === r && b === c);
+        let fill = (r + c) % 2 ? '#24242c' : '#1c1c22';
+        if (tg.some((m) => m.to[0] === r && m.to[1] === c)) fill = '#3a3320';
+        if (v.last && v.last.to && v.last.to[0] === r && v.last.to[1] === c) fill = '#3a2228';
+        s += `<rect data-cell="${r},${c}" x="${M + sc * S + 1}" y="${M + sr * S + 1}" width="${S - 2}" height="${S - 2}" rx="6" fill="${fill}" ${home >= 0 ? `stroke="${COL[home]}" stroke-width="2" stroke-dasharray="5 4"` : ''} style="cursor:pointer"/>`;
+      }
+      for (const p of v.pieces) {
+        const [sr, sc] = toScreen(p.r, p.c);
+        const cx = M + sc * S + S / 2, cy = M + sr * S + S / 2, isSel = sel && sel[0] === p.r && sel[1] === p.c;
+        const rad = p.k === 'K' ? S * 0.38 : S * 0.27;
+        s += `<circle data-cell="${p.r},${p.c}" cx="${cx}" cy="${cy}" r="${rad}" fill="${COL[p.o]}" stroke="${isSel ? '#fff' : '#0d0d10'}" stroke-width="${isSel ? 4 : 2}" style="cursor:pointer"/>`;
+        if (p.k === 'K') s += `<text x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="24" font-weight="900" fill="#0d0d10" pointer-events="none">★</text>`;
+      }
+      boardWrap.innerHTML = s + '</svg>';
+    }
+    boardWrap.addEventListener('click', (e) => {
+      const d = e.target.dataset && e.target.dataset.cell;
+      if (!d || !myTurn()) return;
+      const [r, c] = d.split(',').map(Number);
+      const mv = targets().find((m) => m.to[0] === r && m.to[1] === c);
+      if (mv) { ctx.send({ t: 'move', from: mv.from, to: mv.to }); sel = null; return; }
+      const p = view.pieces.find((q) => q.r === r && q.c === c);
+      sel = p && p.o === view.me ? [r, c] : null;
+      drawBoard();
+    });
+
+    function drawCtrl() {
+      const v = view;
+      ctrl.innerHTML = '';
+      if (v.me < 0) return;
+      if (v.phase === 'plan' && v.planners.includes(v.me)) {
+        const need = v.myNeed;
+        ctrl.append(h('div', { class: 'hl' }, T('cj.planHint', { n: need })),
+          h('div', { class: 'cj-cards' }, ...CARDS.map((c) => {
+            const idx = order.indexOf(c);
+            return cardChip(c, { on: idx >= 0, badge: idx >= 0 ? idx + 1 : null, click: () => { if (idx >= 0) order.splice(idx, 1); else if (order.length < need) order.push(c); drawCtrl(); } });
+          })),
+          h('div', { class: 'row' },
+            h('button', { class: 'btn primary', disabled: order.length !== need, onclick: () => { ctx.send({ t: 'plan', order: order.slice() }); order = []; } }, T('cj.lockOrder')),
+            h('button', { class: 'btn', onclick: () => { order = []; drawCtrl(); } }, T('lf.clear'))));
+        return;
+      }
+      if (v.phase === 'plan') { ctrl.append(h('div', { class: 'muted' }, T('cj.waitPlan'))); }
+      if (myTurn()) {
+        const st = { pieces: v.pieces };
+        const none = !legalMoves(st, v.me, v.curCard).length;
+        ctrl.append(h('div', { class: 'hl' }, T('cj.moveHint', { card: T('cj.card.' + v.curCard) })),
+          none ? h('div', {}, h('div', { class: 'muted' }, T('cj.noMove')), h('button', { class: 'btn', onclick: () => ctx.send({ t: 'pass' }) }, T('cj.pass'))) : '');
+      }
+    }
+    function drawSide() {
+      const v = view;
+      side.innerHTML = '';
+      side.append(h('h4', {}, T('cj.roundsTitle', { n: WINS })),
+        UIx.scoreboard(v.names.map((n, i) => ({ name: n, value: v.roundWins[i], me: i === v.me, sub: v.first === i ? T('cj.firstTag') : '' }))));
+      if (v.myQueue) side.append(h('h4', { style: { marginTop: '8px' } }, T('cj.myQueue')),
+        h('div', { class: 'cj-cards' }, ...v.myQueue.map((c, i) => cardChip(c, { on: i === 0, badge: i + 1 }))));
+      side.append(h('h4', { style: { marginTop: '8px' } }, T('cj.oppNext')),
+        v.oppNext ? h('div', { class: 'cj-cards' }, cardChip(v.oppNext, { on: true }), h('span', { class: 'muted' }, T('cj.oppLeft', { n: v.oppLeft }))) : h('div', { class: 'muted' }, '—'));
+    }
+    function tickTimer() {
+      if (!view) return;
+      timerEl.textContent = view.phase === 'plan' || view.phase === 'move' ? UIx.mmss(UIx.secs(view.deadline, ctx.now())) : '';
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col', style: { alignItems: 'center' } }, status, sub, boardWrap, h('div', { class: 'panel col', style: { width: '100%' } }, ctrl)),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, side))));
+
+    return {
+      update(v) {
+        // 상대가 먼저 순서를 확정해도 내가 고르던 카드가 지워지지 않도록 planners는 키에서 뺌
+        const k = `${v.round}-${v.phase}-${v.turn}-${v.me}`;
+        if (k !== key) { key = k; sel = null; order = []; }
+        view = v;
+        if (v.phase === 'end') status.textContent = T('res.over');
+        else if (v.phase === 'roundEnd') status.textContent = T('cj.roundWon', { name: v.names[v.roundWinner] });
+        else if (v.phase === 'plan') status.textContent = T('cj.planTitle', { r: v.round });
+        else status.textContent = myTurn() ? T('cj.yourMove', { r: v.round }) : T('cj.theirMove', { r: v.round, name: v.names[v.turn] });
+        sub.textContent = v.last ? T('cj.lastMove', { name: v.names[v.last.who], card: T('cj.card.' + v.last.card) }) + (v.last.captured ? ' — ' + T(v.last.captured === 'K' ? 'cj.capKing' : 'cj.capSmall') : '') + (v.last.to ? '' : ' (' + T('cj.pass') + ')') : T('cj.goal');
+        drawBoard(); drawCtrl(); drawSide(); tickTimer();
+      },
+      destroy() { clearInterval(iv); },
+    };
+  }
+
+  I18N.add({
+    ko: { 'cj.card.rat': '쥐', 'cj.card.horse': '말', 'cj.card.monkey': '원숭이', 'cj.card.elephant': '코끼리', 'cj.card.giraffe': '기린',
+      'cj.planHint': '카드 {n}장의 사용 순서를 정하세요 (누른 순서대로 1, 2, 3…)', 'cj.lockOrder': '순서 확정', 'cj.waitPlan': '상대가 카드 순서를 정하는 중...',
+      'cj.moveHint': '이번 카드: {card} — 내 말을 고르고 갈 칸을 누르세요', 'cj.noMove': '이 카드로 움직일 수 있는 말이 없어요.', 'cj.pass': '넘기기',
+      'cj.roundsTitle': '라운드 승리 ({n}승 하면 우승)', 'cj.firstTag': '(선)', 'cj.myQueue': '내 카드 순서', 'cj.oppNext': '상대의 다음 카드 (공개)', 'cj.oppLeft': '남은 {n}장',
+      'cj.roundWon': '{name} 라운드 승리!', 'cj.planTitle': '라운드 {r} — 카드 순서 정하기', 'cj.yourMove': '라운드 {r} — 내 차례', 'cj.theirMove': '라운드 {r} — {name} 차례',
+      'cj.lastMove': '방금: {name} ({card})', 'cj.capKing': '대장말을 잡았습니다!', 'cj.capSmall': '졸을 잡았습니다', 'cj.goal': '★ 대장말로 상대 대장말을 잡거나, 상대 대장말의 시작 칸(점선)에 들어가면 승리' },
+    en: { 'cj.card.rat': 'Rat', 'cj.card.horse': 'Horse', 'cj.card.monkey': 'Monkey', 'cj.card.elephant': 'Elephant', 'cj.card.giraffe': 'Giraffe',
+      'cj.planHint': 'Set the order for your {n} cards (tap them in order: 1, 2, 3…)', 'cj.lockOrder': 'Lock in order', 'cj.waitPlan': 'Your opponent is ordering cards...',
+      'cj.moveHint': 'This card: {card} — pick one of your pieces, then a square', 'cj.noMove': 'No piece can move with this card.', 'cj.pass': 'Pass',
+      'cj.roundsTitle': 'Rounds won (first to {n})', 'cj.firstTag': '(first)', 'cj.myQueue': 'My card order', 'cj.oppNext': "Opponent's next card (shown)", 'cj.oppLeft': '{n} left',
+      'cj.roundWon': '{name} wins the round!', 'cj.planTitle': 'Round {r} — order your cards', 'cj.yourMove': 'Round {r} — your move', 'cj.theirMove': "Round {r} — {name}'s move",
+      'cj.lastMove': 'Last: {name} ({card})', 'cj.capKing': 'captured the great piece!', 'cj.capSmall': 'captured a small piece', 'cj.goal': "★ Win by capturing the opponent's great piece or moving your great piece onto its starting square (dashed)" },
+    zh: { 'cj.card.rat': '鼠', 'cj.card.horse': '马', 'cj.card.monkey': '猴', 'cj.card.elephant': '象', 'cj.card.giraffe': '长颈鹿',
+      'cj.planHint': '决定 {n} 张卡的使用顺序（按点击顺序 1、2、3…）', 'cj.lockOrder': '确定顺序', 'cj.waitPlan': '对手正在排卡牌顺序...',
+      'cj.moveHint': '本次卡牌：{card} — 先选自己的棋子，再点要去的格子', 'cj.noMove': '这张卡没有能走的棋子。', 'cj.pass': '跳过',
+      'cj.roundsTitle': '赢得的回合（先赢 {n} 回合夺冠）', 'cj.firstTag': '（先手）', 'cj.myQueue': '我的卡牌顺序', 'cj.oppNext': '对手的下一张卡（公开）', 'cj.oppLeft': '剩 {n} 张',
+      'cj.roundWon': '{name} 赢下本回合！', 'cj.planTitle': '第 {r} 回合 — 排卡牌顺序', 'cj.yourMove': '第 {r} 回合 — 轮到你', 'cj.theirMove': '第 {r} 回合 — 轮到 {name}',
+      'cj.lastMove': '刚才：{name}（{card}）', 'cj.capKing': '吃掉了大将！', 'cj.capSmall': '吃掉了一个兵', 'cj.goal': '★ 吃掉对手的大将，或让自己的大将走到对手大将的起始格（虚线）即获胜' },
+  });
+
+  registerGame({
+    id: 'cardjanggi', en: 'Card Janggi',
+    name: { ko: '카드 장기', en: 'Card Janggi', zh: '卡牌将棋' },
+    summary: {
+      ko: '다섯 동물 카드의 순서를 몰래 정하고, 카드대로 말을 움직여 상대 대장말을 노리세요. (결승 1라운드)',
+      en: 'Secretly order five animal cards and move by them to hunt the opponent\'s great piece. (Final, game 1)',
+      zh: '暗中排好五张动物卡的顺序，按卡移动棋子，去抓对手的大将。（决赛第1局）',
+    },
+    players: { min: 1, max: 2, default: 2, soloSeats: 2, minSeats: 2 },
+    rules: {
+      ko: `<ul>
+        <li>각자 <b>대장말(★) 1개</b>와 <b>졸 3개</b>, 동물 카드 <b>5장</b>을 가집니다.</li>
+        <li>카드 이동: <b>쥐</b> 상하좌우 1칸 · <b>말</b> 상하좌우 2칸 뒤 옆으로 1칸 · <b>원숭이</b> 주변 8칸 · <b>코끼리</b> 대각선 1~2칸 · <b>기린</b> 상하좌우 2칸. 2칸 이상 가는 카드는 중간 칸이 막히면 갈 수 없습니다.</li>
+        <li>라운드 시작에 카드 사용 순서를 몰래 정합니다(3분). <b>선 플레이어는 5장</b>, 후 플레이어는 처음에 <b>4장</b>만 정합니다. 카드를 다 쓰면 그때 5장 순서를 다시 정합니다.</li>
+        <li>번갈아 가며 순서대로 카드 1장을 써서 말 하나를 움직입니다(90초). 상대 말이 있는 칸에 들어가면 잡습니다. 상대가 <b>다음에 쓸 카드</b>는 항상 공개됩니다.</li>
+        <li>시간 안에 못 두면 가능한 이동 중 하나가 대신 둬지고, 움직일 수 있는 말이 없으면 넘깁니다.</li>
+        <li>승리: 상대 <b>대장말을 잡거나</b>, 내 대장말이 상대 대장말의 <b>시작 칸</b>에 들어가면 라운드 승리. <b>2라운드</b>를 먼저 이긴 사람이 우승. 선 플레이어는 라운드마다 바뀝니다.</li></ul>
+        <div class="note">원작의 판 크기와 시작 배치는 공개되지 않아 5×5 판으로 정했습니다.</div>`,
+      en: `<ul>
+        <li>Each player has <b>1 great piece (★)</b>, <b>3 small pieces</b> and <b>5 animal cards</b>.</li>
+        <li>Card moves: <b>Rat</b> 1 square orthogonally · <b>Horse</b> 2 squares orthogonally then 1 to the side · <b>Monkey</b> any of the 8 neighbors · <b>Elephant</b> 1–2 squares diagonally · <b>Giraffe</b> 2 squares orthogonally. Cards that move 2+ squares are blocked by a piece in between.</li>
+        <li>At the start of a round, secretly set the order of your cards (3 minutes). <b>The first player orders 5</b>; the second player orders only <b>4</b> at first. When you run out, you order all 5 again.</li>
+        <li>Players alternate, each using their next card to move one piece (90 seconds). Moving onto an opponent's piece captures it. Your opponent's <b>next card</b> is always visible.</li>
+        <li>If time runs out, a legal move is made for you. If no piece can move with the card, you pass.</li>
+        <li>Win a round by <b>capturing the opponent's great piece</b> or moving your great piece onto <b>its starting square</b>. First to <b>2 rounds</b> wins. The first player switches every round.</li></ul>
+        <div class="note">The show's board size and starting layout weren't published, so this uses a 5×5 board.</div>`,
+      zh: `<ul>
+        <li>每人有 <b>1 个大将（★）</b>、<b>3 个兵</b>和 <b>5 张动物卡</b>。</li>
+        <li>卡牌走法：<b>鼠</b> 上下左右 1 格 · <b>马</b> 上下左右 2 格再横向 1 格 · <b>猴</b> 周围 8 格 · <b>象</b> 斜走 1~2 格 · <b>长颈鹿</b> 上下左右 2 格。走 2 格以上的卡，中间格被挡住就不能走。</li>
+        <li>回合开始时暗中排好卡牌的使用顺序（3 分钟）。<b>先手排 5 张</b>，后手一开始只排 <b>4 张</b>。卡用完时再重新排 5 张。</li>
+        <li>双方轮流按顺序用 1 张卡移动一个棋子（90 秒）。走到对手棋子所在的格子就吃掉它。对手<b>下一张要用的卡</b>始终公开。</li>
+        <li>超时会自动替你走一步；这张卡没有能走的棋子时跳过。</li>
+        <li>获胜：<b>吃掉对手的大将</b>，或让自己的大将走到对手大将的<b>起始格</b>，即赢下本回合。先赢 <b>2 回合</b>者夺冠，先手每回合交换。</li></ul>
+        <div class="note">原作棋盘大小和初始布局未公开，这里采用 5×5 棋盘。</div>`,
+    },
+    engine, ui,
+  });
+})();
+
+</script>
+  <script>/* js/games/eqlight.js */
+// 7일차 결승 3라운드 — 수식 신호등
+(() => {
+  const LEN = 9, BUILD_MS = 300000, GUESS_MS = 300000;
+  const SYMS = ['+', '-', '×', '÷', '^', '='];
+  const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ...SYMS];
+  const isSym = (x) => SYMS.includes(x);
+  const show = (x) => (x === '-' ? '−' : x);
+
+  // ---- 수식 계산 (^ 먼저(오른쪽부터), 그다음 × ÷, 마지막 + −) ----
+  function evalPart(tokens) {
+    // tokens: 숫자 문자열과 연산자가 번갈아
+    const nums = [], ops = [];
+    tokens.forEach((t, i) => (i % 2 ? ops.push(t) : nums.push(+t)));
+    for (let i = ops.length - 1; i >= 0; i--) if (ops[i] === '^') { nums.splice(i, 2, Math.pow(nums[i], nums[i + 1])); ops.splice(i, 1); }
+    for (let i = 0; i < ops.length;) {
+      if (ops[i] === '×' || ops[i] === '÷') {
+        if (ops[i] === '÷' && nums[i + 1] === 0) return NaN;
+        nums.splice(i, 2, ops[i] === '×' ? nums[i] * nums[i + 1] : nums[i] / nums[i + 1]); ops.splice(i, 1);
+      } else i++;
+    }
+    let v = nums[0];
+    ops.forEach((o, i) => (v = o === '+' ? v + nums[i + 1] : v - nums[i + 1]));
+    return v;
+  }
+  // 올바른 수식인지: 오류 키 또는 null
+  function check(cells) {
+    if (!Array.isArray(cells) || cells.length !== LEN || cells.some((c) => !KEYS.includes(c))) return 'eq.err.fill';
+    if (isSym(cells[0]) || isSym(cells[LEN - 1])) return 'eq.err.edge';
+    for (let i = 1; i < LEN; i++) if (isSym(cells[i]) && isSym(cells[i - 1])) return 'eq.err.adjacent';
+    if (!cells.includes('=')) return 'eq.err.noEq';
+    const parts = [[]];
+    let num = '';
+    for (const c of [...cells, '=']) {
+      if (isSym(c)) {
+        if (num.length > 1 && num[0] === '0') return 'eq.err.zero';
+        parts[parts.length - 1].push(num); num = '';
+        if (c === '=') parts.push([]); else parts[parts.length - 1].push(c);
+      } else num += c;
+    }
+    parts.pop();
+    const vals = parts.map(evalPart);
+    if (vals.some((v) => !isFinite(v) || Math.abs(v) > 1e12)) return 'eq.err.math';
+    if (vals.some((v) => Math.abs(v - vals[0]) > 1e-9)) return 'eq.err.notEqual';
+    return null;
+  }
+  // 신호등: g 맞는 자리, y 있지만 다른 자리, r 없음 (같은 기호가 여러 개면 정답에 있는 개수만큼만)
+  function clue(guess, target) {
+    const res = Array(LEN).fill('r'), left = {};
+    target.forEach((c, i) => { if (guess[i] === c) res[i] = 'g'; else left[c] = (left[c] || 0) + 1; });
+    guess.forEach((c, i) => { if (res[i] !== 'g' && left[c] > 0) { res[i] = 'y'; left[c]--; } });
+    return res;
+  }
+
+  // 봇용 무작위 수식 만들기: 왼쪽 식을 만들고 결과를 오른쪽에 써서 9칸에 맞춤
+  function randomEquation() {
+    for (let k = 0; k < 20000; k++) {
+      const terms = U.rint(2, 3), toks = [];
+      for (let i = 0; i < terms; i++) {
+        if (i) toks.push(U.pick(['+', '+', '-', '×', '×', '÷', '^']));
+        const big = Math.random() < 0.55;
+        toks.push(String(toks[toks.length - 1] === '^' ? U.rint(0, 3) : big ? U.rint(10, 99) : U.rint(1, 9)));
+      }
+      const v = evalPart(toks);
+      if (!Number.isInteger(v) || v < 0 || v > 99999) continue;
+      const cells = [...toks.join(''), '=', ...String(v)];
+      if (cells.length === LEN && !check(cells)) return cells;
+    }
+    return [...'12+34=46'.padEnd(9, '0')]; // 거의 일어나지 않음
+  }
+  const sameClue = (a, b) => a.every((x, i) => x === b[i]);
+  // 봇이 추측할 후보 목록 (처음 한 번만 만듦): "A ○ B = C" 꼴 전부 + 무작위 3항식
+  let POOL = null;
+  function pool() {
+    if (POOL) return POOL;
+    const set = new Set();
+    const add = (s) => { if (s.length === LEN && !set.has(s) && !check([...s])) set.add(s); };
+    for (const op of ['+', '-', '×', '÷']) {
+      for (let x = 0; x < 1000; x++) {
+        const lx = String(x).length;
+        for (let y = 0; y < 1000; y++) {
+          const ly = String(y).length;
+          if (lx + ly > 6) break;
+          let z;
+          if (op === '+') z = x + y; else if (op === '-') z = x - y; else if (op === '×') z = x * y; else { if (!y || x % y) continue; z = x / y; }
+          if (z < 0) continue;
+          if (lx + ly + String(z).length !== 7) continue;
+          add(`${x}${op}${y}=${z}`);
+        }
+      }
+    }
+    // "A ○ B ○ C = D" 꼴 (숫자는 두 자리까지)
+    const OPS = ['+', '-', '×', '÷'];
+    const ap = (a, o, b) => (o === '+' ? a + b : o === '-' ? a - b : o === '×' ? a * b : b ? a / b : NaN);
+    const L = (x) => (x < 10 ? 1 : 2);
+    for (const o1 of OPS) for (const o2 of OPS) {
+      const hi = (o2 === '×' || o2 === '÷') && (o1 === '+' || o1 === '-');
+      for (let x = 0; x < 100; x++) for (let y = 0; y < 100; y++) {
+        if (L(x) + L(y) > 4) continue;
+        for (let z = 0; z < 100; z++) {
+          const used = L(x) + L(y) + L(z);
+          if (used > 5) break;
+          const w = hi ? ap(x, o1, ap(y, o2, z)) : ap(ap(x, o1, y), o2, z);
+          if (!(w >= 0) || Math.abs(w - Math.round(w)) > 1e-9) continue;
+          const ws = String(Math.round(w));
+          if (used + ws.length !== 6) continue;
+          add(`${x}${o1}${y}${o2}${z}=${ws}`);
+        }
+      }
+    }
+    for (let k = 0; k < 30000; k++) add(randomEquation().join('')); // ^ 가 들어간 식 등
+    POOL = [...set].map((s) => [...s]);
+    return POOL;
+  }
+  // 봇마다 아직 가능한 후보 목록을 기억 (게임 상태에는 넣지 않음: 직렬화 대상이 아님)
+  const botMemo = new WeakMap();
+
+  const engine = {
+    setup(seats, opts) {
+      return { seats, n: 2, phase: 'build', deadline: opts.now + BUILD_MS, secret: [null, null], guesses: [[], []], pending: [null, null], round: 0, winner: null, game: 1 };
+    },
+    action(st, seat, a, now) {
+      if (st.phase === 'build' && a.t === 'build' && !st.secret[seat]) {
+        if (check(a.cells)) return false;
+        st.secret[seat] = a.cells.slice();
+        if (st.secret.every(Boolean)) { st.phase = 'guess'; st.round = 1; st.deadline = now + GUESS_MS; }
+        return;
+      }
+      if (st.phase === 'guess' && a.t === 'guess' && !st.pending[seat]) {
+        if (!Array.isArray(a.cells) || a.cells.length !== LEN || a.cells.some((c) => !KEYS.includes(c))) return false;
+        st.pending[seat] = a.cells.slice();
+        if (st.pending.every(Boolean)) resolve(st, now);
+        return;
+      }
+      return false;
+    },
+    tick(st, now) {
+      if (now < st.deadline) return false;
+      if (st.phase === 'build') {
+        st.secret = st.secret.map((s) => s || randomEquation());
+        st.phase = 'guess'; st.round = 1; st.deadline = now + GUESS_MS;
+        return true;
+      }
+      if (st.phase === 'guess') { resolve(st, now); return true; }
+      return false;
+    },
+    active(st) {
+      if (st.phase === 'build') return [0, 1].filter((i) => !st.secret[i]);
+      if (st.phase === 'guess') return [0, 1].filter((i) => !st.pending[i]);
+      return [];
+    },
+    hidden: () => true,
+    botDelay: (st) => (st.phase === 'build' ? 1500 : 2500 + Math.random() * 3000),
+    botAct(st, me) {
+      if (st.phase === 'build') return { t: 'build', cells: randomEquation() };
+      const hist = st.guesses[me];
+      // 새로 받은 신호로만 후보를 걸러 냄 → 남은 것 중 무작위
+      let memo = botMemo.get(st);
+      if (!memo) { memo = {}; botMemo.set(st, memo); }
+      let m = memo[me];
+      if (!m || m.game !== st.game) m = memo[me] = { game: st.game, cands: pool(), seen: 0 };
+      for (; m.seen < hist.length; m.seen++) {
+        const g = hist[m.seen];
+        m.cands = m.cands.filter((cand) => sameClue(clue(g.g, cand), g.c));
+      }
+      if (m.cands.length) return { t: 'guess', cells: U.pick(m.cands) };
+      // 후보 목록 밖의 수식이면: 지금까지 신호와 가장 많이 맞는 무작위 수식
+      let best = null, bestScore = -1;
+      for (let k = 0; k < 3000; k++) {
+        const cand = randomEquation();
+        let score = 0;
+        for (const g of hist) { const c = clue(g.g, cand); for (let i = 0; i < LEN; i++) if (c[i] === g.c[i]) score++; }
+        if (score > bestScore) { bestScore = score; best = cand; }
+      }
+      return { t: 'guess', cells: best };
+    },
+    view(st, me) {
+      const opp = 1 - me;
+      return {
+        phase: st.phase, round: st.round, deadline: st.deadline, winner: st.winner,
+        built: st.secret.map(Boolean), submitted: st.pending.map(Boolean),
+        mySecret: me >= 0 ? st.secret[me] : null,
+        myGuesses: me >= 0 ? st.guesses[me] : [],
+        oppGuesses: me >= 0 ? st.guesses[opp] : [],
+        reveal: st.phase === 'end' ? st.secret : null,
+      };
+    },
+    over(st) {
+      if (st.phase !== 'end') return null;
+      const w = st.winner, l = 1 - w;
+      return { ranking: [{ seat: w, rank: 1, score: { k: 'solved', v: st.guesses[w].length } }, { seat: l, rank: 2, score: { k: 'unsolved' } }] };
+    },
+  };
+  function resolve(st, now) {
+    const solved = [];
+    [0, 1].forEach((i) => {
+      const g = st.pending[i];
+      if (!g) return; // 시간 안에 못 내면 이번 라운드 신호 없음
+      const c = clue(g, st.secret[1 - i]);
+      st.guesses[i].push({ g, c, r: st.round });
+      if (c.every((x) => x === 'g')) solved.push(i);
+    });
+    st.pending = [null, null];
+    if (solved.length === 1) { st.phase = 'end'; st.winner = solved[0]; return; }
+    if (solved.length === 2) { // 동시에 맞히면 처음부터 다시
+      st.game++; st.phase = 'build'; st.secret = [null, null]; st.guesses = [[], []]; st.round = 0; st.deadline = now + BUILD_MS;
+      return;
+    }
+    st.round++; st.deadline = now + GUESS_MS;
+  }
+
+  const COLORS = { g: '#3e9b5f', y: '#c9a227', r: '#7a2a2d' };
+  function ui(root, ctx) {
+    let view = null, input = [], err = null, phaseKey = null;
+    const status = h('div', { class: 'big' });
+    const timerEl = h('span', { class: 'timer' });
+    const slotRow = h('div', { class: 'eq-row' });
+    const keypad = h('div', { class: 'eq-keys' });
+    const actions = h('div', { class: 'row' });
+    const errEl = h('div', { class: 'bad', style: { minHeight: '20px', fontSize: '14px' } });
+    const mine = h('div', { class: 'col' });
+    const theirs = h('div', { class: 'col' });
+    const secretEl = h('div', {});
+
+    const cellEl = (ch, color) => h('div', { class: 'eq-cell', style: { background: color || '' } }, ch ? show(ch) : '');
+    const rowEl = (cells, clueArr) => h('div', { class: 'eq-row' }, ...U.range(LEN).map((i) => cellEl(cells[i], clueArr ? COLORS[clueArr[i]] : null)));
+    const canType = () => view && view.me >= 0 && ((view.phase === 'build' && !view.mySecret) || (view.phase === 'guess' && !view.submitted[view.me]));
+
+    function press(k) {
+      if (!canType()) return;
+      if (k === '⌫') input.pop();
+      else if (k === 'C') input = [];
+      else if (input.length < LEN) input.push(k);
+      err = null; draw();
+    }
+    function submit() {
+      if (!canType()) return;
+      if (view.phase === 'build') {
+        const e = check(input);
+        if (e) { err = e; draw(); return; }
+        ctx.send({ t: 'build', cells: input.slice() });
+      } else {
+        if (input.length !== LEN) { err = 'eq.err.fill'; draw(); return; }
+        ctx.send({ t: 'guess', cells: input.slice() });
+      }
+      input = [];
+    }
+    const onKey = (e) => {
+      if (!canType()) return;
+      const map = { '*': '×', x: '×', '/': '÷', '-': '-', '+': '+', '^': '^', '=': '=' };
+      if (/^[0-9]$/.test(e.key)) press(e.key);
+      else if (map[e.key]) press(map[e.key]);
+      else if (e.key === 'Backspace') press('⌫');
+      else if (e.key === 'Enter') submit();
+    };
+    document.addEventListener('keydown', onKey);
+
+    // 키패드 색: 내가 받은 신호 중 가장 좋은 것
+    function keyColors() {
+      const best = {};
+      const rank = { r: 1, y: 2, g: 3 };
+      for (const g of view.myGuesses) g.g.forEach((ch, i) => { const c = g.c[i]; if (!best[ch] || rank[c] > rank[best[ch]]) best[ch] = c; });
+      return best;
+    }
+    function draw() {
+      const v = view;
+      slotRow.innerHTML = '';
+      const showInput = canType();
+      U.range(LEN).forEach((i) => slotRow.append(cellEl(showInput ? input[i] : null)));
+      slotRow.style.display = showInput ? '' : 'none';
+      keypad.innerHTML = '';
+      const kc = v.phase === 'guess' ? keyColors() : {};
+      for (const k of [...KEYS, '⌫']) keypad.append(h('button', { class: 'btn eq-key', disabled: !showInput, style: { background: kc[k] ? COLORS[kc[k]] : '' }, onclick: () => press(k) }, show(k)));
+      keypad.style.display = showInput ? '' : 'none';
+      actions.innerHTML = '';
+      if (showInput) actions.append(h('button', { class: 'btn primary', onclick: submit }, v.phase === 'build' ? T('eq.lock') : T('eq.guess')), h('button', { class: 'btn', onclick: () => press('C') }, T('lf.clear')));
+      errEl.textContent = err ? T(err) : '';
+      mine.innerHTML = '';
+      mine.append(h('h4', {}, T('eq.myGuesses')));
+      if (!v.myGuesses.length) mine.append(h('div', { class: 'muted' }, '—'));
+      v.myGuesses.forEach((g) => mine.append(rowEl(g.g, g.c)));
+      theirs.innerHTML = '';
+      theirs.append(h('h4', {}, T('eq.theirGuesses')));
+      if (!v.oppGuesses.length) theirs.append(h('div', { class: 'muted' }, '—'));
+      v.oppGuesses.forEach((g) => theirs.append(rowEl(g.g, g.c)));
+      secretEl.innerHTML = '';
+      if (v.mySecret) secretEl.append(h('h4', {}, T('eq.mySecret')), rowEl(v.mySecret));
+      if (v.reveal && v.me >= 0) secretEl.append(h('h4', {}, T('eq.theirSecret')), rowEl(v.reveal[1 - v.me]));
+    }
+    function tickTimer() {
+      if (!view) return;
+      const v = view;
+      if (v.phase === 'end') { timerEl.textContent = ''; status.textContent = T('res.over'); return; }
+      const s = UIx.secs(v.deadline, ctx.now());
+      timerEl.textContent = UIx.mmss(s); timerEl.classList.toggle('warn', s <= 30);
+      if (v.phase === 'build') status.textContent = v.mySecret ? T('eq.waitBuild') : T('eq.build');
+      else status.textContent = v.me >= 0 && v.submitted[v.me] ? T('eq.waitGuess', { r: v.round }) : T('eq.round', { r: v.round });
+    }
+    const iv = setInterval(tickTimer, 250);
+
+    root.append(h('div', { class: 'split' },
+      h('div', { class: 'col' }, status, slotRow, errEl, keypad, actions, h('div', { class: 'eq-legend muted' }, T('eq.legend')), mine),
+      h('div', { class: 'col' },
+        h('div', { class: 'panel row' }, h('span', {}, T('play.timeLeft')), h('span', { style: { flex: 1 } }), timerEl),
+        h('div', { class: 'panel col' }, secretEl),
+        h('div', { class: 'panel col' }, theirs))));
+
+    return {
+      update(v) {
+        const pk = `${v.phase}-${v.round}-${v.me}`;
+        if (pk !== phaseKey) { phaseKey = pk; input = []; err = null; }
+        view = v; draw(); tickTimer();
+      },
+      destroy() { clearInterval(iv); document.removeEventListener('keydown', onKey); },
+    };
+  }
+
+  I18N.add({
+    ko: { 'eq.build': '나만의 수식을 만드세요 (9칸)', 'eq.waitBuild': '상대가 수식을 만드는 중...', 'eq.round': '{r}번째 추측 — 상대의 수식을 맞혀 보세요',
+      'eq.waitGuess': '{r}번째 추측 제출 완료 — 상대를 기다리는 중', 'eq.lock': '이 수식으로 확정', 'eq.guess': '추측 제출',
+      'eq.myGuesses': '내 추측 (상대 수식 기준)', 'eq.theirGuesses': '상대의 추측 (내 수식 기준)', 'eq.mySecret': '내 수식', 'eq.theirSecret': '상대의 수식',
+      'eq.legend': '🟩 자리까지 맞음 · 🟨 있지만 다른 자리 · 🟥 없음',
+      'eq.err.fill': '9칸을 모두 채우세요.', 'eq.err.edge': '맨 앞과 맨 뒤에는 기호를 쓸 수 없어요.', 'eq.err.adjacent': '기호를 연달아 쓸 수 없어요.',
+      'eq.err.noEq': '= 이 하나 이상 있어야 해요.', 'eq.err.zero': '0으로 시작하는 두 자리 이상 숫자는 안 돼요.', 'eq.err.math': '계산할 수 없는 식이에요 (0으로 나누기 등).',
+      'eq.err.notEqual': '= 양쪽 값이 같지 않아요.' },
+    en: { 'eq.build': 'Build your secret equation (9 cells)', 'eq.waitBuild': 'Your opponent is building an equation...', 'eq.round': "Guess #{r} — find your opponent's equation",
+      'eq.waitGuess': 'Guess #{r} submitted — waiting for your opponent', 'eq.lock': 'Lock in this equation', 'eq.guess': 'Submit guess',
+      'eq.myGuesses': "My guesses (on my opponent's equation)", 'eq.theirGuesses': "Opponent's guesses (on my equation)", 'eq.mySecret': 'My equation', 'eq.theirSecret': "Opponent's equation",
+      'eq.legend': '🟩 right spot · 🟨 in it, wrong spot · 🟥 not in it',
+      'eq.err.fill': 'Fill all 9 cells.', 'eq.err.edge': "The first and last cells can't be symbols.", 'eq.err.adjacent': "Two symbols can't be next to each other.",
+      'eq.err.noEq': 'You need at least one =.', 'eq.err.zero': "Numbers with 2+ digits can't start with 0.", 'eq.err.math': "This can't be calculated (e.g. division by zero).",
+      'eq.err.notEqual': "Both sides of = aren't equal." },
+    zh: { 'eq.build': '请写出你的秘密算式（9格）', 'eq.waitBuild': '对手正在写算式...', 'eq.round': '第 {r} 次猜测 — 猜出对手的算式',
+      'eq.waitGuess': '第 {r} 次猜测已提交 — 等待对手', 'eq.lock': '确定这个算式', 'eq.guess': '提交猜测',
+      'eq.myGuesses': '我的猜测（对手的算式）', 'eq.theirGuesses': '对手的猜测（我的算式）', 'eq.mySecret': '我的算式', 'eq.theirSecret': '对手的算式',
+      'eq.legend': '🟩 位置正确 · 🟨 有但位置不对 · 🟥 没有',
+      'eq.err.fill': '请填满 9 格。', 'eq.err.edge': '第一格和最后一格不能是符号。', 'eq.err.adjacent': '符号不能相邻。',
+      'eq.err.noEq': '至少要有一个 =。', 'eq.err.zero': '两位以上的数字不能以 0 开头。', 'eq.err.math': '这个算式无法计算（例如除以 0）。',
+      'eq.err.notEqual': '= 两边的值不相等。' },
+  });
+
+  registerGame({
+    id: 'eqlight', en: 'Equation Traffic Light',
+    name: { ko: '수식 신호등', en: 'Equation Traffic Light', zh: '算式信号灯' },
+    summary: {
+      ko: '9칸짜리 비밀 수식을 만들고, 신호등 색 힌트로 상대의 수식을 먼저 맞히세요. (결승 3라운드)',
+      en: 'Build a secret 9-cell equation, then use traffic-light clues to crack your opponent\'s first. (Final, game 3)',
+      zh: '写一个 9 格的秘密算式，再根据信号灯颜色提示，抢先猜出对手的算式。（决赛第3局）',
+    },
+    players: { min: 1, max: 2, default: 2, soloSeats: 2, minSeats: 2 },
+    rules: {
+      ko: `<ul>
+        <li>쓸 수 있는 기호: 숫자 0~9, <b>+ − × ÷ ^ =</b>. 계산 순서는 ^ → × ÷ → + − 입니다.</li>
+        <li>각자 5분 안에 <b>9칸짜리 비밀 수식</b>을 만듭니다. 수식은 계산이 맞아야 하고, 기호끼리 붙을 수 없으며, 맨 앞·맨 뒤는 숫자여야 합니다. 두 자리 이상 숫자는 0으로 시작할 수 없습니다.</li>
+        <li>매 라운드 둘이 동시에 상대 수식을 추측합니다(5분). 추측은 올바른 수식이 아니어도 됩니다.</li>
+        <li>칸마다 신호가 나옵니다. <span style="color:#3e9b5f">초록</span> = 자리까지 맞음, <span style="color:#c9a227">노랑</span> = 수식에 있지만 다른 자리, <span style="color:#c0392b">빨강</span> = 없음. 같은 기호를 여러 번 쓰면 정답에 있는 개수만큼만 표시됩니다.</li>
+        <li>시간 안에 추측하지 못하면 그 라운드는 신호를 받지 못합니다.</li>
+        <li>먼저 전부 초록을 만든 사람이 승리. 같은 라운드에 둘 다 맞히면 처음부터 다시 합니다.</li></ul>`,
+      en: `<ul>
+        <li>Symbols: digits 0–9 and <b>+ − × ÷ ^ =</b>. Order of operations: ^ first, then × ÷, then + −.</li>
+        <li>Each player has 5 minutes to build a <b>secret 9-cell equation</b>. It must be mathematically correct, two symbols can't touch, and the first and last cells must be digits. Numbers with 2+ digits can't start with 0.</li>
+        <li>Each round, both players guess the other's equation at the same time (5 minutes). A guess doesn't have to be a valid equation.</li>
+        <li>Every cell gets a light: <span style="color:#3e9b5f">green</span> = right symbol, right spot; <span style="color:#c9a227">yellow</span> = in the equation, wrong spot; <span style="color:#c0392b">red</span> = not in it. Repeated symbols only light up as many times as they appear in the answer.</li>
+        <li>If you don't guess in time, you get no lights that round.</li>
+        <li>The first to get all green wins. If both solve it in the same round, the game starts over.</li></ul>`,
+      zh: `<ul>
+        <li>可用符号：数字 0~9 和 <b>+ − × ÷ ^ =</b>。运算顺序：先 ^，再 × ÷，最后 + −。</li>
+        <li>每人在 5 分钟内写出一个 <b>9 格的秘密算式</b>。算式必须成立，符号不能相邻，第一格和最后一格必须是数字。两位以上的数字不能以 0 开头。</li>
+        <li>每轮双方同时猜对方的算式（5 分钟）。猜测不一定要是成立的算式。</li>
+        <li>每一格都会亮灯：<span style="color:#3e9b5f">绿</span> = 位置正确；<span style="color:#c9a227">黄</span> = 算式里有但位置不对；<span style="color:#c0392b">红</span> = 没有。同一符号重复时，只按答案里的个数亮灯。</li>
+        <li>没在时间内提交，该轮没有提示。</li>
+        <li>先全部变绿的人获胜。同一轮双方都猜中则重新开始。</li></ul>`,
     },
     engine, ui,
   });
